@@ -1,6 +1,6 @@
 # napari-PixSeq
 
-[![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-PixSeq/LICENSE)
+[![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-PixSeq/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-PixSeq)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-GapSeq2.svg?color=green)](https://python.org)
 [![tests](https://github.com/piedrro/napari-GapSeq2/workflows/tests/badge.svg)](https://github.com/piedrro/napari-PixSeq/actions)
