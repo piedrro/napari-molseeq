@@ -9,7 +9,7 @@
 
 A **Napari** plugin for extracting time series traces from **Single Molecule Localisation Microsocpy** (SMLM) data.
 
-The napari-pixseq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
+Napari-pixseq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
 
 This is still undergoing development, so some features may not work as expected.
 
