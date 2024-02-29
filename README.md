@@ -3,7 +3,6 @@
 [![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-PixSeq/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-PixSeq)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-GapSeq2.svg?color=green)](https://python.org)
-[![tests](https://github.com/piedrro/napari-GapSeq2/workflows/tests/badge.svg)](https://github.com/piedrro/napari-PixSeq/actions)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-GapSeq2)](https://napari-hub.org/plugins/napari-PixSeq)
 
 A **Napari** plugin for extracting time series traces from **Single Molecule Localisation Microsocpy** (SMLM) data.
