@@ -1,7 +1,7 @@
 # napari-PixSeq
 
 [![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-PixSeq/blob/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-PixSeq)
+[![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-PixSeq/)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-GapSeq2.svg?color=green)](https://python.org)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-GapSeq2)](https://napari-hub.org/plugins/napari-PixSeq)
 
@@ -27,7 +27,11 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `napari-GapSeq2` via [GitHub]:
+You can install `napari-PixSeq` via [pip]:
+
+    pip install napari-PixSeq
+
+You can install `napari-PixSeq` via [GitHub]:
 
     conda create –-name napari-pixseq python==3.9
     conda activate napari-pixseq
