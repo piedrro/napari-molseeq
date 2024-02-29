@@ -9,6 +9,8 @@ A **Napari** plugin for extracting time series traces from **Single Molecule Loc
 
 Napari-PixSeq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
 
+Napari-PixSeq traces can be analysed with TraceAnalyser: https://github.com/piedrro/TraceAnalyser
+
 This is still undergoing development, so some features may not work as expected.
 
 This was built by Dr Piers Turner from the Kapanidis Lab, University of Oxford.
