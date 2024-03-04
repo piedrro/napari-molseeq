@@ -123,12 +123,13 @@ class _plot_utils:
                     if dataset != "" and channel != "":
 
                         channel_dict = self.traces_dict[dataset][channel]
+                        trace_indeces = list(channel_dict.keys())
 
                         n_traces = len(channel_dict)
 
                         if n_traces > 0:
 
-                            metric_names = channel_dict[0].keys()
+                            metric_names = channel_dict[trace_indeces[0]].keys()
 
                             plot_metric_items = []
                             background_metric_items = []
@@ -199,14 +200,15 @@ class _plot_utils:
         try:
 
             dataset_dict = self.traces_dict[dataset_name].copy()
-            n_traces = len(dataset_dict["donor"])
+            trace_indices = list(dataset_dict["donor"].keys())
+            n_traces = len(trace_indices)
 
             dataset_dict["fret_efficiency"] = {}
-            for trace_index in range(n_traces):
+            for trace_index in trace_indices:
                 if trace_index not in dataset_dict["fret_efficiency"]:
                     dataset_dict["fret_efficiency"][trace_index] = {metric_key: []}
 
-            for trace_index in range(n_traces):
+            for trace_index in trace_indices:
 
                 donor = copy.deepcopy(dataset_dict["donor"][trace_index][metric_key])
                 acceptor = copy.deepcopy(dataset_dict["acceptor"][trace_index][metric_key])
@@ -512,9 +514,12 @@ class _plot_utils:
             label_list = []
 
             for dataset_name, dataset_dict in self.plot_dict.items():
-                for label in dataset_dict[0]["labels"]:
+
+                first_index = list(dataset_dict.keys())[0]
+
+                for label in dataset_dict[first_index]["labels"]:
                     label_list.append(label)
-                for channel in dataset_dict[0]["channels"]:
+                for channel in dataset_dict[first_index]["channels"]:
                     channel_list.append(channel)
 
             for i in range(grid_layout.count()):

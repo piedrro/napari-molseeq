@@ -1,0 +1,4 @@
+git tag -a 1.X.X -m "Release version 1.X.X"     # Create a tag
+git push origin 1.X.X       # Push the tag to the remote repository
+py -m build         # Build the package
+py -m twine upload dist/*   # Upload the package to PyPi

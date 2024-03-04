@@ -308,6 +308,7 @@ def extract_spot_metrics(dat):
         stop_event = dat["stop_event"]
         spot_index = dat["spot_index"]
         channel = dat["channel"]
+        frame_shape = np_array.shape[1:]
 
         if not stop_event.is_set():
 
@@ -317,11 +318,15 @@ def extract_spot_metrics(dat):
 
             n_pixels = spot_size**2
 
-            [x1,x2,y1,y2] = dat["spot_bound"]  #
+            bounds = dat["spot_bound"]
+
             spot_mask = dat["spot_mask"]
             spot_mask = spot_mask.astype(np.uint8)
-
             spot_background_mask = dat["spot_background_mask"]
+
+            [x1, x2, y1, y2], spot_mask, spot_background_mask = crop_spot_data(frame_shape,
+                bounds, spot_mask,spot_background_mask)
+
             spot_overlap = dat["background_overlap_mask"][y1:y2, x1:x2]
 
             if spot_overlap.shape == spot_background_mask.shape:
@@ -410,6 +415,51 @@ def extract_spot_metrics(dat):
         pass
 
     return spot_metrics
+
+
+def crop_spot_data(image_shape, spot_bounds, spot_mask, background_mask=None):
+
+    try:
+        x1, x2, y1, y2 = spot_bounds
+        crop = [0, spot_mask.shape[1], 0, spot_mask.shape[0]]
+
+        if x1 < 0:
+            crop[0] = abs(x1)
+            x1 = 0
+        if x2 > image_shape[1]:
+            crop[1] = spot_mask.shape[1] - (x2 - image_shape[1])
+            x2 = image_shape[1]
+        if y1 < 0:
+            crop[2] = abs(y1)
+            y1 = 0
+        if y2 > image_shape[0]:
+            crop[3] = spot_mask.shape[0] - (y2 - image_shape[0])
+            y2 = image_shape[0]
+
+        corrected_bounds = [x1, x2, y1, y2]
+
+        if spot_mask is not None:
+            loc_mask = spot_mask.copy()
+            loc_mask = loc_mask[crop[2]:crop[3], crop[0]:crop[1]]
+        else:
+            loc_mask = None
+
+        if background_mask is not None:
+            loc_bg_mask = background_mask.copy()
+            loc_bg_mask = loc_bg_mask[crop[2]:crop[3], crop[0]:crop[1]]
+        else:
+            loc_bg_mask = None
+
+    except:
+        loc_mask = spot_mask
+        loc_bg_mask = background_mask
+        corrected_bounds = spot_bounds
+        print(traceback.format_exc())
+
+    return corrected_bounds, loc_mask, loc_bg_mask
+
+
+
 
 
 class _trace_compute_utils:
@@ -558,17 +608,17 @@ class _trace_compute_utils:
         global_background_mask = np.zeros(image_mask_shape, dtype=np.uint8)
 
         spot_mask = spot_mask.astype(np.uint16)
-        spot_background_mask = spot_background_mask
+        spot_background_mask = spot_background_mask.astype(np.uint16)
 
         spot_bounds = self.generate_spot_bounds(locs,  len(spot_mask[0]))
 
-        for loc_index, [x1,x2,y1,y2] in enumerate(spot_bounds):
+        for loc_index, bounds in enumerate(spot_bounds):
 
-            x1, y1 = max(0, x1), max(0, y1)
-            x2, y2 = min(global_spot_mask.shape[1], x2), min(global_spot_mask.shape[0], y2)
+            [x1, x2, y1, y2], loc_mask, log_bg_mask = crop_spot_data(image_mask_shape,
+                bounds, spot_mask,spot_background_mask)
 
-            global_spot_mask[y1:y2, x1:x2] += spot_mask[:y2-y1, :x2-x1]
-            global_background_mask[y1:y2, x1:x2] += spot_background_mask[:y2-y1, :x2-x1]
+            global_spot_mask[y1:y2, x1:x2] += loc_mask
+            global_background_mask[y1:y2, x1:x2] += log_bg_mask
 
         global_spot_mask[global_spot_mask > 0] = 1
         global_background_mask[global_background_mask > 0] = 1
@@ -732,8 +782,6 @@ class _trace_compute_utils:
             background_metrics = []
             picasso_metrics = []
 
-            extract_spot_metrics(spot_metrics_jobs[0])
-
             cpu_count = int(multiprocessing.cpu_count() * 0.9)
 
             total_jobs = len(spot_metrics_jobs) + len(background_metrics_jobs) + len(picasso_metrics_jobs)
@@ -758,11 +806,14 @@ class _trace_compute_utils:
                             result = future.result()  # Process result here
                             # Append result to the appropriate list based on job type
                             if job_type == "spot_metrics":
-                                spot_metrics.append(result)
+                                if result is not None:
+                                    spot_metrics.append(result)
                             elif job_type == "picasso_metrics":
-                                picasso_metrics.append(result)
+                                if result is not None:
+                                    picasso_metrics.append(result)
                             else:
-                                background_metrics.append(result)
+                                if result is not None:
+                                    background_metrics.append(result)
                         except concurrent.futures.TimeoutError:
                             # Handle timeout
                             pass
@@ -1037,15 +1088,14 @@ class _trace_compute_utils:
 
                     global_spot_mask = np.zeros(mask_shape, dtype=np.uint16)
 
-                    for loc_index, [x1, x2, y1, y2] in enumerate(spot_bounds):
+                    for loc_index, bounds in enumerate(spot_bounds):
+
+                        [x1, x2, y1, y2], loc_bg_mask, _ = crop_spot_data(mask_shape, bounds, bg_mask)
+
                         temp_mask = np.zeros(mask_shape, dtype=np.uint8)
+                        temp_mask[y1:y2, x1:x2] += loc_bg_mask
 
-                        x1, y1 = max(0, x1), max(0, y1)
-                        x2, y2 = min(global_spot_mask.shape[1], x2), min(global_spot_mask.shape[0], y2)
-
-                        temp_mask[y1:y2, x1:x2] += bg_mask
                         global_spot_mask[temp_mask > 0] = loc_index + 1
-
 
                     binary_spot_mask = global_spot_mask > 0
                     overlap_mask = binary_spot_mask & background_overlap_mask
@@ -1087,14 +1137,12 @@ class _trace_compute_utils:
 
                     global_spot_mask = np.zeros(mask_shape, dtype=np.uint16)
 
-                    for loc_index, [x1,x2,y1,y2] in enumerate(spot_bounds):
+                    for loc_index, bounds in enumerate(spot_bounds):
+
+                        [x1, x2, y1, y2], loc_mask, _ = crop_spot_data(mask_shape, bounds, spot_mask)
 
                         temp_mask = np.zeros(mask_shape, dtype=np.uint8)
-
-                        x1, y1 = max(0, x1), max(0, y1)
-                        x2, y2 = min(global_spot_mask.shape[1], x2), min(global_spot_mask.shape[0], y2)
-
-                        temp_mask[y1:y2, x1:x2] += spot_mask
+                        temp_mask[y1:y2, x1:x2] += loc_mask
                         global_spot_mask[temp_mask > 0] = loc_index + 1
 
                     if "Spot Mask" in self.viewer.layers:
