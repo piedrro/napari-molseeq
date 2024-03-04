@@ -50,7 +50,7 @@ class _export_traces_utils:
             elif export_mode == "OriginLab":
                 file_extension = ".opju"
             else:
-                print(f"Export mode {export_mode} not recognized.")
+                self.pixseq_notification(f"Export mode {export_mode} not recognized.")
 
             export_path = os.path.join(import_directory, file_name + file_extension)
             export_path = os.path.normpath(export_path)

@@ -233,6 +233,8 @@ class _export_images_utils:
 
                 progress_dict = {}
 
+                self.pixseq_notification(f"Exporting image data...")
+
                 for job_index, export_jobs in enumerate(export_jobs):
 
                     if job_index not in progress_dict.keys():
@@ -291,7 +293,7 @@ class _export_images_utils:
 
             tifffile.imwrite(export_path, image)
 
-            print(f"Exported {export_channel} data to {export_path}")
+            self.pixseq_notification(f"Exported {export_channel} data to {export_path}")
 
         except:
             print(traceback.format_exc())

@@ -171,7 +171,7 @@ class _utils_temporal_filtering:
 
             compute_jobs = self._populate_temport_compute_jobs()
 
-            print("Starting temporal filtering on {} images".format(len(self.shared_images)))
+            self.pixseq_notification("Starting temporal filtering on {} images".format(len(self.shared_images)))
 
             start_time = time.time()
 
@@ -219,6 +219,8 @@ class _utils_temporal_filtering:
     def pixseq_temporal_filtering(self, viewer=None):
 
         try:
+            self.pixseq_notification("Starting temporal filtering...")
+
             self.filtering_start.setEnabled(False)
 
             self.update_ui(init=True)

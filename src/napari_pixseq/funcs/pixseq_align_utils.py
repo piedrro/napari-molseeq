@@ -128,7 +128,7 @@ class _align_utils:
 
                     for channel_name, channel_dict in self.dataset_dict[dataset].items():
 
-                        print(f"Aligning {dataset} {channel_name}...")
+                        self.pixseq_notification(f"Aligning {dataset} {channel_name}...")
 
                         img = channel_dict["data"].copy()
 
@@ -190,7 +190,7 @@ class _align_utils:
 
                 if len(missing_fiducial_list) > 0:
                     missing_fiducial_list = ", ".join(missing_fiducial_list)
-                    print(f"Missing fitted {channel_mode} fiducials for {missing_fiducial_list}")
+                    self.pixseq_notification(f"Missing fitted {channel_mode} fiducials for {missing_fiducial_list}")
                 else:
 
                     self.update_ui(init=True)

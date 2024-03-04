@@ -139,7 +139,7 @@ class _utils_colocalize:
                            "localisation_centres": colo_loc_centers,
                            "render_locs": colo_render_locs}
 
-            print(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
+            self.pixseq_notification(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
 
         except:
             print(traceback.format_exc())
@@ -200,11 +200,10 @@ class _utils_colocalize:
             ch2_loc_dict, ch2_n_locs, _ = self.get_loc_dict(dataset, channel2.lower())
 
             if channel1 == channel2:
-                print("Channels must be different for colocalisation")
+                self.pixseq_notification("Channels must be different for colocalisation")
 
             elif ch1_n_locs == 0 or ch2_n_locs == 0:
-
-                print("No localisations found in one or both channels.")
+                self.pixseq_notification("No localisations found in one or both channels.")
 
             else:
                 self.update_ui(init=True)

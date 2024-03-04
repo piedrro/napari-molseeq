@@ -24,10 +24,8 @@ from napari_pixseq.funcs.pixseq_colocalize_utils import _utils_colocalize
 from napari_pixseq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
 from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
 
+import napari
 
-
-if TYPE_CHECKING:
-    import napari
 
 
 class PixSeqWidget(QWidget,

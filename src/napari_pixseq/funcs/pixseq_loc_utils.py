@@ -127,8 +127,6 @@ class picasso_loc_utils():
                 self.remove_duplicate_locs()
 
         except:
-            print(loc_index)
-            print(self.locs, self.locs.dtype)
             print(traceback.format_exc())
             pass
 

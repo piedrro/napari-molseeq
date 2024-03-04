@@ -316,7 +316,7 @@ class _undrift_utils:
                                              "picasso_info": picasso_info,
                                              "channel": channel.lower(), "dataset": dataset}
                 else:
-                    print("No fitted localizations found for dataset: " + dataset)
+                    self.pixseq_notification("No fitted localizations found for dataset: " + dataset)
 
             if undrift_dict != {}:
 

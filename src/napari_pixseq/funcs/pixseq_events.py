@@ -4,9 +4,12 @@ import numpy as np
 from functools import partial, wraps
 from qtpy.QtWidgets import (QSlider, QLabel)
 import time
-
+from napari.utils.notifications import show_info
 
 class _events_utils:
+
+    def pixseq_notification(self, message):
+        show_info(message)
 
     def update_ui(self, error=None, init = False):
 

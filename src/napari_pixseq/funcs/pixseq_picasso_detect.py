@@ -212,9 +212,9 @@ class _picasso_detect_utils:
                     image_channel, box_size, fitted)
 
                 if fitted:
-                    print("Fitted {} localisations".format(total_locs))
+                    self.pixseq_notification("Fitted {} {}".format(total_locs, detect_mode))
                 else:
-                    print("Detected {} localisations".format(total_locs))
+                    self.pixseq_notification("Detected {} {}".format(total_locs, detect_mode))
 
         except:
             print(traceback.format_exc())

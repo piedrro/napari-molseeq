@@ -125,7 +125,7 @@ class _tranform_utils:
                 tform_path = QFileDialog.getSaveFileName(self, 'Save transform matrix', tform_path, 'Text files (*.txt)')[0]
 
                 if tform_path != "":
-                    print(f"Saving transform matrix to {tform_path}")
+                    self.pixseq_notification(f"Saving transform matrix to {tform_path}")
 
                     with open(tform_path, 'w') as filehandle:
                         json.dump(self.transform_matrix.tolist(), filehandle)
@@ -149,7 +149,7 @@ class _tranform_utils:
 
     def _apply_transform_matrix(self, progress_callback=None):
 
-        print("Applying transform matrix...")
+        self.pixseq_notification("Applying transform matrix...")
 
         try:
 
@@ -207,13 +207,13 @@ class _tranform_utils:
 
                 if hasattr(self, "transform_matrix") == False:
 
-                    print("No transform matrix loaded.")
+                    self.pixseq_notification("No transform matrix loaded.")
 
                 else:
 
                     if self.transform_matrix is None:
 
-                        print("No transform matrix loaded.")
+                        self.pixseq_notification("No transform matrix loaded.")
 
                     else:
 

@@ -170,7 +170,7 @@ class _cluster_utils:
 
             dataset = self.cluster_dataset.currentText()
             channel = self.cluster_channel.currentText()
-
+            mode = self.cluster_mode.currentText()
             eps = self.cluster_eps.text()
             min_samples = self.dbscan_min_samples.text()
 
@@ -178,6 +178,9 @@ class _cluster_utils:
             min_samples = self.check_number(min_samples)
 
             loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower())
+
+            if n_locs == 0 or fitted == False:
+                self.pixseq_notification("Localisation clustering requires fitted fiducials.")
 
             if n_locs > 0 and fitted and eps is not None and min_samples is not None:
 

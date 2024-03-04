@@ -1034,21 +1034,31 @@ class _trace_compute_utils:
 
         try:
 
+            compute_traces = False
+
             if self.localisation_dict != {}:
-
-                layer_names = [layer.name for layer in self.viewer.layers]
-
                 if "bounding_boxes" in self.localisation_dict.keys():
                     if "localisations" in self.localisation_dict["bounding_boxes"].keys():
-                        if len(self.localisation_dict["bounding_boxes"]["localisations"]):
+                        n_bboxes = len(self.localisation_dict["bounding_boxes"]["localisations"])
 
-                            self.update_ui(init=True)
+                        if n_bboxes > 0:
+                            compute_traces = True
 
-                            self.worker = Worker(self._pixseq_compute_traces)
-                            self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.compute_traces_progressbar))
-                            self.worker.signals.finished.connect(self._pixseq_compute_traces_finished)
-                            self.worker.signals.error.connect(self._pixseq_compute_traces_finished)
-                            self.threadpool.start(self.worker)
+            if compute_traces == True:
+
+                self.pixseq_notification(f"Computing traces for {n_bboxes} bounding boxes.")
+
+                self.update_ui(init=True)
+
+                self.worker = Worker(self._pixseq_compute_traces)
+                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.compute_traces_progressbar))
+                self.worker.signals.finished.connect(self._pixseq_compute_traces_finished)
+                self.worker.signals.error.connect(self._pixseq_compute_traces_finished)
+                self.threadpool.start(self.worker)
+
+            else:
+                self.pixseq_notification("Bounding Boxes required for trace computation.")
+
 
         except:
             self.update_ui()
