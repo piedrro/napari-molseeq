@@ -1,5 +1,5 @@
 name: napari-PixSeq
-display_name: Napari PixSeq
+display_name: PixSeq
 # use 'hidden' to remove plugin from napari hub search results
 visibility: public
 # see https://napari.org/stable/plugins/manifest.html for valid categories
@@ -11,4 +11,4 @@ contributions:
       title: Make a QWidget
   widgets:
     - command: napari-PixSeq.make_qwidget
-      display_name: napari-PixSeq
+      display_name: PixSeq
