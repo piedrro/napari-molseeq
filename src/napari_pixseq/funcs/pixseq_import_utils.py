@@ -24,28 +24,31 @@ def import_image_data(dat, progress_dict={}, index=0):
 
         n_frames = len(frame_list)
 
-        for (frame_index, channels, channel_frame) in zip(frame_list, channel_list, channel_frame_list):
+        with Image.open(path) as image:
 
-            image_shape = dat["image_shape"]
-            stop_event = dat["stop_event"]
+            for (frame_index, channels, channel_frame) in zip(frame_list, channel_list, channel_frame_list):
 
-            if not stop_event.is_set():
+                image_shape = dat["image_shape"]
+                stop_event = dat["stop_event"]
 
-                img_frame = tifffile.imread(path, key=frame_index)
+                if not stop_event.is_set():
 
-                if len(channels) == 1:
-                    img_frames = [img_frame]
-                else:
-                    img_frames = np.array_split(img_frame, 2, axis=-1)
+                    image.seek(frame_index)
+                    img_frame = np.array(image)
 
-                for channel, channel_img in zip(channels, img_frames):
+                    if len(channels) == 1:
+                        img_frames = [img_frame]
+                    else:
+                        img_frames = np.array_split(img_frame, 2, axis=-1)
 
-                    shared_mem = channel_images[channel]
-                    np_array = np.ndarray(image_shape, dtype=dat["dtype"], buffer=shared_mem.buf)
-                    np_array[channel_frame] = channel_img
+                    for channel, channel_img in zip(channels, img_frames):
 
-            progress = int(((frame_index + 1) / n_frames)*100)
-            progress_dict[index] = progress
+                        shared_mem = channel_images[channel]
+                        np_array = np.ndarray(image_shape, dtype=dat["dtype"], buffer=shared_mem.buf)
+                        np_array[channel_frame] = channel_img
+
+                progress = int(((frame_index + 1) / n_frames)*100)
+                progress_dict[index] = progress
 
     except:
         print(traceback.format_exc())
