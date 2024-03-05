@@ -216,7 +216,7 @@ class _import_utils:
                         if self.verbose:
                             print(f"Creating shared image for {dataset_name} {channel}...")
 
-                        shared_image = self.create_import_shared_image(image_size)
+                        shared_image = self.create_import_shared_image(image_size//2)
                         channel_images[channel] = shared_image
                         shared_images[dataset_name][channel] = shared_image
 
@@ -284,7 +284,7 @@ class _import_utils:
                         if self.verbose:
                             print(f"Creating shared memory for {dataset_name} {channel}...")
 
-                        shared_image = self.create_import_shared_image(image_size)
+                        shared_image = self.create_import_shared_image(image_size//4)
                         channel_images[channel] = shared_image
                         shared_images[dataset_name][channel] = shared_image
 

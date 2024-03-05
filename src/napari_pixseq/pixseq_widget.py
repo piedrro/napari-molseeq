@@ -1,5 +1,6 @@
 
 from typing import TYPE_CHECKING
+
 from qtpy.QtWidgets import QPushButton
 from qtpy.QtCore import QThreadPool
 from qtpy.QtWidgets import (QWidget,QVBoxLayout, QFrame, QSizePolicy, QSlider, QComboBox,QLineEdit, QProgressBar, QLabel, QCheckBox, QGridLayout)
@@ -40,6 +41,7 @@ class PixSeqWidget(QWidget,
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
     def __init__(self, viewer: "napari.viewer.Viewer"):
         super().__init__()
+
         self.viewer = viewer
 
         from napari_pixseq.GUI.pixseq_ui import Ui_Frame
@@ -336,6 +338,7 @@ class PixSeqWidget(QWidget,
         # todo picasso export localisations
         # todo delete dataset e.g. localisation dataset
 
+
     def toggle_verbose(self):
 
         if self.dev_verbose.isChecked():
@@ -606,3 +609,5 @@ class PixSeqWidget(QWidget,
 
         return loc_centres
 
+    def closeEvent(self):
+        print("Closing PixSeq")
