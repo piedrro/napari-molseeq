@@ -55,7 +55,7 @@ def import_image_data(dat, progress_dict={}, index=0):
 
 class _import_utils:
 
-    def create_import_shared_image(self, image_shape, image_dtype):
+    def create_import_shared_image(self, image_size):
 
         shared_mem = None
 
@@ -64,16 +64,7 @@ class _import_utils:
             if self.verbose:
                 print("Creating shared image...")
 
-            image_shape = tuple(np.array(image_shape).astype(int))
-
-            image_size = np.prod(image_shape) * (image_dtype.itemsize)
-            image_size = int(image_size)
-
-            image_size_gb = image_size / 1000000000
-
             shared_mem = shared_memory.SharedMemory(create=True, size=image_size)
-            shared_memory_name = shared_mem.name
-            shared_image = np.ndarray(image_shape, dtype=image_dtype, buffer=shared_mem.buf)
 
         except:
             print(traceback.format_exc())
@@ -92,8 +83,9 @@ class _import_utils:
             dtype = np_img.dtype
 
         image_shape = (n_frames, page_shape[1], page_shape[0])
+        image_size = os.path.getsize(path)
 
-        return n_frames, image_shape, dtype
+        return n_frames, image_shape, dtype, image_size
 
     def format_import_path(self, path):
 
@@ -149,7 +141,7 @@ class _import_utils:
                 if dataset_name not in shared_images.keys():
                     shared_images[dataset_name] = {}
 
-                n_frames, image_shape, dtype = self.get_image_info(path)
+                n_frames, image_shape, dtype, image_size = self.get_image_info(path)
 
                 if import_mode.lower() in ["donor", "acceptor", "dd", "da", "ad", "aa"]:
 
@@ -174,7 +166,7 @@ class _import_utils:
                         if self.verbose:
                             print(f"Creating image memory for {dataset_name} {channel}...")
 
-                        shared_image = self.create_import_shared_image(image_shape, dtype)
+                        shared_image = self.create_import_shared_image(image_size)
                         channel_images[channel] = shared_image
                         shared_images[dataset_name][channel] = shared_image
 
@@ -221,7 +213,7 @@ class _import_utils:
                         if self.verbose:
                             print(f"Creating shared image for {dataset_name} {channel}...")
 
-                        shared_image = self.create_import_shared_image(image_shape, dtype)
+                        shared_image = self.create_import_shared_image(image_size)
                         channel_images[channel] = shared_image
                         shared_images[dataset_name][channel] = shared_image
 
@@ -289,7 +281,7 @@ class _import_utils:
                         if self.verbose:
                             print(f"Creating shared memory for {dataset_name} {channel}...")
 
-                        shared_image = self.create_import_shared_image(image_shape, dtype)
+                        shared_image = self.create_import_shared_image(image_size)
                         channel_images[channel] = shared_image
                         shared_images[dataset_name][channel] = shared_image
 
