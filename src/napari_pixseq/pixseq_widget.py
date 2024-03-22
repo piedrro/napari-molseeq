@@ -298,6 +298,7 @@ class PixSeqWidget(QWidget,
         self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
         self.traces_dict = {}
         self.plot_dict = {}
+        self.contrast_dict = {}
 
         self.active_dataset = None
         self.active_channel = None

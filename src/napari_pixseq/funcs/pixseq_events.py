@@ -185,31 +185,69 @@ class _events_utils:
         self.update_active_image(channel="acceptor")
 
 
-    def image_layer_auto_contrast(self, image):
+    def image_layer_auto_contrast(self, image, dataset, channel):
 
         contrast_limits = None
 
         try:
-            full_range = [np.min(image), np.max(image)]
+            autocontrast = True
 
-            if max(full_range) > min(full_range):
-                contrast_limits = np.percentile(image[:10].copy(), [0.1, 99.99])
+            if dataset in self.contrast_dict.keys():
+                if channel in self.contrast_dict[dataset].keys():
 
-                gamma = 1.0
-                if contrast_limits[1] > contrast_limits[0]:
-                    gamma = np.log(0.5) / np.log((contrast_limits[1] - contrast_limits[0]) / (full_range[1] - full_range[0]))
+                    autocontrast = False
 
-                if hasattr(self, "image_layer"):
-                    self.image_layer.gamma = gamma
-                    self.image_layer.contrast_limits = contrast_limits
+                    contrast_limits = self.contrast_dict[dataset][channel]["contrast_limits"]
+                    gamma = self.contrast_dict[dataset][channel]["gamma"]
 
+                    if hasattr(self, "image_layer"):
+                        self.image_layer.gamma = gamma
+                        self.image_layer.contrast_limits = contrast_limits
+
+            if autocontrast is True:
+
+                full_range = [np.min(image), np.max(image)]
+
+                if max(full_range) > min(full_range):
+                    contrast_limits = np.percentile(image[:10].copy(), [0.1, 99.99])
+
+                    gamma = 1.0
+                    if contrast_limits[1] > contrast_limits[0]:
+                        gamma = np.log(0.5) / np.log((contrast_limits[1] - contrast_limits[0]) / (full_range[1] - full_range[0]))
+
+                    if hasattr(self, "image_layer"):
+                        self.image_layer.gamma = gamma
+                        self.image_layer.contrast_limits = contrast_limits
 
         except:
             print(traceback.format_exc())
 
         return contrast_limits
 
+    def update_contrast_dict(self):
 
+        try:
+            dataset = self.active_dataset
+            channel = self.active_channel
+
+            if dataset not in self.contrast_dict.keys():
+                self.contrast_dict[dataset] = {}
+            if channel not in self.contrast_dict[dataset].keys():
+                self.contrast_dict[dataset][channel] = {}
+
+            layer_name = [layer.name for layer in self.viewer.layers if dataset in layer.name]
+
+            if len(layer_name) > 0:
+
+                image_layer = self.viewer.layers[layer_name[0]]
+                contrast_limits = image_layer.contrast_limits
+                gamma = image_layer.gamma
+
+                self.contrast_dict[dataset][channel] = {"contrast_limits": contrast_limits,
+                                                        "gamma": gamma}
+
+        except:
+            print(traceback.format_exc())
 
     def update_active_image(self, channel=None, dataset=None, event=None):
 
@@ -224,6 +262,8 @@ class _events_utils:
                 dataset_name = dataset
 
             if dataset_name in self.dataset_dict.keys():
+
+                self.update_contrast_dict()
 
                 channel_names = [channel for channel in self.dataset_dict[dataset_name].keys()]
 
@@ -263,7 +303,7 @@ class _events_utils:
                         self.image_layer.name = layer_name
                         self.image_layer.refresh()
 
-                    self.image_layer_auto_contrast(image)
+                    self.image_layer_auto_contrast(image, dataset_name, channel)
 
             else:
                 if hasattr(self, "image_layer"):
