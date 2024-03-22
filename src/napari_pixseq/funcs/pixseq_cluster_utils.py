@@ -137,18 +137,30 @@ class _cluster_utils:
                 dataset = self.cluster_dataset.currentText()
                 channel = self.cluster_channel.currentText()
 
+                fiducial_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
+                bbox_dict = self.localisation_dict["bounding_boxes"]
+
                 if "fiducials" in mode.lower():
 
-                    self.localisation_dict["fiducials"][dataset][channel.lower()]["localisations"] = locs
-                    self.localisation_dict["fiducials"][dataset][channel.lower()]["localisation_centres"] = loc_centers
-                    self.localisation_dict["fiducials"][dataset][channel.lower()]["render_locs"] = render_locs
+                    fiducial_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
+
+                    fiducial_dict["localisations"] = locs
+                    fiducial_dict["localisation_centres"] = loc_centers
+                    fiducial_dict["render_locs"] = render_locs
 
                 else:
 
-                    self.localisation_dict["bounding_boxes"]["localisations"] = locs
-                    self.localisation_dict["bounding_boxes"]["localisation_centres"] = loc_centers
+                    if "box_size" in fiducial_dict.keys():
+                        box_size = fiducial_dict["box_size"]
+                    else:
+                        box_size = int(self.picasso_box_size.currentText())
+
+                    bbox_dict["localisations"] = locs
+                    bbox_dict["localisation_centres"] = loc_centers
+                    bbox_dict["box_size"] = box_size
 
         except:
+            print(traceback.format_exc())
             pass
 
 
