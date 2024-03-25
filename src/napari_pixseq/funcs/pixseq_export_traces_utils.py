@@ -281,7 +281,7 @@ class _export_traces_utils:
         elif channel_name.lower() == "alex":
             channel_list = ["dd", "da", "ad", "aa"]
         else:
-            channel_list = [channel_name]
+            channel_list = [channel_name.lower()]
 
         json_dict = {"metadata": {}, "data": {}}
 
@@ -298,6 +298,8 @@ class _export_traces_utils:
         loc_dict, n_locs, fitted = self.get_loc_dict(type="bounding_boxes")
         locs = loc_dict["localisations"]
         spot_locs_dict = {}
+
+        print(channel_list,n_traces)
 
         for dataset in dataset_list:
             for channel_name, channel_dict in self.dataset_dict[dataset].items():
@@ -423,7 +425,7 @@ class _export_traces_utils:
             elif channel_name.lower() == "alex":
                 channel_list = ["dd", "da", "ad", "aa"]
             else:
-                channel_list = [channel_name]
+                channel_list = [channel_name.lower()]
 
             channel_list = [chan for chan in channel_list if "efficiency" not in chan.lower()]
 
