@@ -30,7 +30,9 @@ class _export_traces_utils:
 
             if dataset_name == "All Datasets":
                 dataset_name = list(self.traces_dict.keys())[0]
-            if export_channel in ["All Channels", "FRET Efficiency", "ALEX Efficiency"]:
+            if export_channel in ["All Channels",
+                                  "FRET Efficiency", "ALEX Efficiency",
+                                  "FRET Data", "ALEX Data"]:
                 export_channel = list(self.traces_dict[dataset_name].keys())[0]
 
             import_path = self.dataset_dict[dataset_name][export_channel.lower()]["path"]
@@ -303,8 +305,6 @@ class _export_traces_utils:
         locs = loc_dict["localisations"]
         spot_locs_dict = {}
 
-        print(channel_list,n_traces)
-
         for dataset in dataset_list:
             for channel_name, channel_dict in self.dataset_dict[dataset].items():
                 if "gap_label" in channel_dict.keys():
@@ -445,6 +445,21 @@ class _export_traces_utils:
             n_traces = len(self.traces_dict[dataset_list[0]][channel_list[0]].keys())
 
             for dataset in dataset_list:
+
+                if channel_name == "All Channels" or "efficiency" in channel_name.lower():
+
+                    if set(["dd", "da"]).issubset(channel_list):
+
+                        self.compute_alex_efficiency(dataset, metric_key,
+                            background_metric_key, progress_callback=None,
+                            clip_data=True)
+
+                    elif set(["donor", "acceptor"]).issubset(channel_list):
+
+                        self.compute_fret_efficiency(dataset, metric_key,
+                            background_metric_key, progress_callback=None,
+                            clip_data=True)
+
                 for trace_index in range(n_traces):
                     for channel in channel_list:
 
@@ -453,6 +468,10 @@ class _export_traces_utils:
 
                             if channel.lower() in ["dd", "da", "ad", "aa"]:
                                 channel_name = channel.upper()
+                            elif channel.lower() == "alex_efficiency":
+                                channel_name = "ALEX Efficiency"
+                            elif channel.lower() == "fret_efficiency":
+                                channel_name = "FRET Efficiency"
                             else:
                                 channel_name = channel.capitalize()
 
