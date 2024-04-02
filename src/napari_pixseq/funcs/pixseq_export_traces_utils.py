@@ -28,7 +28,7 @@ class _export_traces_utils:
 
             if dataset_name == "All Datasets":
                 dataset_name = list(self.traces_dict.keys())[0]
-            if export_channel == "All Channels":
+            if export_channel in ["All Channels", "FRET Efficiency", "ALEX Efficiency"]:
                 export_channel = list(self.traces_dict[dataset_name].keys())[0]
 
             import_path = self.dataset_dict[dataset_name][export_channel.lower()]["path"]
@@ -45,6 +45,10 @@ class _export_traces_utils:
                 file_extension = ".txt"
             elif export_mode == "CSV (.csv)":
                 file_extension = ".csv"
+            elif export_mode == "Nero (.dat)":
+                file_extension = ".dat"
+            elif export_mode == "ebFRET SMD (.mat)":
+                file_extension = ".mat"
             elif export_mode == "Excel":
                 file_extension = ".xlsx"
             elif export_mode == "OriginLab":
@@ -192,8 +196,6 @@ class _export_traces_utils:
             print(traceback.format_exc())
 
 
-
-
     def json_dict_report(self, json_dataset):
 
         try:
@@ -276,9 +278,9 @@ class _export_traces_utils:
             if set(["donor", "acceptor"]).issubset(channel_list):
                 channel_list.append("fret_efficiency")
 
-        elif channel_name.lower() == "fret":
+        elif channel_name.lower() == "fret data":
             channel_list = ["donor", "acceptor"]
-        elif channel_name.lower() == "alex":
+        elif channel_name.lower() == "alex data":
             channel_list = ["dd", "da", "ad", "aa"]
         else:
             channel_list = [channel_name.lower()]
@@ -420,14 +422,16 @@ class _export_traces_utils:
 
             if channel_name == "All Channels":
                 channel_list = list(self.traces_dict[dataset_list[0]].keys())
-            elif channel_name.lower() == "fret":
+            elif channel_name.lower() == "fret data":
                 channel_list = ["donor", "acceptor"]
-            elif channel_name.lower() == "alex":
+            elif channel_name.lower() == "alex data":
                 channel_list = ["dd", "da", "ad", "aa"]
+            elif channel_name.lower() == "alex efficiency":
+                channel_list = ["alex_efficiency"]
+            elif channel_name.lower() == "fret efficiency":
+                channel_list = ["fret_efficiency"]
             else:
                 channel_list = [channel_name.lower()]
-
-            channel_list = [chan for chan in channel_list if "efficiency" not in chan.lower()]
 
             dataset_name_list = []
             channel_name_list = []
@@ -437,7 +441,6 @@ class _export_traces_utils:
             n_traces = 0
 
             n_traces = len(self.traces_dict[dataset_list[0]][channel_list[0]].keys())
-
 
             for dataset in dataset_list:
                 for trace_index in range(n_traces):
@@ -487,7 +490,6 @@ class _export_traces_utils:
     def export_traces_error(self, error_message):
 
         self.update_ui()
-
 
 
     def export_traces(self):
@@ -565,6 +567,26 @@ class _export_traces_utils:
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)
 
+                elif export_mode == "Nero (.dat)":
+
+                    self.worker = Worker(self.export_traces_nero, export_path=export_path)
+                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                        progress_bar=self.export_progressbar))
+                    self.worker.signals.finished.connect(partial(self.export_traces_finished,
+                        export_path=export_path))
+                    self.worker.signals.error.connect(self.update_ui)
+                    self.threadpool.start(self.worker)
+
+                elif export_mode == "ebFRET SMD (.mat)":
+
+                    self.worker = Worker(self.export_traces_ebfret_smd, export_path=export_path)
+                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                        progress_bar=self.export_progressbar))
+                    self.worker.signals.finished.connect(partial(self.export_traces_finished,
+                        export_path=export_path))
+                    self.worker.signals.error.connect(self.update_ui)
+                    self.threadpool.start(self.worker)
+
                 else:
                     self.update_ui()
 
@@ -575,12 +597,40 @@ class _export_traces_utils:
             print(traceback.format_exc())
             self.update_ui()
 
+    def export_traces_nero(self, export_path, progress_callback=None):
+
+        try:
+            export_dict = self.populate_export_dict()
+
+            export_data = np.stack(export_dict["data"], axis=0).T
+
+            export_indices = np.array(export_dict["index"]).astype(int)
+            export_indices += 1
+
+            export_data = pd.DataFrame(export_data)
+            export_data.columns = export_indices
+
+            export_data.to_csv(export_path, index=False, sep=" ")
+
+        except:
+            print(traceback.format_exc())
+
+    def export_traces_ebfret_smd(self, export_path, progress_callback=None):
+
+            try:
+
+                print("Exporting traces to ebFRET SMD...")
+
+            except:
+                print(traceback.format_exc())
+
 
     def populate_export_combos(self):
 
         try:
             export_channel_list = []
 
+            export_mode = self.traces_export_mode.currentText()
             export_dataset = self.traces_export_dataset.currentText()
 
             if export_dataset != "":
@@ -611,11 +661,17 @@ class _export_traces_utils:
                             export_channel_list.append(channel_name)
 
                 if set(["Donor", "Acceptor"]).issubset(set(export_channel_list)):
-                    export_channel_list.insert(0, "FRET")
+                    export_channel_list.insert(0, "FRET Data")
+                    export_channel_list.insert(0, "FRET Efficiency")
                 if set(["DD","DA","AA","AD"]).issubset(set(export_channel_list)):
-                    export_channel_list.insert(0, "ALEX")
+                    export_channel_list.insert(0, "ALEX Data")
+                    export_channel_list.insert(0, "ALEX Efficiency")
 
                 export_channel_list.insert(0, "All Channels")
+
+                if export_mode == "Nero (.dat)":
+                    multi_channel_list = ["All Channels", "FRET Data", "ALEX Data"]
+                    export_channel_list = [chan for chan in export_channel_list if chan not in multi_channel_list]
 
                 self.traces_export_channel.blockSignals(True)
                 self.traces_export_channel.clear()

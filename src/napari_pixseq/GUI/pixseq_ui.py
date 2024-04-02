@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Frame(object):
     def setupUi(self, Frame):
         Frame.setObjectName("Frame")
-        Frame.resize(763, 625)
+        Frame.resize(763, 626)
         self.verticalLayout = QtWidgets.QVBoxLayout(Frame)
         self.verticalLayout.setObjectName("verticalLayout")
         self.tabWidget = QtWidgets.QTabWidget(Frame)
@@ -789,6 +789,8 @@ class Ui_Frame(object):
         self.traces_export_mode.addItem("")
         self.traces_export_mode.addItem("")
         self.traces_export_mode.addItem("")
+        self.traces_export_mode.addItem("")
+        self.traces_export_mode.addItem("")
         self.formLayout_13.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.traces_export_mode)
         self.label_45 = QtWidgets.QLabel(self.tab_9)
         self.label_45.setObjectName("label_45")
@@ -1363,6 +1365,8 @@ class Ui_Frame(object):
         self.traces_export_mode.setItemText(3, _translate("Frame", "Dat (.dat)"))
         self.traces_export_mode.setItemText(4, _translate("Frame", "Text (.txt)"))
         self.traces_export_mode.setItemText(5, _translate("Frame", "CSV (.csv)"))
+        self.traces_export_mode.setItemText(6, _translate("Frame", "Nero (.dat)"))
+        self.traces_export_mode.setItemText(7, _translate("Frame", "ebFRET SMD (.mat)"))
         self.label_45.setText(_translate("Frame", "Data Selection"))
         self.traces_export_dataset.setItemText(0, _translate("Frame", "All Images"))
         self.label_63.setText(_translate("Frame", "Channel"))

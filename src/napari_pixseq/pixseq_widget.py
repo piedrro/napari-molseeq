@@ -294,6 +294,9 @@ class PixSeqWidget(QWidget,
         self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
         self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
 
+        self.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
+
+
         self.dataset_dict = {}
         self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
         self.traces_dict = {}
@@ -350,8 +353,7 @@ class PixSeqWidget(QWidget,
     def dev_function(self, event):
 
         print("Dev function called")
-        self.restore_shared_frames()
-        self.update_ui()
+        self.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
     def select_image_layer(self):
 
