@@ -7,6 +7,8 @@ import numpy as np
 import json
 import pandas as pd
 import originpro as op
+import random
+import string
 
 class npEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -615,15 +617,113 @@ class _export_traces_utils:
         except:
             print(traceback.format_exc())
 
+    def populate_smd_dict(self):
+
+        try:
+
+            dataset_name = self.traces_export_dataset.currentText()
+            channel_name = self.traces_export_channel.currentText()
+            metric_name = self.traces_export_metric.currentText()
+            background_mode = self.traces_export_background.currentText()
+
+            metric_key = self.get_dict_key(self.metric_dict, metric_name)
+
+            if background_mode not in ["None", None, ""] and type(metric_key) == str:
+                key_modifier = self.get_dict_key(self.background_dict, background_mode)
+                background_metric_key = metric_key + key_modifier
+            else:
+                background_metric_key = None
+
+            if dataset_name == "All Datasets":
+                dataset_list = list(self.traces_dict.keys())
+            else:
+                dataset_list = [dataset_name]
+
+            if channel_name == "All Channels":
+                channel_list = list(self.traces_dict[dataset_list[0]].keys())
+            elif channel_name.lower() == "fret data":
+                channel_list = ["donor", "acceptor"]
+            elif channel_name.lower() == "alex data":
+                channel_list = ["dd", "da", "ad", "aa"]
+            elif channel_name.lower() == "alex efficiency":
+                channel_list = ["alex_efficiency"]
+            elif channel_name.lower() == "fret efficiency":
+                channel_list = ["fret_efficiency"]
+            else:
+                channel_list = [channel_name.lower()]
+
+            smd_dict = {"attr": {"data_package": "TraceAnalyser"},
+                        "columns": channel_list,
+                        "data": {"attr": [], "id": [], "index": [], "values": []},
+                        "id": ''.join(random.choices(string.ascii_lowercase + string.digits, k=32)),
+                        "type": "TraceAnalyser",
+                        }
+
+            n_traces = len(self.traces_dict[dataset_list[0]][channel_list[0]].keys())
+
+
+
+            for dataset in dataset_list:
+
+                export_channel = list(self.traces_dict[dataset].keys())[0]
+                file_path = self.dataset_dict[dataset_name][export_channel.lower()]["path"]
+
+                for trace_index in range(n_traces):
+
+                    smd_values = []
+
+                    for channel in channel_list:
+
+                        if trace_index in self.traces_dict[dataset][channel].keys():
+                            trace_dict = self.traces_dict[dataset][channel][trace_index].copy()
+
+                            data = np.array(trace_dict[metric_key].copy())
+
+                            if "efficiency" not in channel and background_mode != "None":
+                                background = np.array(trace_dict[background_metric_key].copy())
+                                data = data - background
+
+                            smd_values.append(data)
+
+                    smd_index = np.expand_dims(np.arange(1, len(smd_values[0])+1), -1).astype(float).tolist()
+                    smd_values = np.stack(smd_values, axis=1).tolist()
+
+                    lowerbound = np.min(smd_values)
+
+                    smd_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
+                    smd_attr = {
+                        "file": os.path.basename(file_path),
+                        "layer": channel,
+                        "localisation_number": trace_index,
+                        "lowerbound": lowerbound,
+                        "group": "group 1",
+                        "restart":0,
+                        "crop_min": 0,
+                        "crop_max": len(data),
+                    }
+
+                    smd_dict["data"]["attr"].append(smd_attr)
+                    smd_dict["data"]["id"].append(smd_id)
+                    smd_dict["data"]["index"].append(smd_index)
+                    smd_dict["data"]["values"].append(smd_values)
+
+        except:
+            print(traceback.format_exc())
+            smd_dict = {}
+
+        return smd_dict
+
     def export_traces_ebfret_smd(self, export_path, progress_callback=None):
 
             try:
 
-                print("Exporting traces to ebFRET SMD...")
+                smd_dict = self.populate_smd_dict()
+
+                import mat4py
+                mat4py.savemat(export_path, smd_dict)
 
             except:
                 print(traceback.format_exc())
-
 
     def populate_export_combos(self):
 
