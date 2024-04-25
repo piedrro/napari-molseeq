@@ -8,6 +8,7 @@ import numpy as np
 import traceback
 from multiprocessing import Manager
 from functools import partial
+import matplotlib.colors as mcolors
 
 from napari_pixseq.funcs.pixseq_utils_compute import _utils_compute
 from napari_pixseq.funcs.pixseq_undrift_utils import _undrift_utils
@@ -24,6 +25,7 @@ from napari_pixseq.funcs.pixseq_export_traces_utils import _export_traces_utils
 from napari_pixseq.funcs.pixseq_colocalize_utils import _utils_colocalize
 from napari_pixseq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
 from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
+from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
 
 import napari
 
@@ -35,7 +37,7 @@ class PixSeqWidget(QWidget,
     _tranform_utils, _trace_compute_utils, _plot_utils,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
-    _cluster_utils):
+    _cluster_utils, _simple_analysis_utils):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -348,9 +350,23 @@ class PixSeqWidget(QWidget,
 
         self.viewer.bind_key('Q', self.stop_worker, overwrite=True)
 
-        # todo dataset selection for multiple datasets?
-        # todo picasso export localisations
-        # todo delete dataset e.g. localisation dataset
+        self.viewer.layers.events.inserted.connect(self.on_add_layer)
+
+        self.simple_plot_mode.currentIndexChanged.connect(self.draw_line_plot)
+        self.simple_plot_dataset.currentIndexChanged.connect(self.draw_line_plot)
+        self.simple_plot_channel.currentIndexChanged.connect(self.draw_line_plot)
+
+    def on_add_layer(self, event):
+        if event.value.name == "Shapes":
+            layer_list = [layer.name for layer in self.viewer.layers if layer.name != "Shapes"]
+
+            self.shapes_layer = self.viewer.layers["Shapes"]
+
+            self.shapes_layer.events.data.connect(self.shapes_layer_updated)
+
+            self.shapes_layer.current_edge_color = list(mcolors.to_rgb("green"))
+            self.shapes_layer.current_face_color = [0, 0, 0, 0]
+            self.shapes_layer.current_edge_width = 1
 
 
     def toggle_verbose(self):

@@ -416,7 +416,7 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel1")
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel2")
 
-            self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel")
+            self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
 
         except:
             print(traceback.format_exc())

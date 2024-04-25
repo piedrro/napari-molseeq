@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>763</width>
+    <width>661</width>
     <height>626</height>
    </rect>
   </property>
@@ -898,12 +898,12 @@
           <widget class="QComboBox" name="simple_plot_mode">
            <item>
             <property name="text">
-             <string>Line Profiles</string>
+             <string>Line Profiles (Shapes:Lines)</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Single Molecule Time Series</string>
+             <string>Single Molecule Time Series (Shapes:Rectangles)</string>
             </property>
            </item>
           </widget>
@@ -946,6 +946,16 @@
          </property>
          <property name="toolTipDuration">
           <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_80">
+         <property name="text">
+          <string>Add a Shapes layer and draw rectangles [R] or lines [L] to generate simple analysis plot data</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
