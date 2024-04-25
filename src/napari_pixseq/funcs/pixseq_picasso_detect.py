@@ -79,8 +79,7 @@ def picasso_detect(dat):
             shared_mem = shared_memory.SharedMemory(name=dat["shared_memory_name"])
             np_array = np.ndarray(dat["shape"], dtype=dat["dtype"], buffer=shared_mem.buf)
 
-            # Perform preprocessing steps and overwrite original image
-            frame = np_array[frame_index].copy()
+            frame = np_array.copy()
 
             if detect:
                 locs = identify_frame(frame, min_net_gradient, box_size, 0, roi=roi)
@@ -277,7 +276,7 @@ class _picasso_detect_utils:
 
             channel_list = [image_channel.lower()]
 
-            self.shared_images = self.create_shared_images(dataset_list=dataset_list, channel_list=channel_list)
+            self.shared_frames = self.create_shared_frames(dataset_list=dataset_list, channel_list=channel_list)
 
             compute_jobs = []
 
@@ -285,56 +284,41 @@ class _picasso_detect_utils:
                 print("Creating Picasso compute jobs...")
 
             if self.verbose:
-                print("Creating compute jobs for {} datasets...".format(len(self.shared_images)))
+                print(f"Creating compute jobs for {len(self.shared_images)} datasets...")
 
-            for image_dict in self.shared_images:
-
+            for image_dict in self.shared_frames:
                 image_dict = image_dict.copy()
 
                 if frame_mode.lower() == "active":
                     frame_list = [self.viewer.dims.current_step[0]]
                 else:
-                    n_frames = image_dict['shape'][0]
+                    n_frames = image_dict["shape"][0]
                     frame_list = list(range(n_frames))
 
                 for frame_index in frame_list:
+                    frame_dict = image_dict["frame_dict"][frame_index]
 
                     time_start = time.time()
 
                     if self.verbose:
-                        print("Creating compute job for frame {}".format(frame_index))
+                        print(f"Creating compute job for frame {frame_index}")
 
-                    frame_locs = self.get_frame_locs(image_dict["dataset"],
-                        image_channel, frame_index)
+                    frame_locs = self.get_frame_locs(image_dict["dataset"], image_channel, frame_index)
 
                     if detect == False and frame_locs is None:
                         continue
                     else:
-                        compute_job = {"dataset": image_dict["dataset"],
-                                       "channel": image_dict["channel"],
-                                       "frame_index": frame_index,
-                                       "shared_memory_name": image_dict['shared_memory_name'],
-                                       "shape": image_dict['shape'],
-                                       "dtype": image_dict['dtype'],
-                                       "detect": detect,
-                                       "fit": fit,
-                                       "min_net_gradient": int(min_net_gradient),
-                                       "box_size": int(box_size),
-                                       "roi": roi,
-                                       "frame_locs": frame_locs,
-                                       "remove_overlapping": remove_overlapping,
-                                       "stop_event": self.stop_event,
-                                       }
+                        compute_job = {"dataset": frame_dict["dataset"], "channel": frame_dict["channel"], "frame_index": frame_index, "shared_memory_name": frame_dict["shared_memory_name"], "shape": frame_dict["shape"], "dtype": frame_dict[
+                            "dtype"], "detect": detect, "fit": fit, "min_net_gradient": int(min_net_gradient), "box_size": int(box_size), "roi": roi, "frame_locs": frame_locs, "remove_overlapping": remove_overlapping, "stop_event": self.stop_event, }
 
                     compute_jobs.append(compute_job)
 
                     if self.verbose:
                         time_end = time.time()
                         time_duration = time_end - time_start
-                        print("Compute job created in {} seconds".format(time_duration))
+                        print(f"Compute job created in {time_duration} seconds")
 
             if len(compute_jobs) > 0:
-
                 if self.verbose:
                     print(f"Starting Picasso {len(compute_jobs)} compute jobs...")
 
@@ -373,7 +357,7 @@ class _picasso_detect_utils:
                                 render_locs = result["render_locs"]
 
                                 loc_dict[dataset_name].extend(locs)
-                                render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs}
+                                render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs, }
 
                             iter += 1
                             progress = int((iter / len(compute_jobs)) * 100)
@@ -384,7 +368,6 @@ class _picasso_detect_utils:
                             pass
                         except Exception as e:
                             print(f"Error occurred in task {job}: {e}")  # Handle other exceptions
-                            pass
 
                 if self.verbose:
                     print("Finished Picasso compute jobs...")
@@ -398,12 +381,12 @@ class _picasso_detect_utils:
                     loc_dict[dataset] = locs
                     total_locs += len(locs)
 
-            self.restore_shared_images()
+            self.restore_shared_frames()
             self.update_ui()
 
         except:
             print(traceback.format_exc())
-            self.restore_shared_images()
+            self.restore_shared_frames()
 
             self.update_ui()
 

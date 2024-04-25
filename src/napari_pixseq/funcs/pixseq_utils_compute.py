@@ -77,44 +77,61 @@ class _utils_compute:
                     print(traceback.format_exc())
                     pass
 
-    def create_shared_frames(self):
+    def create_shared_frames(self, dataset_list = None, channel_list = None):
 
         if self.verbose:
             print("Creating shared frames")
 
+        if dataset_list is None:
+            dataset_list = list(self.dataset_dict.keys())
+        else:
+            dataset_list = [dataset for dataset in dataset_list if dataset in self.dataset_dict.keys()]
+
         self.shared_frames = []
 
-        for dataset_name, dataset_dict in self.dataset_dict.items():
-            for channel_name, channel_dict in dataset_dict.items():
+        for dataset_name in dataset_list:
 
-                image = channel_dict.pop("data")
+            if channel_list is None:
+                channel_names = list(self.dataset_dict[dataset_name].keys())
+            else:
+                channel_names = [channel for channel in channel_list if channel in self.dataset_dict[dataset_name].keys()]
 
-                image_dict = {"dataset": dataset_name,
-                              "channel": channel_name,
-                              "gap_label": channel_dict["gap_label"],
-                              "sequence_label": channel_dict["sequence_label"],
-                              "n_frames": image.shape[0],
-                              "shape": image.shape,
-                              "dtype": image.dtype,
-                              "frame_dict":{},
-                              }
+            for channel_name in channel_names:
 
-                for frame_index, frame in enumerate(image):
+                if channel_name in self.dataset_dict[dataset_name].keys():
 
-                    if frame_index not in image_dict["frame_dict"]:
-                        image_dict["frame_dict"][frame_index] = {}
+                    channel_dict = self.dataset_dict[dataset_name][channel_name]
 
-                    shared_mem = shared_memory.SharedMemory(create=True, size=frame.nbytes)
-                    shared_frame = np.ndarray(frame.shape, dtype=frame.dtype, buffer=shared_mem.buf)
-                    shared_frame[:] = frame[:]
+                    image = channel_dict.pop("data")
 
-                    image_dict["frame_dict"][frame_index] = {"frame_index": frame_index,
-                                                             "dataset": dataset_name,
-                                                                "channel": channel_name,
-                                                                "shared_mem": shared_mem,
-                                                                "shape": frame.shape,
-                                                                "dtype": frame.dtype,
-                                                                }
+                    image_dict = {"dataset": dataset_name,
+                                  "channel": channel_name,
+                                  "gap_label": channel_dict["gap_label"],
+                                  "sequence_label": channel_dict["sequence_label"],
+                                  "n_frames": image.shape[0],
+                                  "shape": image.shape,
+                                  "dtype": image.dtype,
+                                  "frame_dict":{},
+                                  }
+
+                    for frame_index, frame in enumerate(image):
+
+                        if frame_index not in image_dict["frame_dict"]:
+                            image_dict["frame_dict"][frame_index] = {}
+
+                        shared_mem = shared_memory.SharedMemory(create=True, size=frame.nbytes)
+                        shared_memory_name = shared_mem.name
+                        shared_frame = np.ndarray(frame.shape, dtype=frame.dtype, buffer=shared_mem.buf)
+                        shared_frame[:] = frame[:]
+
+                        image_dict["frame_dict"][frame_index] = {"frame_index": frame_index,
+                                                                 "dataset": dataset_name,
+                                                                 "channel": channel_name,
+                                                                 "shared_mem": shared_mem,
+                                                                 "shared_memory_name": shared_memory_name,
+                                                                 "shape": frame.shape,
+                                                                 "dtype": frame.dtype,
+                                                                 }
 
                 self.shared_frames.append(image_dict)
 
@@ -156,6 +173,28 @@ class _utils_compute:
                 except:
                     print(traceback.format_exc())
                     pass
+
+    def clear_live_images(self):
+
+        try:
+
+            if self.verbose:
+                print("Clearing live images")
+
+            image_layers = [layer for layer in self.viewer.layers if isinstance(layer, napari.layers.Image)]
+
+            for layer in image_layers:
+
+                # self.viewer.layers.remove(layer)
+
+                frame_shape = layer.data.shape[1:]
+                empty_frame = np.zeros(frame_shape, dtype=layer.data.dtype)
+                layer.data = empty_frame
+
+        except:
+            print(traceback.format_exc())
+            pass
+
 
 
 class WorkerSignals(QObject):
