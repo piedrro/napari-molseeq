@@ -880,6 +880,77 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_19">
+      <attribute name="title">
+       <string>Simple Analysis</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_22">
+       <item>
+        <layout class="QFormLayout" name="formLayout_17">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_77">
+           <property name="text">
+            <string>Plot Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="simple_plot_mode">
+           <item>
+            <property name="text">
+             <string>Line Profiles</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Single Molecule Time Series</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_78">
+           <property name="text">
+            <string>Plot Dataset</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="simple_plot_dataset"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_79">
+           <property name="text">
+            <string>Plot Channel</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="simple_plot_channel"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QWidget" name="simple_graph_container" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTipDuration">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
        <string>Detect</string>

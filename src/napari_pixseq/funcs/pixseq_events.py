@@ -319,7 +319,8 @@ class _events_utils:
             print(traceback.format_exc())
             pass
 
-    def update_channel_selector(self, dataset_selector, channel_selector, event=None, channel_type = "all", efficiency=False, block_signals=False):
+    def update_channel_selector(self, dataset_selector,
+            channel_selector, event=None, channel_type = "all", efficiency=False, block_signals=False):
 
         try:
 
@@ -414,6 +415,8 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor")
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel1")
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel2")
+
+            self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel")
 
         except:
             print(traceback.format_exc())

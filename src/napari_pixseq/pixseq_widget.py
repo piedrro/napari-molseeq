@@ -63,6 +63,13 @@ class PixSeqWidget(QWidget,
         self.graph_canvas = CustomPyQTGraphWidget(self)
         self.graph_container.layout().addWidget(self.graph_canvas)
 
+        self.simple_graph_container = self.findChild(QWidget, "simple_graph_container")
+        self.simple_graph_container.setLayout(QVBoxLayout())
+
+        self.simple_graph_canvas = CustomPyQTGraphWidget(self)
+        self.simple_graph_container.layout().addWidget(self.simple_graph_canvas)
+
+
         # register controls
         self.pixseq_import_mode = self.findChild(QComboBox, 'pixseq_import_mode')
         self.pixseq_import_limt = self.findChild(QComboBox, 'pixseq_import_limt')
@@ -215,6 +222,10 @@ class PixSeqWidget(QWidget,
         self.colo_fiducials = self.findChild(QCheckBox, 'colo_fiducials')
         self.pixseq_colocalize = self.findChild(QPushButton, 'pixseq_colocalize')
 
+        self.simple_plot_mode = self.findChild(QComboBox, 'simple_plot_mode')
+        self.simple_plot_channel = self.findChild(QComboBox, 'simple_plot_channel')
+        self.simple_plot_dataset = self.findChild(QComboBox, 'simple_plot_dataset')
+
         self.dev_verbose = self.findChild(QCheckBox, 'dev_verbose')
         self.dev_verbose.stateChanged.connect(self.toggle_verbose)
         self.verbose = False
@@ -232,7 +243,6 @@ class PixSeqWidget(QWidget,
         self.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
         self.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
         self.dbscan_remove_overlapping = self.findChild(QCheckBox, "dbscan_remove_overlapping")
-
 
         self.pixseq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
         self.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,

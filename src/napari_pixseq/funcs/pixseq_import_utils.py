@@ -574,6 +574,11 @@ class _import_utils:
             self.locs_export_dataset.addItems(dataset_names)
             self.locs_export_dataset.blockSignals(False)
 
+            self.simple_plot_dataset.blockSignals(True)
+            self.simple_plot_dataset.clear()
+            self.simple_plot_dataset.addItems(dataset_names)
+            self.simple_plot_dataset.blockSignals(False)
+
         except:
             print(traceback.format_exc())
 
