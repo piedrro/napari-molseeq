@@ -10,7 +10,8 @@ import json
 from datetime import datetime
 
 
-def transform_image(img, transform_matrix, progress_callback=None):
+def transform_image(img, transform_matrix,
+        transform_mode = "homography", progress_callback=None):
 
     w, h = img.shape[-2:]
 
@@ -23,9 +24,15 @@ def transform_image(img, transform_matrix, progress_callback=None):
     iter = 0
 
     for index, image in enumerate(image_splits):
+
         image = np.moveaxis(image, 0, -1)
-        image = cv2.warpPerspective(image, transform_matrix, (h, w), borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
-        # image = np.moveaxis(image, -1, 0)
+
+        if transform_mode == "homography":
+            image = cv2.warpPerspective(image, transform_matrix, (h, w),
+                borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+        elif transform_mode == "affine":
+            image = cv2.warpAffine(image, transform_matrix, (h, w),
+                borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
 
         transformed_image.append(image)
         iter += 250

@@ -122,25 +122,49 @@ class _align_utils:
                 dst_pts = np.float32([dst_pts[m.queryIdx] for m in matches]).reshape(-1, 2)
                 src_pts = np.float32([src_pts[m.trainIdx] for m in matches]).reshape(-1, 2)
 
-                transform_matrix, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+                if len(dst_pts) > 0:
 
-                if transform_matrix.shape == (3,3):
+                    if len(dst_pts) == 1 or len(dst_pts) == 2:
 
-                    for channel_name, channel_dict in self.dataset_dict[dataset].items():
+                        dst_point = dst_pts[0]
+                        src_point = src_pts[0]
 
-                        self.pixseq_notification(f"Aligning {dataset} {channel_name}...")
+                        # Calculate translation vector
+                        tx = dst_point[0] - src_point[0]
+                        ty = dst_point[1] - src_point[1]
 
-                        img = channel_dict["data"].copy()
+                        # Translation matrix
+                        transform_matrix = np.float32([[1, 0, tx], [0, 1, ty]])
+                        transform_mode = "affine"
 
-                        def transform_progress(progress):
-                            nonlocal iter
-                            iter += progress
-                            progress = int((iter / total_frames) * 100)
-                            progress_callback.emit(progress)
+                    elif len(dst_pts) == 3:
 
-                        img = transform_image(img, transform_matrix, progress_callback=transform_progress)
+                        transform_matrix = cv2.getAffineTransform(src_pts, dst_pts)
+                        transform_mode = "affine"
 
-                        self.dataset_dict[dataset][channel_name.lower()]["data"] = img.copy()
+                    elif len(dst_pts) > 3:
+                        transform_matrix, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+                        transform_mode = "homography"
+
+                    if transform_matrix.shape in [(2, 3), (3, 3)]:
+
+                        for channel_name, channel_dict in self.dataset_dict[dataset].items():
+
+                            self.pixseq_notification(f"Aligning {dataset} {channel_name}...")
+
+                            img = channel_dict["data"].copy()
+
+                            def transform_progress(progress):
+                                nonlocal iter
+                                iter += progress
+                                progress = int((iter / total_frames) * 100)
+                                progress_callback.emit(progress)
+
+                            img = transform_image(img, transform_matrix,
+                                transform_mode = transform_mode,
+                                progress_callback=transform_progress)
+
+                            self.dataset_dict[dataset][channel_name.lower()]["data"] = img.copy()
 
         except:
             print(traceback.format_exc())
