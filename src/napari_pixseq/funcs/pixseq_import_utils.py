@@ -77,16 +77,17 @@ class _import_utils:
 
     def get_image_info(self, path):
 
-        with Image.open(path) as img:
-            n_frames = img.n_frames
-            page_shape = img.size
+        if self.verbose:
+            print(f"Getting image info for {path}")
 
-            img.seek(0)
-            np_img = np.array(img)
-            dtype = np_img.dtype
+        image_size = os.path.getsize(path)  # Get file size directly
 
-        image_shape = (n_frames, page_shape[1], page_shape[0])
-        image_size = os.path.getsize(path)
+        with tifffile.TiffFile(path) as tif:
+            n_frames = len(tif.pages)  # Number of pages (frames)
+            page_shape = tif.pages[0].shape  # Dimensions of the first page
+            dtype = tif.pages[0].dtype  # Data type of the first page
+
+        image_shape = (n_frames, page_shape[0], page_shape[1])
 
         return n_frames, image_shape, dtype, image_size
 
