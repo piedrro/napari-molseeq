@@ -579,6 +579,11 @@ class _import_utils:
             self.simple_plot_dataset.addItems(dataset_names)
             self.simple_plot_dataset.blockSignals(False)
 
+            self.picasso_render_dataset.blockSignals(True)
+            self.picasso_render_dataset.clear()
+            self.picasso_render_dataset.addItems(dataset_names)
+            self.picasso_render_dataset.blockSignals(False)
+
         except:
             print(traceback.format_exc())
 

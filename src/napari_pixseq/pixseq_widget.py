@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QPushButton
 from qtpy.QtCore import QThreadPool
-from qtpy.QtWidgets import (QWidget,QVBoxLayout, QFrame, QSizePolicy, QSlider, QComboBox,QLineEdit, QProgressBar, QLabel, QCheckBox, QGridLayout)
+from qtpy.QtWidgets import (QWidget,QVBoxLayout, QFrame, QSizePolicy, QSlider, QComboBox,
+    QLineEdit, QProgressBar, QLabel, QCheckBox, QGridLayout, QDoubleSpinBox)
+
 import numpy as np
 import traceback
 from multiprocessing import Manager
@@ -130,6 +132,12 @@ class PixSeqWidget(QWidget,
         self.picasso_vis_opacity = self.findChild(QComboBox, 'picasso_vis_opacity')
         self.picasso_vis_edge_width = self.findChild(QComboBox, 'picasso_vis_edge_width')
 
+        self.picasso_render_dataset = self.findChild(QComboBox, 'picasso_render_dataset')
+        self.picasso_render_channel = self.findChild(QComboBox, 'picasso_render_channel')
+        self.picasso_render_blur_method = self.findChild(QComboBox, 'picasso_render_blur_method')
+        self.picasso_render_min_blur = self.findChild(QDoubleSpinBox, 'picasso_render_min_blur')
+        self.picasso_render = self.findChild(QPushButton, 'picasso_render')
+
         self.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
         self.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
         self.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
@@ -245,6 +253,8 @@ class PixSeqWidget(QWidget,
         self.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
         self.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
         self.dbscan_remove_overlapping = self.findChild(QCheckBox, "dbscan_remove_overlapping")
+
+        self.picasso_render.clicked.connect(self.initialise_picasso_render)
 
         self.pixseq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
         self.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,

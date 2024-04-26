@@ -417,6 +417,7 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel2")
 
             self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
+            self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
 
         except:
             print(traceback.format_exc())
