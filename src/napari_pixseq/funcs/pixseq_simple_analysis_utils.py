@@ -27,16 +27,12 @@ class _simple_analysis_utils:
                         shapes_layer.add(shapes, shape_type=shape_type)
 
                     if shape_type == "line":
-                        shape = shapes_layer.data[-1].copy()
-                        shape = shape[:, 1:]
-                        self.viewer.layers["Shapes"].data[-1] = shape
-
                         self.simple_plot_mode.setCurrentIndex(0)
 
                     if shape_type == "rectangle":
                         self.simple_plot_mode.setCurrentIndex(1)
 
-                    self.draw_line_plot()
+                self.draw_line_plot()
 
         except:
             print(traceback.format_exc())
