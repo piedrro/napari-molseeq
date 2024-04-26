@@ -8,20 +8,35 @@ class _simple_analysis_utils:
     def shapes_layer_updated(self, event):
         try:
             if event.action in ["added", "changed", "removed"]:
+
                 shapes_layer = self.viewer.layers["Shapes"]
-                shape_type = shapes_layer.shape_type[-1]
+                shapes = shapes_layer.data
 
-                if shape_type == "line":
-                    shape = shapes_layer.data[-1].copy()
-                    shape = shape[:, 1:]
-                    self.viewer.layers["Shapes"].data[-1] = shape
+                if len(shapes) > 0:
 
-                    self.simple_plot_mode.setCurrentIndex(0)
+                    shape_type = shapes_layer.shape_type[-1]
 
-                if shape_type == "rectangle":
-                    self.simple_plot_mode.setCurrentIndex(1)
+                    if shapes_layer.ndim == 3:
 
-                self.draw_line_plot()
+                        if self.verbose:
+                            print("reformatting shapes to ndim=2")
+
+                        shapes = shapes_layer.data.copy()
+                        shapes = [shape[:,-2:] for shape in shapes]
+                        shapes_layer.data = []
+                        shapes_layer.add(shapes, shape_type=shape_type)
+
+                    if shape_type == "line":
+                        shape = shapes_layer.data[-1].copy()
+                        shape = shape[:, 1:]
+                        self.viewer.layers["Shapes"].data[-1] = shape
+
+                        self.simple_plot_mode.setCurrentIndex(0)
+
+                    if shape_type == "rectangle":
+                        self.simple_plot_mode.setCurrentIndex(1)
+
+                    self.draw_line_plot()
 
         except:
             print(traceback.format_exc())
