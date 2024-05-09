@@ -28,6 +28,7 @@ from napari_pixseq.funcs.pixseq_colocalize_utils import _utils_colocalize
 from napari_pixseq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
 from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
 from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
+from napari_pixseq.funcs.pixseq_filter_utils import _filter_utils
 
 import napari
 
@@ -39,7 +40,7 @@ class PixSeqWidget(QWidget,
     _tranform_utils, _trace_compute_utils, _plot_utils,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
-    _cluster_utils, _simple_analysis_utils):
+    _cluster_utils, _simple_analysis_utils, _filter_utils):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -60,7 +61,7 @@ class PixSeqWidget(QWidget,
         self.form.setupUi(self.pixseq_ui)
         self.layout().addWidget(self.pixseq_ui)
 
-        #create pyqt graph container
+        #create pyqt graph container(s)
         self.graph_container = self.findChild(QWidget, "graph_container")
         self.graph_container.setLayout(QVBoxLayout())
 
@@ -72,6 +73,12 @@ class PixSeqWidget(QWidget,
 
         self.simple_graph_canvas = CustomPyQTGraphWidget(self)
         self.simple_graph_container.layout().addWidget(self.simple_graph_canvas)
+
+        self.filter_graph_container = self.findChild(QWidget, "filter_graph_container")
+        self.filter_graph_container.setLayout(QVBoxLayout())
+
+        self.filter_graph_canvas = CustomPyQTGraphWidget(self)
+        self.filter_graph_container.layout().addWidget(self.filter_graph_canvas)
 
 
         # register controls
@@ -236,6 +243,15 @@ class PixSeqWidget(QWidget,
         self.simple_plot_channel = self.findChild(QComboBox, 'simple_plot_channel')
         self.simple_plot_dataset = self.findChild(QComboBox, 'simple_plot_dataset')
 
+        self.picasso_filter_type = self.findChild(QComboBox, 'picasso_filter_type')
+        self.picasso_filter_dataset = self.findChild(QComboBox, 'picasso_filter_dataset')
+        self.picasso_filter_dataset_label = self.findChild(QLabel, 'picasso_filter_dataset_label')
+        self.picasso_filter_channel = self.findChild(QComboBox, 'picasso_filter_channel')
+        self.filter_criterion = self.findChild(QComboBox, 'filter_criterion')
+        self.filter_min = self.findChild(QDoubleSpinBox, 'filter_min')
+        self.filter_max = self.findChild(QDoubleSpinBox, 'filter_max')
+        self.filter_localisations = self.findChild(QPushButton, 'filter_localisations')
+
         self.dev_verbose = self.findChild(QCheckBox, 'dev_verbose')
         self.dev_verbose.stateChanged.connect(self.toggle_verbose)
         self.verbose = False
@@ -315,9 +331,17 @@ class PixSeqWidget(QWidget,
         self.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor"))
         self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
         self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
+        self.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
+
 
         self.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
+
+        self.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
+        self.picasso_filter_channel.currentIndexChanged.connect(self.update_filter_criterion)
+        self.filter_criterion.currentIndexChanged.connect(self.update_criterion_ranges)
+        self.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
+        self.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
 
         self.dataset_dict = {}
         self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}

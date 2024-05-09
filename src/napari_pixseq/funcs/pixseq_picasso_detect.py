@@ -232,6 +232,9 @@ class _picasso_detect_utils:
 
             self.draw_bounding_boxes()
 
+            self.update_filter_criterion()
+            self.update_criterion_ranges()
+
             self.update_ui()
 
         except:
@@ -550,7 +553,11 @@ class _picasso_detect_utils:
 
     def picasso_render_finished(self):
 
+        self.update_filter_criterion()
+        self.update_criterion_ranges()
+
         self.update_ui(init=False)
+
 
 
     def draw_picasso_render(self, data):

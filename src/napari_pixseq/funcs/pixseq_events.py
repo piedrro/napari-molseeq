@@ -28,6 +28,7 @@ class _events_utils:
                         "pixseq_update_dataset_name",
                         "pixseq_colocalize",
                         "cluster_localisations",
+                        "filter_localisations",
                         ]
 
             progressbars = ["pixseq_import_progressbar",
@@ -418,6 +419,7 @@ class _events_utils:
 
             self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
+            self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
 
         except:
             print(traceback.format_exc())

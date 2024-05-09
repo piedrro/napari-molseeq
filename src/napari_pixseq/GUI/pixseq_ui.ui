@@ -1190,6 +1190,157 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="tab_23">
+          <attribute name="title">
+           <string>Filter</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_26">
+           <item>
+            <widget class="QLabel" name="label_92">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Filter Localisations (Picasso)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QFormLayout" name="formLayout_24">
+             <item row="1" column="0">
+              <widget class="QLabel" name="picasso_filter_dataset_label">
+               <property name="text">
+                <string>Dataset</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="picasso_filter_dataset"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_89">
+               <property name="text">
+                <string>Channel</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="picasso_filter_channel"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_90">
+               <property name="text">
+                <string>Filter By</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QComboBox" name="filter_criterion"/>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_93">
+               <property name="text">
+                <string>Type</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="picasso_filter_type">
+               <item>
+                <property name="text">
+                 <string>Fiducials</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Bounding Boxes</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QWidget" name="filter_graph_container" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_91">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Filter Ranges</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QGridLayout" name="gridLayout_7">
+             <item row="0" column="0">
+              <layout class="QFormLayout" name="formLayout_22">
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_86">
+                 <property name="text">
+                  <string>Min</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="filter_min">
+                 <property name="minimum">
+                  <double>-999999999.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>9999999999.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item row="0" column="1">
+              <layout class="QFormLayout" name="formLayout_23">
+               <item row="0" column="0">
+                <widget class="QLabel" name="label_87">
+                 <property name="text">
+                  <string>Max</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="filter_max">
+                 <property name="minimum">
+                  <double>-99999999999.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>9999999999.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="filter_localisations">
+             <property name="text">
+              <string>Filter Localisations</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QWidget" name="tab_20">
           <attribute name="title">
            <string>Render</string>

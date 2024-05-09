@@ -541,6 +541,11 @@ class _import_utils:
             self.import_picasso_dataset.addItems(dataset_names)
             self.import_picasso_dataset.blockSignals(False)
 
+            self.picasso_filter_dataset.blockSignals(True)
+            self.picasso_filter_dataset.clear()
+            self.picasso_filter_dataset.addItems(dataset_names)
+            self.picasso_filter_dataset.blockSignals(False)
+
             if len(dataset_names) > 1:
                 dataset_names.insert(0, "All Datasets")
 
