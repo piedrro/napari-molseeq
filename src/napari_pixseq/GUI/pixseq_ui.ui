@@ -886,26 +886,79 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_22">
        <item>
+        <widget class="QLabel" name="label_94">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Add Shapes</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="add_line">
+           <property name="text">
+            <string>Add Line Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="add_box">
+           <property name="text">
+            <string>Add Box Profile</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="add_background">
+           <property name="text">
+            <string>Add Background Box</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_21">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Minimum</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_88">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Plot Settings</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QFormLayout" name="formLayout_17">
          <item row="0" column="0">
           <widget class="QLabel" name="label_77">
            <property name="text">
             <string>Plot Mode</string>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="simple_plot_mode">
-           <item>
-            <property name="text">
-             <string>Line Profiles (Shapes:Lines)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Single Molecule Time Series (Shapes:Rectangles)</string>
-            </property>
-           </item>
           </widget>
          </item>
          <item row="1" column="0">
@@ -928,7 +981,33 @@
          <item row="2" column="1">
           <widget class="QComboBox" name="simple_plot_channel"/>
          </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="simple_plot_mode">
+           <item>
+            <property name="text">
+             <string>Line Profiles</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Line Profiles With Gaussian Fit</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Single Molecule Time Series</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="simple_subtract_background">
+         <property name="text">
+          <string>Subtract Background (Single Molecule Time Series)</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QWidget" name="simple_graph_container" native="true">
@@ -946,16 +1025,6 @@
          </property>
          <property name="toolTipDuration">
           <number>0</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_80">
-         <property name="text">
-          <string>Add a Shapes layer and draw rectangles [R] or lines [L] to generate simple analysis plot data</string>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
          </property>
         </widget>
        </item>

@@ -239,9 +239,14 @@ class PixSeqWidget(QWidget,
         self.colo_fiducials = self.findChild(QCheckBox, 'colo_fiducials')
         self.pixseq_colocalize = self.findChild(QPushButton, 'pixseq_colocalize')
 
+
+        self.add_line = self.findChild(QPushButton, 'add_line')
+        self.add_box = self.findChild(QPushButton, 'add_box')
+        self.add_background = self.findChild(QPushButton, 'add_background')
         self.simple_plot_mode = self.findChild(QComboBox, 'simple_plot_mode')
         self.simple_plot_channel = self.findChild(QComboBox, 'simple_plot_channel')
         self.simple_plot_dataset = self.findChild(QComboBox, 'simple_plot_dataset')
+        self.simple_subtract_background = self.findChild(QCheckBox, 'simple_subtract_background')
 
         self.picasso_filter_type = self.findChild(QComboBox, 'picasso_filter_type')
         self.picasso_filter_dataset = self.findChild(QComboBox, 'picasso_filter_dataset')
@@ -386,9 +391,14 @@ class PixSeqWidget(QWidget,
 
         self.viewer.layers.events.inserted.connect(self.on_add_layer)
 
-        self.simple_plot_mode.currentIndexChanged.connect(self.draw_line_plot)
+        self.simple_plot_mode.currentIndexChanged.connect(self.update_plot_channel)
         self.simple_plot_dataset.currentIndexChanged.connect(self.draw_line_plot)
         self.simple_plot_channel.currentIndexChanged.connect(self.draw_line_plot)
+        self.simple_subtract_background.clicked.connect(self.draw_line_plot)
+
+        self.add_line.clicked.connect(lambda: self.draw_shapes(mode="line"))
+        self.add_box.clicked.connect(lambda: self.draw_shapes(mode="box"))
+        self.add_background.clicked.connect(lambda: self.draw_shapes(mode="background"))
 
     def on_add_layer(self, event):
         if event.value.name == "Shapes":
