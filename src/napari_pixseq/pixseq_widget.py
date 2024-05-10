@@ -7,7 +7,7 @@ from multiprocessing import Manager
 from functools import partial
 import matplotlib.colors as mcolors
 
-from napari_pixseq.GUI import Ui_Frame as gui
+from napari_pixseq.GUI.pixseq_ui import Ui_Frame as gui
 from napari_pixseq.funcs.pixseq_utils_compute import _utils_compute
 from napari_pixseq.funcs.pixseq_undrift_utils import _undrift_utils
 from napari_pixseq.funcs.pixseq_picasso_detect import _picasso_detect_utils
@@ -76,84 +76,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
 
-
-        self.undrift_dataset_selector = self.gui.undrift_dataset_selector
-        self.undrift_channel_selector = self.gui.undrift_channel_selector
-        self.picasso_undrift = self.gui.picasso_undrift
-        self.undrift_progressbar = self.gui.undrift_progressbar
-
-        self.align_reference_dataset = self.gui.align_reference_dataset
-        self.align_reference_channel = self.gui.align_reference_channel
-        self.pixseq_align_datasets = self.gui.pixseq_align_datasets
-        self.align_progressbar = self.gui.align_progressbar
-
-        self.tform_compute_dataset = self.gui.tform_compute_dataset
-        self.tform_compute_ref_channel = self.gui.tform_compute_ref_channel
-        self.tform_compute_target_channel = self.gui.tform_compute_target_channel
-        self.pixseq_compute_tform = self.gui.pixseq_compute_tform
-        self.tform_apply_target = self.gui.tform_apply_target
-        self.pixseq_apply_tform = self.gui.pixseq_apply_tform
-        self.tform_apply_progressbar = self.gui.tform_apply_progressbar
-        self.save_tform = self.gui.save_tform
-
-        self.export_dataset = self.gui.export_dataset
-        self.export_channel = self.gui.export_channel
-        self.pixseq_export_data = self.gui.pixseq_export_data
-
-        self.pixseq_export_traces = self.gui.pixseq_export_traces
-        self.export_progressbar = self.gui.export_progressbar
-
-        self.pixseq_export_locs = self.gui.pixseq_export_locs
-
-        self.traces_spot_size = self.gui.traces_spot_size
-        self.traces_spot_shape = self.gui.traces_spot_shape
-        self.traces_background_buffer = self.gui.traces_background_buffer
-        self.traces_background_width = self.gui.traces_background_width
-        self.compute_with_picasso = self.gui.compute_with_picasso
-        self.compute_global_background = self.gui.compute_global_background
-        self.traces_visualise_masks = self.gui.traces_visualise_masks
-        self.traces_channel_selection_layout = self.gui.traces_channel_selection_layout
-        self.compute_traces = self.gui.compute_traces
-        self.compute_traces_progressbar = self.gui.compute_traces_progressbar
-
-        self.plot_data = self.gui.plot_data
-        self.plot_channel = self.gui.plot_channel
-        self.plot_metric = self.gui.plot_metric
-        self.plot_background_mode = self.gui.plot_background_mode
-        self.split_plots = self.gui.split_plots
-        self.normalise_plots = self.gui.normalise_plots
-        self.focus_on_bbox = self.gui.focus_on_bbox
-        self.plot_compute_progress = self.gui.plot_compute_progress
-        self.plot_localisation_number = self.gui.plot_localisation_number
-        self.plot_localisation_number_label = self.gui.plot_localisation_number_label
-
-        self.colo_dataset = self.gui.colo_dataset
-        self.colo_channel1 = self.gui.colo_channel1
-        self.colo_channel2 = self.gui.colo_channel2
-        self.colo_max_dist = self.gui.colo_max_dist
-        self.colo_bboxes = self.gui.colo_bboxes
-        self.colo_fiducials = self.gui.colo_fiducials
-        self.pixseq_colocalize = self.gui.pixseq_colocalize
-
-        self.add_line = self.gui.add_line
-        self.add_box = self.gui.add_box
-        self.add_background = self.gui.add_background
-        self.simple_plot_mode = self.gui.simple_plot_mode
-        self.simple_plot_channel = self.gui.simple_plot_channel
-        self.simple_plot_dataset = self.gui.simple_plot_dataset
-        self.simple_subtract_background = self.gui.simple_subtract_background
-
-        self.picasso_filter_type = self.gui.picasso_filter_type
-        self.picasso_filter_dataset = self.gui.picasso_filter_dataset
-        self.picasso_filter_dataset_label = self.gui.picasso_filter_dataset_label
-        self.picasso_filter_channel = self.gui.picasso_filter_channel
-        self.filter_criterion = self.gui.filter_criterion
-        self.filter_min = self.gui.filter_min
-        self.filter_max = self.gui.filter_max
-        self.filter_localisations = self.gui.filter_localisations
-
-        self.dev_verbose = self.gui.dev_verbose
-        self.dev_verbose.stateChanged.connect(self.toggle_verbose)
+        self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
         self.verbose = False
 
         self.gui.pixseq_import.clicked.connect(self.pixseq_import_data)
@@ -168,7 +91,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.picasso_fit.clicked.connect(partial(self.pixseq_picasso, detect = False, fit=True))
         self.gui.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
         self.gui.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
-        self.dbscan_remove_overlapping = self.gui.dbscan_remove_overlapping
+        self.gui.dbscan_remove_overlapping = self.gui.dbscan_remove_overlapping
 
         self.gui.picasso_render.clicked.connect(self.initialise_picasso_render)
 
@@ -176,48 +99,48 @@ class PixSeqWidget(QWidget, gui,
         self.gui.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
             dataset = self.gui.pixseq_dataset_selector.currentText()))
 
-        self.picasso_undrift.clicked.connect(self.undrift_images)
+        self.gui.picasso_undrift.clicked.connect(self.undrift_images)
 
-        self.pixseq_align_datasets.clicked.connect(self.align_datasets)
-        self.align_reference_dataset.currentIndexChanged.connect(self.update_align_reference_channel)
+        self.gui.pixseq_align_datasets.clicked.connect(self.align_datasets)
+        self.gui.align_reference_dataset.currentIndexChanged.connect(self.update_align_reference_channel)
 
         self.gui.pixseq_import_tform.clicked.connect(self.import_transform_matrix)
-        self.pixseq_compute_tform.clicked.connect(self.compute_transform_matrix)
-        self.pixseq_apply_tform.clicked.connect(self.apply_transform_matrix)
+        self.gui.pixseq_compute_tform.clicked.connect(self.compute_transform_matrix)
+        self.gui.pixseq_apply_tform.clicked.connect(self.apply_transform_matrix)
 
         self.gui.picasso_detect_mode.currentIndexChanged.connect(self.update_picasso_options)
 
-        self.pixseq_export_data.clicked.connect(self.export_data)
-        self.export_dataset.currentIndexChanged.connect(self.update_export_options)
+        self.gui.pixseq_export_data.clicked.connect(self.export_data)
+        self.gui.export_dataset.currentIndexChanged.connect(self.update_export_options)
 
-        self.pixseq_export_locs.clicked.connect(self.initialise_export_locs)
+        self.gui.pixseq_export_locs.clicked.connect(self.initialise_export_locs)
         self.gui.locs_export_mode.currentIndexChanged.connect(self.update_loc_export_options)
         self.gui.locs_export_dataset.currentIndexChanged.connect(self.update_loc_export_options)
 
-        self.pixseq_export_traces.clicked.connect(self.export_traces)
+        self.gui.pixseq_export_traces.clicked.connect(self.export_traces)
         self.gui.traces_export_dataset.currentIndexChanged.connect(self.populate_export_combos)
 
         self.viewer.dims.events.current_step.connect(partial(self.draw_fiducials, update_vis = False))
 
-        self.compute_traces.clicked.connect(self.pixseq_compute_traces)
-        self.traces_visualise_masks.clicked.connect(self.visualise_spot_masks)
-        self.traces_visualise_masks.clicked.connect(self.visualise_background_masks)
+        self.gui.compute_traces.clicked.connect(self.pixseq_compute_traces)
+        self.gui.traces_visualise_masks.clicked.connect(self.visualise_spot_masks)
+        self.gui.traces_visualise_masks.clicked.connect(self.visualise_background_masks)
 
-        self.plot_data.currentIndexChanged.connect(partial(self.update_plot_combos, combo="plot_data"))
-        self.plot_channel.currentIndexChanged.connect(partial(self.update_plot_combos, combo="plot_channel"))
+        self.gui.plot_data.currentIndexChanged.connect(partial(self.update_plot_combos, combo="plot_data"))
+        self.gui.plot_channel.currentIndexChanged.connect(partial(self.update_plot_combos, combo="plot_channel"))
 
-        self.plot_data.currentIndexChanged.connect(self.initialize_plot)
-        self.plot_channel.currentIndexChanged.connect(self.initialize_plot)
-        self.plot_metric.currentIndexChanged.connect(self.initialize_plot)
-        self.split_plots.stateChanged.connect(self.initialize_plot)
-        self.normalise_plots.stateChanged.connect(self.initialize_plot)
-        self.plot_background_mode.currentIndexChanged.connect(self.initialize_plot)
-        self.focus_on_bbox.stateChanged.connect(self.initialize_plot)
+        self.gui.plot_data.currentIndexChanged.connect(self.initialize_plot)
+        self.gui.plot_channel.currentIndexChanged.connect(self.initialize_plot)
+        self.gui.plot_metric.currentIndexChanged.connect(self.initialize_plot)
+        self.gui.split_plots.stateChanged.connect(self.initialize_plot)
+        self.gui.normalise_plots.stateChanged.connect(self.initialize_plot)
+        self.gui.plot_background_mode.currentIndexChanged.connect(self.initialize_plot)
+        self.gui.focus_on_bbox.stateChanged.connect(self.initialize_plot)
 
-        self.pixseq_colocalize.clicked.connect(self.pixseq_colocalize_fiducials)
+        self.gui.pixseq_colocalize.clicked.connect(self.pixseq_colocalize_fiducials)
 
-        self.plot_localisation_number.valueChanged.connect(lambda: self.update_slider_label("plot_localisation_number"))
-        self.plot_localisation_number.valueChanged.connect(partial(self.plot_traces))
+        self.gui.plot_localisation_number.valueChanged.connect(lambda: self.update_slider_label("plot_localisation_number"))
+        self.gui.plot_localisation_number.valueChanged.connect(partial(self.plot_traces))
 
         self.gui.filtering_start.clicked.connect(self.pixseq_temporal_filtering)
         self.gui.filtering_datasets.currentIndexChanged.connect(self.update_filtering_channels)
@@ -225,23 +148,23 @@ class PixSeqWidget(QWidget, gui,
         self.gui.pixseq_append.stateChanged.connect(self.update_import_append_options)
 
         self.gui.picasso_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_dataset", channel_selector="picasso_channel"))
-        self.undrift_dataset_selector.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector"))
+        self.gui.undrift_dataset_selector.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector"))
         self.gui.cluster_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="cluster_dataset", channel_selector="cluster_channel"))
-        self.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_ref_channel", channel_type="donor"))
-        self.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor"))
-        self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
-        self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
-        self.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
+        self.gui.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_ref_channel", channel_type="donor"))
+        self.gui.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor"))
+        self.gui.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
+        self.gui.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
+        self.gui.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
 
 
         self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
 
-        self.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
-        self.picasso_filter_channel.currentIndexChanged.connect(self.update_filter_criterion)
-        self.filter_criterion.currentIndexChanged.connect(self.update_criterion_ranges)
-        self.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
-        self.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
+        self.gui.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
+        self.gui.picasso_filter_channel.currentIndexChanged.connect(self.update_filter_criterion)
+        self.gui.filter_criterion.currentIndexChanged.connect(self.update_criterion_ranges)
+        self.gui.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
+        self.gui.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
 
         self.dataset_dict = {}
         self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
@@ -286,14 +209,14 @@ class PixSeqWidget(QWidget, gui,
 
         self.viewer.layers.events.inserted.connect(self.on_add_layer)
 
-        self.simple_plot_mode.currentIndexChanged.connect(self.update_plot_channel)
-        self.simple_plot_dataset.currentIndexChanged.connect(self.draw_line_plot)
-        self.simple_plot_channel.currentIndexChanged.connect(self.draw_line_plot)
-        self.simple_subtract_background.clicked.connect(self.draw_line_plot)
+        self.gui.simple_plot_mode.currentIndexChanged.connect(self.update_plot_channel)
+        self.gui.simple_plot_dataset.currentIndexChanged.connect(self.draw_line_plot)
+        self.gui.simple_plot_channel.currentIndexChanged.connect(self.draw_line_plot)
+        self.gui.simple_subtract_background.clicked.connect(self.draw_line_plot)
 
-        self.add_line.clicked.connect(lambda: self.draw_shapes(mode="line"))
-        self.add_box.clicked.connect(lambda: self.draw_shapes(mode="box"))
-        self.add_background.clicked.connect(lambda: self.draw_shapes(mode="background"))
+        self.gui.add_line.clicked.connect(lambda: self.draw_shapes(mode="line"))
+        self.gui.add_box.clicked.connect(lambda: self.draw_shapes(mode="box"))
+        self.gui.add_background.clicked.connect(lambda: self.draw_shapes(mode="background"))
 
     def on_add_layer(self, event):
         if event.value.name == "Shapes":
@@ -310,7 +233,7 @@ class PixSeqWidget(QWidget, gui,
 
     def toggle_verbose(self):
 
-        if self.dev_verbose.isChecked():
+        if self.gui.dev_verbose.isChecked():
             self.verbose = True
         else:
             self.verbose = False

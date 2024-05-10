@@ -517,7 +517,7 @@ class _export_traces_utils:
 
         try:
 
-            self.pixseq_export_traces.setEnabled(False)
+            self.gui.pixseq_export_traces.setEnabled(False)
 
             export_path, export_directory = self.get_export_traces_path(dialog=True)
 
@@ -531,7 +531,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_json, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -541,7 +541,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_dat, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -551,7 +551,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_txt, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -561,7 +561,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_csv, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -571,7 +571,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_excel, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -582,7 +582,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_originlab, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -592,7 +592,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_nero, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)
@@ -602,7 +602,7 @@ class _export_traces_utils:
 
                     self.worker = Worker(self.export_traces_ebfret_smd, export_path=export_path)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.export_progressbar))
+                        progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
                     self.worker.signals.error.connect(self.update_ui)

@@ -8,12 +8,12 @@ class _filter_utils:
 
         try:
 
-            localisation_type = self.picasso_filter_type.currentText()
-            dataset = self.picasso_filter_dataset.currentText()
-            channel = self.picasso_filter_channel.currentText()
-            criterion = self.filter_criterion.currentText()
-            min_value = self.filter_min.value()
-            max_value = self.filter_max.value()
+            localisation_type = self.gui.picasso_filter_type.currentText()
+            dataset = self.gui.picasso_filter_dataset.currentText()
+            channel = self.gui.picasso_filter_channel.currentText()
+            criterion = self.gui.filter_criterion.currentText()
+            min_value = self.gui.filter_min.value()
+            max_value = self.gui.filter_max.value()
 
             if dataset != "" and channel != "":
 
@@ -30,7 +30,7 @@ class _filter_utils:
 
                     if criterion in columns:
 
-                        self.filter_localisations.setEnabled(False)
+                        self.gui.filter_localisations.setEnabled(False)
 
                         n_locs = len(locs)
 
@@ -62,23 +62,23 @@ class _filter_utils:
             self.update_criterion_ranges()
             print(f"Filtered {n_removed} {localisation_type}")
 
-            self.filter_localisations.setEnabled(True)
+            self.gui.filter_localisations.setEnabled(True)
 
         except:
-            self.filter_localisations.setEnabled(True)
+            self.gui.filter_localisations.setEnabled(True)
             print(traceback.format_exc())
 
 
     def update_filter_dataset(self, viewer=None):
 
-        if self.picasso_filter_type.currentText() == "Fiducials":
-            self.picasso_filter_dataset.setEnabled(True)
-            self.picasso_filter_dataset.show()
-            self.picasso_filter_dataset_label.show()
+        if self.gui.picasso_filter_type.currentText() == "Fiducials":
+            self.gui.picasso_filter_dataset.setEnabled(True)
+            self.gui.picasso_filter_dataset.show()
+            self.gui.picasso_filter_dataset_label.show()
         else:
-            self.picasso_filter_dataset.setEnabled(False)
-            self.picasso_filter_dataset.hide()
-            self.picasso_filter_dataset_label.hide()
+            self.gui.picasso_filter_dataset.setEnabled(False)
+            self.gui.picasso_filter_dataset.hide()
+            self.gui.picasso_filter_dataset_label.hide()
 
         self.update_filter_criterion()
         self.update_criterion_ranges()
@@ -90,10 +90,10 @@ class _filter_utils:
 
             columns = []
 
-            dataset = self.picasso_filter_dataset.currentText()
-            channel = self.picasso_filter_channel.currentText()
-            localisation_type = self.picasso_filter_type.currentText()
-            selector = self.filter_criterion
+            dataset = self.gui.picasso_filter_dataset.currentText()
+            channel = self.gui.picasso_filter_channel.currentText()
+            localisation_type = self.gui.picasso_filter_type.currentText()
+            selector = self.gui.filter_criterion
 
             if dataset != "" and channel != "":
 
@@ -124,10 +124,10 @@ class _filter_utils:
 
             self.filter_graph_canvas.clear()
 
-            dataset = self.picasso_filter_dataset.currentText()
-            channel = self.picasso_filter_channel.currentText()
-            localisation_type = self.picasso_filter_type.currentText()
-            criterion = self.filter_criterion.currentText()
+            dataset = self.gui.picasso_filter_dataset.currentText()
+            channel = self.gui.picasso_filter_channel.currentText()
+            localisation_type = self.gui.picasso_filter_type.currentText()
+            criterion = self.gui.filter_criterion.currentText()
 
             if localisation_type == "Fiducials":
                 loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
@@ -150,14 +150,14 @@ class _filter_utils:
                     min_value = np.min(values)
                     max_value = np.max(values)
 
-                    self.filter_min.setMinimum(min_value)
-                    self.filter_min.setMaximum(max_value)
+                    self.gui.filter_min.setMinimum(min_value)
+                    self.gui.filter_min.setMaximum(max_value)
 
-                    self.filter_max.setMinimum(min_value)
-                    self.filter_max.setMaximum(max_value)
+                    self.gui.filter_max.setMinimum(min_value)
+                    self.gui.filter_max.setMaximum(max_value)
 
-                    self.filter_min.setValue(min_value)
-                    self.filter_max.setValue(max_value)
+                    self.gui.filter_min.setValue(min_value)
+                    self.gui.filter_max.setValue(max_value)
 
         except:
             print(traceback.format_exc())

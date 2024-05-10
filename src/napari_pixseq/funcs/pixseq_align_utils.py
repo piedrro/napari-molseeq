@@ -43,11 +43,11 @@ class _align_utils:
             acceptor_channels = "Acceptor Channels: [" + "/ ".join(acceptor_channels) + "]"
             donor_channels = "Donor Channels: [" + "/".join(donor_channels) + "]"
 
-            self.align_reference_channel.blockSignals(True)
-            self.align_reference_channel.clear()
-            self.align_reference_channel.addItem(acceptor_channels)
-            self.align_reference_channel.addItem(donor_channels)
-            self.align_reference_channel.blockSignals(False)
+            self.gui.align_reference_channel.blockSignals(True)
+            self.gui.align_reference_channel.clear()
+            self.gui.align_reference_channel.addItem(acceptor_channels)
+            self.gui.align_reference_channel.addItem(donor_channels)
+            self.gui.align_reference_channel.blockSignals(False)
 
         except:
             pass
@@ -89,8 +89,8 @@ class _align_utils:
 
         try:
 
-            reference_dataset = self.align_reference_dataset.currentText()
-            reference_channel = self.align_reference_channel.currentText()
+            reference_dataset = self.gui.align_reference_dataset.currentText()
+            reference_channel = self.gui.align_reference_channel.currentText()
 
             dataset_list = list(self.dataset_dict.keys())
             dataset_list.remove(reference_dataset)
@@ -177,8 +177,8 @@ class _align_utils:
 
             if self.dataset_dict != {}:
 
-                align_dataset = self.align_reference_dataset.currentText()
-                align_channel = self.align_reference_channel.currentText()
+                align_dataset = self.gui.align_reference_dataset.currentText()
+                align_channel = self.gui.align_reference_channel.currentText()
 
                 if "Donor Channels" in align_channel:
                     channel_mode = "Donor"
@@ -220,7 +220,7 @@ class _align_utils:
                     self.update_ui(init=True)
 
                     self.worker = Worker(self._align_datasets, align_dict=align_dict)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.align_progressbar))
+                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.align_progressbar))
                     self.worker.signals.finished.connect(self._align_datasets_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)

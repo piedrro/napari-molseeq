@@ -328,10 +328,10 @@ class _events_utils:
             if self.verbose:
                 print(f"Updating channel selector for dataset {dataset_selector} and channel {channel_selector}")
 
-            if hasattr(self, channel_selector) and hasattr(self, dataset_selector):
+            if hasattr(self.gui, channel_selector) and hasattr(self.gui, dataset_selector):
 
-                channel_selector = getattr(self, channel_selector)
-                dataset_selector = getattr(self, dataset_selector)
+                channel_selector = getattr(self.gui, channel_selector)
+                dataset_selector = getattr(self.gui, dataset_selector)
 
                 dataset_name = dataset_selector.currentText()
 
@@ -749,10 +749,10 @@ class _events_utils:
         label_name = slider_name + "_label"
 
         self.slider = self.findChild(QSlider, slider_name)
-        self.label = self.findChild(QLabel, label_name)
+        self.gui.label = self.findChild(QLabel, label_name)
 
         slider_value = self.slider.value()
-        self.label.setText(str(slider_value))
+        self.gui.label.setText(str(slider_value))
 
     def update_picasso_options(self):
 

@@ -290,8 +290,8 @@ class _undrift_utils:
 
         try:
 
-            dataset = self.undrift_dataset_selector.currentText()
-            channel = self.undrift_channel_selector.currentText()
+            dataset = self.gui.undrift_dataset_selector.currentText()
+            channel = self.gui.undrift_channel_selector.currentText()
 
             if dataset == "All Datasets":
                 dataset_list = list(self.dataset_dict.keys())
@@ -318,7 +318,7 @@ class _undrift_utils:
                 self.update_ui(init=True)
 
                 self.worker = Worker(self._undrift_images, undrift_dict=undrift_dict, segmentation=20)
-                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.undrift_progressbar))
+                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.undrift_progressbar))
                 self.worker.signals.finished.connect(self._undrift_images_finished)
                 self.threadpool.start(self.worker)
 

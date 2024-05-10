@@ -66,9 +66,9 @@ class _tranform_utils:
         try:
             if self.dataset_dict != {}:
 
-                dataset_name = self.tform_compute_dataset.currentText()
-                target_channel = self.tform_compute_target_channel.currentText()
-                reference_channel = self.tform_compute_ref_channel.currentText()
+                dataset_name = self.gui.tform_compute_dataset.currentText()
+                target_channel = self.gui.tform_compute_target_channel.currentText()
+                reference_channel = self.gui.tform_compute_ref_channel.currentText()
 
                 target_locs = None
                 reference_locs = None
@@ -103,7 +103,7 @@ class _tranform_utils:
 
                     print(f"Transform Matrix\n: {self.transform_matrix}")
 
-                    if self.save_tform.isChecked():
+                    if self.gui.save_tform.isChecked():
                         self.save_transform_matrix()
 
         except:
@@ -121,8 +121,8 @@ class _tranform_utils:
                 date = datetime.now().strftime("%y%m%d")
                 file_name = f'pixseq_transform_matrix-{date}.txt'
 
-                dataset_name = self.tform_compute_dataset.currentText()
-                channel_name = self.tform_compute_target_channel.currentText()
+                dataset_name = self.gui.tform_compute_dataset.currentText()
+                channel_name = self.gui.tform_compute_target_channel.currentText()
 
                 path = self.dataset_dict[dataset_name][channel_name.lower()]["path"]
                 path_directory = os.path.dirname(path)
@@ -163,9 +163,9 @@ class _tranform_utils:
             if self.dataset_dict != {}:
 
                 from qtpy.QtWidgets import QComboBox
-                self.tform_apply_target = self.gui.self.tform_apply_target
+                self.gui.tform_apply_target = self.gui.self.gui.tform_apply_target
 
-                apply_channel = self.tform_apply_target.currentText()
+                apply_channel = self.gui.tform_apply_target.currentText()
 
                 if "donor" in apply_channel.lower():
                     ref_emission = "d"
@@ -227,7 +227,7 @@ class _tranform_utils:
                         self.update_ui(init=True)
 
                         self.worker = Worker(self._apply_transform_matrix)
-                        self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.tform_apply_progressbar))
+                        self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.tform_apply_progressbar))
                         self.worker.signals.finished.connect(self._apply_transform_matrix_finished)
                         self.worker.signals.error.connect(self.update_ui)
                         self.threadpool.start(self.worker)

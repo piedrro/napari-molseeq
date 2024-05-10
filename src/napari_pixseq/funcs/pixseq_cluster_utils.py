@@ -59,7 +59,7 @@ class _cluster_utils:
             mode = self.gui.cluster_mode.currentText()
             dataset = self.gui.cluster_dataset.currentText()
             channel = self.gui.cluster_channel.currentText()
-            remove_overlapping = self.dbscan_remove_overlapping.isChecked()
+            remove_overlapping = self.gui.dbscan_remove_overlapping.isChecked()
 
             loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type = "fiducials")
 

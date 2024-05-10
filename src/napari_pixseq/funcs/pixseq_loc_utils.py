@@ -514,7 +514,7 @@ class _loc_utils():
             self.update_ui(init = True)
 
             self.worker = Worker(self.export_locs, export_dataset = export_dataset, export_channel = export_channel)
-            self.worker.signals.progress.connect(partial(self.pixseq_progress,progress_bar=self.export_progressbar))
+            self.worker.signals.progress.connect(partial(self.pixseq_progress,progress_bar=self.gui.export_progressbar))
             self.worker.signals.finished.connect(self.export_locs_finished)
             self.threadpool.start(self.worker)
 

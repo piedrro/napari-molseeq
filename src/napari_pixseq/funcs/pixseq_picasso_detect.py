@@ -612,7 +612,7 @@ class _picasso_detect_utils:
                     worker = Worker(self.render_picasso_locs, locs=locs, image_shape=image_shape,
                         blur_method=blur_method, min_blur_width=min_blur_width, pixel_size=pixel_size, )
                     worker.signals.result.connect(self.draw_picasso_render)
-                    worker.signals.finished.connect(self.gui.picasso_render_finished)
+                    worker.signals.finished.connect(self.picasso_render_finished)
                     self.threadpool.start(worker)
 
         except:

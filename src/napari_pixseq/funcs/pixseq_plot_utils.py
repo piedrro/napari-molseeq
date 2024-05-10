@@ -36,16 +36,16 @@ class _plot_utils:
 
                     self.updating_plot_combos = True
 
-                    self.plot_data.blockSignals(True)
-                    self.plot_data.clear()
+                    self.gui.plot_data.blockSignals(True)
+                    self.gui.plot_data.clear()
 
                     dataset_names = list(self.traces_dict.keys())
 
                     if len(dataset_names) > 0:
                         dataset_names.insert(0, "All Datasets")
 
-                    self.plot_data.addItems(dataset_names)
-                    self.plot_data.blockSignals(False)
+                    self.gui.plot_data.addItems(dataset_names)
+                    self.gui.plot_data.blockSignals(False)
 
                     self.updating_plot_combos = False
 
@@ -60,14 +60,14 @@ class _plot_utils:
 
                 if self.traces_dict != {}:
 
-                    dataset_name = self.plot_data.currentText()
+                    dataset_name = self.gui.plot_data.currentText()
 
                     if dataset_name != "":
 
                         self.updating_plot_combos = True
 
-                        self.plot_channel.blockSignals(True)
-                        self.plot_channel.clear()
+                        self.gui.plot_channel.blockSignals(True)
+                        self.gui.plot_channel.clear()
 
                         if dataset_name == "All Datasets":
                             channel_names = []
@@ -96,9 +96,9 @@ class _plot_utils:
                             else:
                                 pass
 
-                        self.update_qcombo_items(self.plot_channel, plot_channel_list)
+                        self.update_qcombo_items(self.gui.plot_channel, plot_channel_list)
 
-                        self.plot_channel.blockSignals(False)
+                        self.gui.plot_channel.blockSignals(False)
                         self.updating_plot_combos = False
 
         except:
@@ -152,8 +152,8 @@ class _plot_utils:
                             background_metric_items.insert(0, "None")
 
                             self.updating_plot_combos = True
-                            self.update_qcombo_items(self.plot_metric, plot_metric_items)
-                            self.update_qcombo_items(self.plot_background_mode, background_metric_items)
+                            self.update_qcombo_items(self.gui.plot_metric, plot_metric_items)
+                            self.update_qcombo_items(self.gui.plot_background_mode, background_metric_items)
                             self.update_qcombo_items(self.gui.traces_export_metric, plot_metric_items)
                             self.update_qcombo_items(self.gui.traces_export_background, background_metric_items)
                             self.updating_plot_combos = False
@@ -319,10 +319,10 @@ class _plot_utils:
 
         try:
 
-            dataset_name = self.plot_data.currentText()
-            channel_name = self.plot_channel.currentText()
-            metric_name = self.plot_metric.currentText()
-            background_mode = self.plot_background_mode.currentText()
+            dataset_name = self.gui.plot_data.currentText()
+            channel_name = self.gui.plot_channel.currentText()
+            metric_name = self.gui.plot_metric.currentText()
+            background_mode = self.gui.plot_background_mode.currentText()
 
             if hasattr(self, "plot_show_dict") == False:
                 self.plot_show_dict = {}
@@ -472,32 +472,32 @@ class _plot_utils:
 
                 if self.traces_dict != {}:
 
-                    dataset_name = self.plot_data.currentText()
-                    channel_name = self.plot_channel.currentText()
-                    metric_name = self.plot_metric.currentText()
+                    dataset_name = self.gui.plot_data.currentText()
+                    channel_name = self.gui.plot_channel.currentText()
+                    metric_name = self.gui.plot_metric.currentText()
 
                     if dataset_name != "" and channel_name != "" and metric_name != "":
 
                         if self.updating_plot_combos == False:
 
-                            self.plot_localisation_number.setEnabled(False)
-                            self.plot_data.setEnabled(False)
-                            self.plot_channel.setEnabled(False)
-                            self.plot_metric.setEnabled(False)
-                            self.split_plots.setEnabled(False)
-                            self.normalise_plots.setEnabled(False)
+                            self.gui.plot_localisation_number.setEnabled(False)
+                            self.gui.plot_data.setEnabled(False)
+                            self.gui.plot_channel.setEnabled(False)
+                            self.gui.plot_metric.setEnabled(False)
+                            self.gui.split_plots.setEnabled(False)
+                            self.gui.normalise_plots.setEnabled(False)
 
                             self.populate_plot_dict()
                             self.create_plot_checkboxes()
                             self.update_plot_layout()
                             self.plot_traces()
 
-                            self.plot_localisation_number.setEnabled(True)
-                            self.plot_data.setEnabled(True)
-                            self.plot_channel.setEnabled(True)
-                            self.plot_metric.setEnabled(True)
-                            self.split_plots.setEnabled(True)
-                            self.normalise_plots.setEnabled(True)
+                            self.gui.plot_localisation_number.setEnabled(True)
+                            self.gui.plot_data.setEnabled(True)
+                            self.gui.plot_channel.setEnabled(True)
+                            self.gui.plot_metric.setEnabled(True)
+                            self.gui.split_plots.setEnabled(True)
+                            self.gui.normalise_plots.setEnabled(True)
 
         except:
             print(traceback.format_exc())
@@ -508,7 +508,7 @@ class _plot_utils:
 
         try:
 
-            grid_layout = self.traces_channel_selection_layout
+            grid_layout = self.gui.traces_channel_selection_layout
 
             channel_list = []
             label_list = []
@@ -556,7 +556,7 @@ class _plot_utils:
 
                         check_box.stateChanged.connect(self.plot_checkbox_event)
 
-                        self.traces_channel_selection_layout.addWidget(check_box, 0, col_index)
+                        self.gui.traces_channel_selection_layout.addWidget(check_box, 0, col_index)
 
         except:
             print(traceback.format_exc())
@@ -566,7 +566,7 @@ class _plot_utils:
 
         try:
 
-            grid_layout = self.traces_channel_selection_layout
+            grid_layout = self.gui.traces_channel_selection_layout
 
             for i in range(grid_layout.count()):
                 item = grid_layout.itemAt(i)
@@ -600,8 +600,8 @@ class _plot_utils:
 
             self.graph_canvas.clear()
 
-            split = self.split_plots.isChecked()
-            plot_mode = self.plot_channel.currentText()
+            split = self.gui.split_plots.isChecked()
+            plot_mode = self.gui.plot_channel.currentText()
 
             efficiency_plot = False
 
@@ -720,8 +720,8 @@ class _plot_utils:
             if len(n_traces) > 0:
 
                 n_traces = max(n_traces)
-                self.plot_localisation_number = self.gui.plot_localisation_number
-                self.plot_localisation_number.setMaximum(n_traces-1)
+                self.gui.plot_localisation_number = self.gui.plot_localisation_number
+                self.gui.plot_localisation_number.setMaximum(n_traces-1)
 
                 plot_list = []
                 for plot_index, grid in enumerate(self.plot_grid.values()):
@@ -779,9 +779,9 @@ class _plot_utils:
 
             if self.plot_grid != {}:
 
-                localisation_number = self.plot_localisation_number.value()
+                localisation_number = self.gui.plot_localisation_number.value()
 
-                if self.focus_on_bbox.isChecked() == True:
+                if self.gui.focus_on_bbox.isChecked() == True:
                     self.get_loc_coords(localisation_number)
 
                 for plot_index, grid in enumerate(self.plot_grid.values()):
@@ -802,7 +802,7 @@ class _plot_utils:
                         data_index = self.plot_dict[plot_dataset][localisation_number]["labels"].index(plot_label)
                         data = self.plot_dict[plot_dataset][localisation_number]["data"][data_index]
 
-                        if self.normalise_plots.isChecked() and "efficiency" not in plot_label.lower():
+                        if self.gui.normalise_plots.isChecked() and "efficiency" not in plot_label.lower():
                             data = (data - np.min(data)) / (np.max(data) - np.min(data))
 
                         plot_line = plot_lines[line_index]

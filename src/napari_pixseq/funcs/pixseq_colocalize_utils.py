@@ -53,10 +53,10 @@ class _utils_colocalize:
 
         try:
 
-            dataset = self.colo_dataset.currentText()
-            channel1 = self.colo_channel1.currentText()
-            channel2 = self.colo_channel2.currentText()
-            max_dist = float(self.colo_max_dist.currentText())
+            dataset = self.gui.colo_dataset.currentText()
+            channel1 = self.gui.colo_channel1.currentText()
+            channel2 = self.gui.colo_channel2.currentText()
+            max_dist = float(self.gui.colo_max_dist.currentText())
 
             ch1_loc_dict, ch1_n_locs, _ = self.get_loc_dict(dataset, channel1.lower())
             ch2_loc_dict, ch2_n_locs, _ = self.get_loc_dict(dataset, channel2.lower())
@@ -156,11 +156,11 @@ class _utils_colocalize:
 
             if colo_locs is not None:
 
-                dataset = self.colo_dataset.currentText()
-                channel1 = self.colo_channel1.currentText()
-                channel2 = self.colo_channel2.currentText()
+                dataset = self.gui.colo_dataset.currentText()
+                channel1 = self.gui.colo_channel1.currentText()
+                channel2 = self.gui.colo_channel2.currentText()
 
-                if self.colo_fiducials.isChecked():
+                if self.gui.colo_fiducials.isChecked():
 
                     self.localisation_dict["fiducials"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
                     self.localisation_dict["fiducials"][dataset][channel1.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
@@ -172,7 +172,7 @@ class _utils_colocalize:
 
                     self.draw_fiducials(update_vis=True)
 
-                if self.colo_bboxes.isChecked():
+                if self.gui.colo_bboxes.isChecked():
 
                     self.localisation_dict["bounding_boxes"]["localisations"] = colo_locs["localisations"]
                     self.localisation_dict["bounding_boxes"]["localisation_centres"] = colo_locs["localisation_centres"]
@@ -192,9 +192,9 @@ class _utils_colocalize:
 
         try:
 
-            dataset = self.colo_dataset.currentText()
-            channel1 = self.colo_channel1.currentText()
-            channel2 = self.colo_channel2.currentText()
+            dataset = self.gui.colo_dataset.currentText()
+            channel1 = self.gui.colo_channel1.currentText()
+            channel2 = self.gui.colo_channel2.currentText()
 
             ch1_loc_dict, ch1_n_locs, _ = self.get_loc_dict(dataset, channel1.lower())
             ch2_loc_dict, ch2_n_locs, _ = self.get_loc_dict(dataset, channel2.lower())

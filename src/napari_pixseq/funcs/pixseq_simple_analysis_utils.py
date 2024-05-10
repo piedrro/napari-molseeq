@@ -8,9 +8,9 @@ class _simple_analysis_utils:
 
     def update_plot_channel(self):
 
-        plot_mode = self.simple_plot_mode.currentIndex()
-        plot_channel = self.simple_plot_channel.currentText()
-        plot_dataset = self.simple_plot_dataset.currentText()
+        plot_mode = self.gui.simple_plot_mode.currentIndex()
+        plot_channel = self.gui.simple_plot_channel.currentText()
+        plot_dataset = self.gui.simple_plot_dataset.currentText()
 
         plot_channels = list(self.dataset_dict[plot_dataset].keys())
 
@@ -26,15 +26,15 @@ class _simple_analysis_utils:
             if set(["DD", "DA"]).issubset(plot_channels):
                 plot_channels.extend(["ALEX Data", "ALEX Efficiency"])
 
-        self.simple_plot_channel.blockSignals(True)
-        self.simple_plot_channel.clear()
-        self.simple_plot_channel.addItems(plot_channels)
+        self.gui.simple_plot_channel.blockSignals(True)
+        self.gui.simple_plot_channel.clear()
+        self.gui.simple_plot_channel.addItems(plot_channels)
 
         if plot_channel in plot_channels:
             index = plot_channels.index(plot_channel)
-            self.simple_plot_channel.setCurrentIndex(index)
+            self.gui.simple_plot_channel.setCurrentIndex(index)
 
-        self.simple_plot_channel.blockSignals(False)
+        self.gui.simple_plot_channel.blockSignals(False)
 
         self.draw_line_plot()
 
@@ -111,10 +111,10 @@ class _simple_analysis_utils:
                             shapes_layer.remove_selected()
 
                     if shape_type == "line":
-                        self.simple_plot_mode.setCurrentIndex(0)
+                        self.gui.simple_plot_mode.setCurrentIndex(0)
 
                     if shape_type == "rectangle":
-                        self.simple_plot_mode.setCurrentIndex(2)
+                        self.gui.simple_plot_mode.setCurrentIndex(2)
 
             if event.action in ["added", "changed", "removed"]:
                 self.draw_line_plot()
@@ -164,10 +164,10 @@ class _simple_analysis_utils:
                 shape_types = shapes_layer.shape_type.copy()
                 shape_modes = shapes_layer.properties["mode"].tolist()
 
-                plot_mode = self.simple_plot_mode.currentIndex()
-                plot_channel = self.simple_plot_channel.currentText()
-                dataset = self.simple_plot_dataset.currentText()
-                subtract_background = self.simple_subtract_background.isChecked()
+                plot_mode = self.gui.simple_plot_mode.currentIndex()
+                plot_channel = self.gui.simple_plot_channel.currentText()
+                dataset = self.gui.simple_plot_dataset.currentText()
+                subtract_background = self.gui.simple_subtract_background.isChecked()
                 current_frame = self.viewer.dims.current_step[0]
 
                 if plot_channel.lower() in ["donor", "acceptor","dd","da","aa","ad"]:
@@ -250,7 +250,7 @@ class _simple_analysis_utils:
 
     def draw_line_plot(self):
         try:
-            plot_mode = self.simple_plot_mode.currentIndex()
+            plot_mode = self.gui.simple_plot_mode.currentIndex()
             plot_data = self.get_plot_data()
 
             self.simple_graph_canvas.clear()

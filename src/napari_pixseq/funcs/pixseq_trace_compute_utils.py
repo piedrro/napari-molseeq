@@ -494,7 +494,7 @@ class _trace_compute_utils:
 
     def _pixseq_compute_traces_finished(self):
 
-        self.compute_traces.setEnabled(True)
+        self.gui.compute_traces.setEnabled(True)
 
         self.populate_plot_combos()
         self.populate_export_combos()
@@ -666,14 +666,14 @@ class _trace_compute_utils:
 
         try:
 
-            self.traces_spot_size = self.gui.traces_spot_size
+            self.gui.traces_spot_size = self.gui.traces_spot_size
 
-            spot_size = int(self.traces_spot_size.currentText())
-            spot_shape = self.traces_spot_shape.currentText()
-            buffer_size = int(self.traces_background_buffer.currentText())
-            bg_width = int(self.traces_background_width.currentText())
-            compute_global_background = self.compute_global_background.isChecked()
-            compute_picasso = self.compute_with_picasso.isChecked()
+            spot_size = int(self.gui.traces_spot_size.currentText())
+            spot_shape = self.gui.traces_spot_shape.currentText()
+            buffer_size = int(self.gui.traces_background_buffer.currentText())
+            bg_width = int(self.gui.traces_background_width.currentText())
+            compute_global_background = self.gui.compute_global_background.isChecked()
+            compute_picasso = self.gui.compute_with_picasso.isChecked()
 
             localisation_dict = copy.deepcopy(self.localisation_dict["bounding_boxes"])
             locs = localisation_dict["localisations"].copy()
@@ -696,7 +696,7 @@ class _trace_compute_utils:
                 n_locs = len(locs)
                 channel = image_dict["channel"]
                 dataset = image_dict["dataset"]
-                n_pixels = int(self.traces_spot_size.currentText()) ** 2
+                n_pixels = int(self.gui.traces_spot_size.currentText()) ** 2
 
                 background_overlap_mask, global_spot_mask = self.generate_background_overlap_mask(locs,
                     buffer_mask, spot_background_mask, mask_shape)
@@ -769,8 +769,8 @@ class _trace_compute_utils:
 
         try:
 
-            compute_global_background = self.compute_global_background.isChecked()
-            compute_picasso = self.compute_with_picasso.isChecked()
+            compute_global_background = self.gui.compute_global_background.isChecked()
+            compute_picasso = self.gui.compute_with_picasso.isChecked()
 
             compute_jobs = self.populate_spot_metric_compute_jobs()
 
@@ -1022,7 +1022,7 @@ class _trace_compute_utils:
             self.populatate_traces_dict()
 
             self.compute_photo_bleaching()
-            self.compute_traces.setEnabled(True)
+            self.gui.compute_traces.setEnabled(True)
 
         except:
             self.update_ui()
@@ -1051,7 +1051,7 @@ class _trace_compute_utils:
                 self.update_ui(init=True)
 
                 self.worker = Worker(self._pixseq_compute_traces)
-                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.compute_traces_progressbar))
+                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.compute_traces_progressbar))
                 self.worker.signals.finished.connect(self._pixseq_compute_traces_finished)
                 self.worker.signals.error.connect(self._pixseq_compute_traces_finished)
                 self.threadpool.start(self.worker)
@@ -1067,7 +1067,7 @@ class _trace_compute_utils:
 
     def visualise_background_masks(self):
 
-        self.compute_traces.setEnabled(True)
+        self.gui.compute_traces.setEnabled(True)
 
         try:
 
@@ -1076,10 +1076,10 @@ class _trace_compute_utils:
             if "bounding_boxes" in self.localisation_dict.keys():
                 if "localisations" in self.localisation_dict["bounding_boxes"].keys():
 
-                    spot_size = int(self.traces_spot_size.currentText())
-                    spot_shape = self.traces_spot_shape.currentText()
-                    buffer_size = int(self.traces_background_buffer.currentText())
-                    bg_width = int(self.traces_background_width.currentText())
+                    spot_size = int(self.gui.traces_spot_size.currentText())
+                    spot_shape = self.gui.traces_spot_shape.currentText()
+                    buffer_size = int(self.gui.traces_background_buffer.currentText())
+                    bg_width = int(self.gui.traces_background_width.currentText())
 
                     localisation_dict = copy.deepcopy(self.localisation_dict["bounding_boxes"])
                     locs = localisation_dict["localisations"]
@@ -1129,10 +1129,10 @@ class _trace_compute_utils:
             if "bounding_boxes" in self.localisation_dict.keys():
                 if "fitted" in self.localisation_dict["bounding_boxes"].keys():
 
-                    spot_size = int(self.traces_spot_size.currentText())
-                    spot_shape = self.traces_spot_shape.currentText()
-                    buffer_size = int(self.traces_background_buffer.currentText())
-                    bg_width = int(self.traces_background_width.currentText())
+                    spot_size = int(self.gui.traces_spot_size.currentText())
+                    spot_shape = self.gui.traces_spot_shape.currentText()
+                    buffer_size = int(self.gui.traces_background_buffer.currentText())
+                    bg_width = int(self.gui.traces_background_width.currentText())
 
                     localisation_dict = copy.deepcopy(self.localisation_dict["bounding_boxes"])
                     locs = localisation_dict["localisations"]

@@ -22,7 +22,7 @@ class _export_images_utils:
 
         if self.dataset_dict != {}:
 
-            dataset_name = self.export_dataset.currentText()
+            dataset_name = self.gui.export_dataset.currentText()
 
             export_channel_list = []
 
@@ -53,8 +53,8 @@ class _export_images_utils:
 
             export_channel_list.insert(0, "Import Channel(s)")
 
-            self.export_channel.clear()
-            self.export_channel.addItems(export_channel_list)
+            self.gui.export_channel.clear()
+            self.gui.export_channel.addItems(export_channel_list)
 
     def get_free_RAM(self):
 
@@ -75,8 +75,8 @@ class _export_images_utils:
 
         try:
 
-            dataset_name = self.export_dataset.currentText()
-            export_channel = self.export_channel.currentText()
+            dataset_name = self.gui.export_dataset.currentText()
+            export_channel = self.gui.export_channel.currentText()
 
             dataset_dict = self.dataset_dict[dataset_name]
 
@@ -128,8 +128,8 @@ class _export_images_utils:
 
     def get_export_jobs(self):
 
-        dataset_name = self.export_dataset.currentText()
-        export_channel = self.export_channel.currentText()
+        dataset_name = self.gui.export_dataset.currentText()
+        export_channel = self.gui.export_channel.currentText()
 
         export_jobs = []
         total_frames = 0
@@ -249,7 +249,7 @@ class _export_images_utils:
                     def export_progress(progress, job_index=None):
                         progress_dict[job_index] = progress
                         total_progress = int(np.sum(list(progress_dict.values()))/len(progress_dict))
-                        self.pixseq_progress(total_progress, self.export_progressbar)
+                        self.pixseq_progress(total_progress, self.gui.export_progressbar)
 
                     if export_channel.lower() == "alex":
                         self.worker = Worker(self.export_alex_data,
