@@ -234,9 +234,9 @@ class _loc_utils():
 
         try:
 
-            dataset = self.import_picasso_dataset.currentText()
-            channel = self.import_picasso_channel.currentText()
-            type = self.import_picasso_type.currentText()
+            dataset = self.gui.import_picasso_dataset.currentText()
+            channel = self.gui.import_picasso_channel.currentText()
+            type = self.gui.import_picasso_type.currentText()
 
             if type == "Fiducials":
                 if dataset not in self.localisation_dict["fiducials"].keys():
@@ -259,7 +259,7 @@ class _loc_utils():
                 # print(locs.dtype.descr)
                 # print(len(locs[0]))
 
-            box_size = self.picasso_box_size.currentText()
+            box_size = self.gui.picasso_box_size.currentText()
 
 
             if self.verbose:
@@ -317,9 +317,9 @@ class _loc_utils():
 
         try:
 
-            dataset = self.import_picasso_dataset.currentText()
-            channel = self.import_picasso_channel.currentText()
-            type = self.import_picasso_type.currentText()
+            dataset = self.gui.import_picasso_dataset.currentText()
+            channel = self.gui.import_picasso_channel.currentText()
+            type = self.gui.import_picasso_type.currentText()
 
             if dataset in self.dataset_dict.keys():
                 if channel.lower() in self.dataset_dict[dataset].keys():
@@ -353,7 +353,7 @@ class _loc_utils():
 
         try:
 
-            dataset_name  = self.locs_export_dataset.currentText()
+            dataset_name  = self.gui.locs_export_dataset.currentText()
 
             if dataset_name in self.dataset_dict.keys() or dataset_name == "All Datasets":
 
@@ -371,10 +371,10 @@ class _loc_utils():
 
                     channel_names.insert(0, "All Channels")
 
-                self.locs_export_channel.blockSignals(True)
-                self.locs_export_channel.clear()
-                self.locs_export_channel.addItems(channel_names)
-                self.locs_export_channel.blockSignals(False)
+                self.gui.locs_export_channel.blockSignals(True)
+                self.gui.locs_export_channel.clear()
+                self.gui.locs_export_channel.addItems(channel_names)
+                self.gui.locs_export_channel.blockSignals(False)
 
         except:
             print(traceback.format_exc())
@@ -385,7 +385,7 @@ class _loc_utils():
 
         try:
 
-            export_loc_mode = self.locs_export_mode.currentText()
+            export_loc_mode = self.gui.locs_export_mode.currentText()
             export_loc_jobs = []
 
             if export_dataset == "All Datasets":
@@ -426,7 +426,7 @@ class _loc_utils():
                             if "min_net_gradient" in loc_dict.keys():
                                 min_net_gradient = loc_dict["min_net_gradient"]
                             else:
-                                min_net_gradient = int(self.picasso_min_net_gradient.text())
+                                min_net_gradient = int(self.gui.picasso_min_net_gradient.text())
 
                             if channel_name in self.dataset_dict[dataset_name].keys():
 
@@ -507,9 +507,9 @@ class _loc_utils():
         try:
 
             if export_dataset == "" or export_dataset not in self.dataset_dict.keys():
-                export_dataset = self.locs_export_dataset.currentText()
+                export_dataset = self.gui.locs_export_dataset.currentText()
             if export_channel == "":
-                export_channel = self.locs_export_channel.currentText()
+                export_channel = self.gui.locs_export_channel.currentText()
 
             self.update_ui(init = True)
 
@@ -588,12 +588,12 @@ class _loc_utils():
 
         try:
 
-            dataset = self.pixseq_dataset_selector.currentText()
+            dataset = self.gui.pixseq_dataset_selector.currentText()
             channel = self.active_channel
             frame = self.viewer.dims.current_step[0]
 
             if box_size is None:
-                box_size = self.picasso_box_size.currentText()
+                box_size = self.gui.picasso_box_size.currentText()
 
             loc_mask, _, loc_bg_mask = self.generate_localisation_mask(
                 box_size, spot_shape = "square")
@@ -637,9 +637,9 @@ class _loc_utils():
 
         try:
 
-            active_dataset = self.pixseq_dataset_selector.currentText()
+            active_dataset = self.gui.pixseq_dataset_selector.currentText()
             active_channel = self.active_channel
-            box_size = int(self.picasso_box_size.currentText())
+            box_size = int(self.gui.picasso_box_size.currentText())
             frame = self.viewer.dims.current_step[0]
             net_gradient = self.compute_net_gradient(position, box_size=box_size)
 
@@ -738,7 +738,7 @@ class _loc_utils():
                 else:
                     x, y = position
 
-                    box_size = int(self.picasso_box_size.currentText())
+                    box_size = int(self.gui.picasso_box_size.currentText())
 
                     new_loc = [frame, position[0], position[1], net_gradient]
 
@@ -824,7 +824,7 @@ class _loc_utils():
 
                     x, y = position
 
-                    box_size = int(self.picasso_box_size.currentText())
+                    box_size = int(self.gui.picasso_box_size.currentText())
 
                     new_loc = [frame, position[0], position[1], net_gradient]
 

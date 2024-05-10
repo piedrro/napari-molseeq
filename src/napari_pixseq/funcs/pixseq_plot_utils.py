@@ -154,8 +154,8 @@ class _plot_utils:
                             self.updating_plot_combos = True
                             self.update_qcombo_items(self.plot_metric, plot_metric_items)
                             self.update_qcombo_items(self.plot_background_mode, background_metric_items)
-                            self.update_qcombo_items(self.traces_export_metric, plot_metric_items)
-                            self.update_qcombo_items(self.traces_export_background, background_metric_items)
+                            self.update_qcombo_items(self.gui.traces_export_metric, plot_metric_items)
+                            self.update_qcombo_items(self.gui.traces_export_background, background_metric_items)
                             self.updating_plot_combos = False
 
         except:
@@ -532,7 +532,6 @@ class _plot_utils:
                             checkbox.hide()
 
             self.repaint()
-            self.pixseq_ui.repaint()
 
             if len(channel_list) > 1:
                 for col_index, (channel, label) in enumerate(zip(channel_list,label_list)):
@@ -721,7 +720,7 @@ class _plot_utils:
             if len(n_traces) > 0:
 
                 n_traces = max(n_traces)
-                self.plot_localisation_number = self.findChild(QSlider, 'plot_localisation_number')
+                self.plot_localisation_number = self.gui.plot_localisation_number
                 self.plot_localisation_number.setMaximum(n_traces-1)
 
                 plot_list = []

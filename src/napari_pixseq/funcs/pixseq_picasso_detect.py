@@ -185,10 +185,10 @@ class _picasso_detect_utils:
 
         except:
             print(traceback.format_exc())
-            self.picasso_progressbar.setValue(0)
-            self.picasso_detect.setEnabled(True)
-            self.picasso_fit.setEnabled(True)
-            self.picasso_detectfit.setEnabled(True)
+            self.gui.picasso_progressbar.setValue(0)
+            self.gui.picasso_detect.setEnabled(True)
+            self.gui.picasso_fit.setEnabled(True)
+            self.gui.picasso_detectfit.setEnabled(True)
 
     def _picasso_wrapper_result(self, result):
 
@@ -199,9 +199,9 @@ class _picasso_detect_utils:
 
             fitted, loc_dict, render_loc_dict, total_locs = result
 
-            detect_mode = self.picasso_detect_mode.currentText()
-            image_channel = self.picasso_channel.currentText()
-            box_size = int(self.picasso_box_size.currentText())
+            detect_mode = self.gui.picasso_detect_mode.currentText()
+            image_channel = self.gui.picasso_channel.currentText()
+            box_size = int(self.gui.picasso_box_size.currentText())
 
             dataset_names = list(loc_dict.keys())
 
@@ -222,8 +222,8 @@ class _picasso_detect_utils:
 
         try:
 
-            image_channel = self.picasso_channel.currentText()
-            dataset_name = self.picasso_dataset.currentText()
+            image_channel = self.gui.picasso_channel.currentText()
+            dataset_name = self.gui.picasso_dataset.currentText()
 
             if dataset_name == "All Datasets":
                 dataset_name = self.active_dataset
@@ -266,10 +266,10 @@ class _picasso_detect_utils:
         total_locs = 0
         try:
 
-            box_size = int(self.picasso_box_size.currentText())
-            dataset_name = self.picasso_dataset.currentText()
-            frame_mode = self.picasso_frame_mode.currentText()
-            remove_overlapping = self.picasso_remove_overlapping.isChecked()
+            box_size = int(self.gui.picasso_box_size.currentText())
+            dataset_name = self.gui.picasso_dataset.currentText()
+            frame_mode = self.gui.picasso_frame_mode.currentText()
+            remove_overlapping = self.gui.picasso_remove_overlapping.isChecked()
             roi = self.generate_roi()
 
             if dataset_name == "All Datasets":
@@ -404,15 +404,15 @@ class _picasso_detect_utils:
         try:
             if self.dataset_dict != {}:
 
-                min_net_gradient = self.picasso_min_net_gradient.text()
-                image_channel = self.picasso_channel.currentText()
+                min_net_gradient = self.gui.picasso_min_net_gradient.text()
+                image_channel = self.gui.picasso_channel.currentText()
 
                 if min_net_gradient.isdigit() and image_channel != "":
 
-                    self.picasso_progressbar.setValue(0)
-                    self.picasso_detect.setEnabled(False)
-                    self.picasso_fit.setEnabled(False)
-                    self.picasso_detectfit.setEnabled(False)
+                    self.gui.picasso_progressbar.setValue(0)
+                    self.gui.picasso_detect.setEnabled(False)
+                    self.gui.picasso_fit.setEnabled(False)
+                    self.gui.picasso_detectfit.setEnabled(False)
 
                     self.update_ui(init=True)
 
@@ -421,7 +421,7 @@ class _picasso_detect_utils:
                         min_net_gradient=min_net_gradient,
                         image_channel=image_channel,)
 
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.picasso_progressbar))
+                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.picasso_progressbar))
                     self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
@@ -439,8 +439,8 @@ class _picasso_detect_utils:
         if self.verbose:
             print("Generating ROI")
 
-        border_width = self.picasso_roi_border_width.text()
-        window_cropping = self.picasso_window_cropping.isChecked()
+        border_width = self.gui.picasso_roi_border_width.text()
+        window_cropping = self.gui.picasso_window_cropping .isChecked()
 
         roi = None
 
@@ -468,8 +468,8 @@ class _picasso_detect_utils:
 
             if generate_roi:
 
-                dataset = self.picasso_dataset.currentText()
-                channel = self.picasso_channel.currentText()
+                dataset = self.gui.picasso_dataset.currentText()
+                channel = self.gui.picasso_channel.currentText()
 
                 if dataset == "All Datasets":
                     dataset = list(self.dataset_dict.keys())[0]
@@ -511,10 +511,10 @@ class _picasso_detect_utils:
 
         try:
 
-            dataset_name = self.picasso_dataset.currentText()
-            image_channel = self.picasso_channel.currentText()
-            min_net_gradient = int(self.picasso_min_net_gradient.text())
-            box_size = int(self.picasso_box_size.currentText())
+            dataset_name = self.gui.picasso_dataset.currentText()
+            image_channel = self.gui.picasso_channel.currentText()
+            min_net_gradient = int(self.gui.picasso_min_net_gradient.text())
+            box_size = int(self.gui.picasso_box_size.currentText())
 
             path = self.dataset_dict[dataset_name][image_channel.lower()]["path"]
             image_shape = self.dataset_dict[dataset_name][image_channel.lower()]["data"].shape
@@ -582,10 +582,10 @@ class _picasso_detect_utils:
 
         try:
 
-            dataset_name = self.picasso_render_dataset.currentText()
-            image_channel = self.picasso_render_channel.currentText()
-            blur_method = self.picasso_render_blur_method.currentText()
-            min_blur_width = float(self.picasso_render_min_blur.text())
+            dataset_name = self.gui.picasso_render_dataset.currentText()
+            image_channel = self.gui.picasso_render_channel.currentText()
+            blur_method = self.gui.picasso_render_blur_method.currentText()
+            min_blur_width = float(self.gui.picasso_render_min_blur.text())
 
             if (image_channel.lower() in self.localisation_dict["fiducials"][dataset_name].keys()):
                 localisation_dict = self.localisation_dict["fiducials"][dataset_name][image_channel.lower()].copy()
@@ -612,7 +612,7 @@ class _picasso_detect_utils:
                     worker = Worker(self.render_picasso_locs, locs=locs, image_shape=image_shape,
                         blur_method=blur_method, min_blur_width=min_blur_width, pixel_size=pixel_size, )
                     worker.signals.result.connect(self.draw_picasso_render)
-                    worker.signals.finished.connect(self.picasso_render_finished)
+                    worker.signals.finished.connect(self.gui.picasso_render_finished)
                     self.threadpool.start(worker)
 
         except:

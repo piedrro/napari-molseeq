@@ -76,7 +76,7 @@ class _utils_temporal_filtering:
 
             if self.dataset_dict != {}:
 
-                filtering_datasets = self.filtering_datasets.currentText()
+                filtering_datasets = self.gui.filtering_datasets.currentText()
 
                 if filtering_datasets == "All Datasets":
                     dataset_names = list(self.dataset_dict.keys())
@@ -97,8 +97,8 @@ class _utils_temporal_filtering:
                 if len(channel_names) > 0:
                     channel_names.insert(0, "All Channels")
 
-                self.filtering_channels.clear()
-                self.filtering_channels.addItems(channel_names)
+                self.gui.filtering_channels.clear()
+                self.gui.filtering_channels.addItems(channel_names)
 
         except:
             print(traceback.format_exc())
@@ -119,8 +119,8 @@ class _utils_temporal_filtering:
 
     def _populate_temport_compute_jobs(self):
 
-        filter_size = int(self.filtering_filter_size.currentText())
-        filter_mode = self.filtering_mode.currentText()
+        filter_size = int(self.gui.filtering_filter_size.currentText())
+        filter_mode = self.gui.filtering_mode.currentText()
 
         compute_jobs = []
 
@@ -154,8 +154,8 @@ class _utils_temporal_filtering:
 
         try:
 
-            filtering_datasets = self.filtering_datasets.currentText()
-            filtering_channels = self.filtering_channels.currentText()
+            filtering_datasets = self.gui.filtering_datasets.currentText()
+            filtering_channels = self.gui.filtering_channels.currentText()
 
             if filtering_datasets == "All Datasets":
                 dataset_names = list(self.dataset_dict.keys())
@@ -221,12 +221,12 @@ class _utils_temporal_filtering:
         try:
             self.pixseq_notification("Starting temporal filtering...")
 
-            self.filtering_start.setEnabled(False)
+            self.gui.filtering_start.setEnabled(False)
 
             self.update_ui(init=True)
 
             self.worker = Worker(self._pixseq_temporal_filtering)
-            self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.filtering_progressbar))
+            self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.filtering_progressbar))
             self.worker.signals.finished.connect(self._pixseq_temporal_filtering_finished)
             self.worker.signals.error.connect(self.update_ui)
             self.threadpool.start(self.worker)

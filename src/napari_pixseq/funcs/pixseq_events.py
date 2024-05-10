@@ -43,13 +43,13 @@ class _events_utils:
                             ]
 
             for progressbar in progressbars:
-                if hasattr(self, progressbar):
-                    getattr(self, progressbar).setValue(0)
+                if hasattr(self.gui, progressbar):
+                    getattr(self.gui, progressbar).setValue(0)
 
             if init is True:
 
                 for control in controls:
-                    getattr(self, control).setEnabled(False)
+                    getattr(self.gui, control).setEnabled(False)
 
                 self.stop_event.clear()
                 self.multiprocessing_active = True
@@ -57,7 +57,7 @@ class _events_utils:
             else:
 
                 for control in controls:
-                    getattr(self, control).setEnabled(True)
+                    getattr(self.gui, control).setEnabled(True)
 
                 self.multiprocessing_active = False
 
@@ -106,7 +106,7 @@ class _events_utils:
                 elif new_dataset_index > len(dataset_list) - 1:
                     new_dataset_index = 0
 
-                self.pixseq_dataset_selector.setCurrentIndex(new_dataset_index)
+                self.gui.pixseq_dataset_selector.setCurrentIndex(new_dataset_index)
 
         except:
             print(traceback.format_exc())
@@ -128,7 +128,7 @@ class _events_utils:
 
             if self.dataset_dict  != {}:
 
-                dataset_name = self.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.pixseq_dataset_selector.currentText()
                 channel_name = self.active_channel
 
                 if dataset_name in self.dataset_dict.keys():
@@ -258,7 +258,7 @@ class _events_utils:
                 print(f"Updating active image to channel {channel} and dataset {dataset}")
 
             if dataset == None or dataset not in self.dataset_dict.keys():
-                dataset_name = self.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.pixseq_dataset_selector.currentText()
             else:
                 dataset_name = dataset
 
@@ -430,7 +430,7 @@ class _events_utils:
     def update_channel_select_buttons(self):
 
         try:
-            datast_name = self.pixseq_dataset_selector.currentText()
+            datast_name = self.gui.pixseq_dataset_selector.currentText()
 
             if datast_name in self.dataset_dict.keys():
 
@@ -443,79 +443,79 @@ class _events_utils:
                 channel_refs = list(set(channel_refs))
                 fret_mode = list(set(fret_modes))[0]
 
-                self.pixseq_show_dd.clicked.connect(lambda: None)
-                self.pixseq_show_da.clicked.connect(lambda: None)
-                self.pixseq_show_aa.clicked.connect(lambda: None)
-                self.pixseq_show_ad.clicked.connect(lambda: None)
+                self.gui.pixseq_show_dd.clicked.connect(lambda: None)
+                self.gui.pixseq_show_da.clicked.connect(lambda: None)
+                self.gui.pixseq_show_aa.clicked.connect(lambda: None)
+                self.gui.pixseq_show_ad.clicked.connect(lambda: None)
 
                 if fret_mode == True:
 
-                    self.pixseq_show_dd.setVisible(True)
-                    self.pixseq_show_da.setVisible(True)
-                    self.pixseq_show_aa.setVisible(False)
-                    self.pixseq_show_ad.setVisible(False)
+                    self.gui.pixseq_show_dd.setVisible(True)
+                    self.gui.pixseq_show_da.setVisible(True)
+                    self.gui.pixseq_show_aa.setVisible(False)
+                    self.gui.pixseq_show_ad.setVisible(False)
 
                     if "dd" in channel_refs:
-                        self.pixseq_show_dd.setEnabled(True)
-                        self.pixseq_show_dd.setText("Donor [F1]")
+                        self.gui.pixseq_show_dd.setEnabled(True)
+                        self.gui.pixseq_show_dd.setText("Donor [F1]")
                         self.viewer.bind_key(key="F1", func=self.select_channel_donor, overwrite=True)
-                        self.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="donor"))
+                        self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="donor"))
                     else:
-                        self.pixseq_show_dd.setEnabled(False)
-                        self.pixseq_show_dd.setText("")
+                        self.gui.pixseq_show_dd.setEnabled(False)
+                        self.gui.pixseq_show_dd.setText("")
 
                     if "da" in channel_refs:
-                        self.pixseq_show_da.setEnabled(True)
-                        self.pixseq_show_da.setText("Acceptor [F2]")
+                        self.gui.pixseq_show_da.setEnabled(True)
+                        self.gui.pixseq_show_da.setText("Acceptor [F2]")
                         self.viewer.bind_key(key="F2", func=self.select_channel_acceptor, overwrite=True)
-                        self.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="acceptor"))
+                        self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="acceptor"))
                     else:
-                        self.pixseq_show_da.setEnabled(False)
-                        self.pixseq_show_da.setText("")
+                        self.gui.pixseq_show_da.setEnabled(False)
+                        self.gui.pixseq_show_da.setText("")
 
                 else:
 
-                    self.pixseq_show_dd.setVisible(True)
-                    self.pixseq_show_da.setVisible(True)
-                    self.pixseq_show_aa.setVisible(True)
-                    self.pixseq_show_ad.setVisible(True)
+                    self.gui.pixseq_show_dd.setVisible(True)
+                    self.gui.pixseq_show_da.setVisible(True)
+                    self.gui.pixseq_show_aa.setVisible(True)
+                    self.gui.pixseq_show_ad.setVisible(True)
 
                     if "dd" in channel_refs:
-                        self.pixseq_show_dd.setText("DD [F1]")
-                        self.pixseq_show_dd.setEnabled(True)
+                        self.gui.pixseq_show_dd.setText("DD [F1]")
+                        self.gui.pixseq_show_dd.setEnabled(True)
                         self.viewer.bind_key(key="F1", func=self.select_channel_dd, overwrite=True)
-                        self.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="dd"))
+                        self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="dd"))
 
                     else:
-                        self.pixseq_show_dd.setText("")
-                        self.pixseq_show_dd.setEnabled(False)
+                        self.gui.pixseq_show_dd.setText("")
+                        self.gui.pixseq_show_dd.setEnabled(False)
 
                     if "da" in channel_refs:
-                        self.pixseq_show_da.setText("DA [F2]")
-                        self.pixseq_show_da.setEnabled(True)
+                        self.gui.pixseq_show_da.setText("DA [F2]")
+                        self.gui.pixseq_show_da.setEnabled(True)
                         self.viewer.bind_key(key="F2", func=self.select_channel_da, overwrite=True)
-                        self.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="da"))
+                        self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="da"))
                     else:
-                        self.pixseq_show_da.setText("")
-                        self.pixseq_show_da.setEnabled(False)
+                        self.gui.pixseq_show_da.setText("")
+                        self.gui.pixseq_show_da.setEnabled(False)
 
                     if "ad" in channel_refs:
-                        self.pixseq_show_ad.setText("AD [F3]")
-                        self.pixseq_show_ad.setEnabled(True)
+                        self.gui.pixseq_show_ad.setText("AD [F3]")
+                        self.gui.pixseq_show_ad.setEnabled(True)
                         self.viewer.bind_key(key="F3", func=self.select_channel_ad, overwrite=True)
-                        self.pixseq_show_ad.clicked.connect(partial(self.update_active_image, channel="ad"))
+                        self.gui.pixseq_show_ad.clicked.connect(partial(self.update_active_image, channel="ad"))
                     else:
-                        self.pixseq_show_ad.setText("")
-                        self.pixseq_show_ad.setEnabled(False)
+                        self.gui.pixseq_show_ad.setText("")
+                        self.gui.pixseq_show_ad.setEnabled(False)
 
                     if "aa" in channel_refs:
-                        self.pixseq_show_aa.setText("AA [F4]")
-                        self.pixseq_show_aa.setEnabled(True)
+                        self.gui.pixseq_show_aa.setText("AA [F4]")
+                        self.gui.pixseq_show_aa.setEnabled(True)
                         self.viewer.bind_key(key="F4", func=self.select_channel_aa, overwrite=True)
-                        self.pixseq_show_aa.clicked.connect(partial(self.update_active_image, channel="aa"))
+                        self.gui.pixseq_show_aa.clicked.connect(partial(self.update_active_image, channel="aa"))
                     else:
-                        self.pixseq_show_aa.setText("")
-                        self.pixseq_show_aa.setEnabled(False)
+                        self.gui.pixseq_show_aa.setText("")
+                        self.gui.pixseq_show_aa.setEnabled(False)
 
         except:
             print(traceback.format_exc())
@@ -525,16 +525,16 @@ class _events_utils:
 
         try:
 
-            if self.pixseq_append.isChecked():
-                self.pixseq_append_dataset.setEnabled(True)
-                self.pixseq_append_dataset_label.setEnabled(True)
-                self.pixseq_append_dataset.setVisible(True)
-                self.pixseq_append_dataset_label.setVisible(True)
+            if self.gui.pixseq_append.isChecked():
+                self.gui.pixseq_append_dataset.setEnabled(True)
+                self.gui.pixseq_append_dataset_label.setEnabled(True)
+                self.gui.pixseq_append_dataset.setVisible(True)
+                self.gui.pixseq_append_dataset_label.setVisible(True)
             else:
-                self.pixseq_append_dataset.setEnabled(False)
-                self.pixseq_append_dataset_label.setEnabled(False)
-                self.pixseq_append_dataset.setVisible(False)
-                self.pixseq_append_dataset_label.setVisible(False)
+                self.gui.pixseq_append_dataset.setEnabled(False)
+                self.gui.pixseq_append_dataset_label.setEnabled(False)
+                self.gui.pixseq_append_dataset.setVisible(False)
+                self.gui.pixseq_append_dataset_label.setVisible(False)
 
         except:
             print(traceback.format_exc())
@@ -550,31 +550,31 @@ class _events_utils:
 
         def update_channel_layout(self, show = True):
             if show:
-                self.pixseq_channel_layout.setEnabled(True)
-                self.pixseq_channel_layout.clear()
-                self.pixseq_channel_layout.addItems(["Donor-Acceptor", "Acceptor-Donor"])
-                self.pixseq_channel_layout.setHidden(False)
-                self.pixseq_channel_layout_label.setHidden(False)
+                self.gui.pixseq_channel_layout.setEnabled(True)
+                self.gui.pixseq_channel_layout.clear()
+                self.gui.pixseq_channel_layout.addItems(["Donor-Acceptor", "Acceptor-Donor"])
+                self.gui.pixseq_channel_layout.setHidden(False)
+                self.gui.pixseq_channel_layout_label.setHidden(False)
             else:
-                self.pixseq_channel_layout.setEnabled(False)
-                self.pixseq_channel_layout.clear()
-                self.pixseq_channel_layout.setHidden(True)
-                self.pixseq_channel_layout_label.setHidden(True)
+                self.gui.pixseq_channel_layout.setEnabled(False)
+                self.gui.pixseq_channel_layout.clear()
+                self.gui.pixseq_channel_layout.setHidden(True)
+                self.gui.pixseq_channel_layout_label.setHidden(True)
 
         def update_alex_first_frame(self, show = True):
             if show:
-                self.pixseq_alex_first_frame.setEnabled(True)
-                self.pixseq_alex_first_frame.clear()
-                self.pixseq_alex_first_frame.addItems(["Donor", "Acceptor"])
-                self.pixseq_alex_first_frame.setHidden(False)
-                self.pixseq_alex_first_frame_label.setHidden(False)
+                self.gui.pixseq_alex_first_frame.setEnabled(True)
+                self.gui.pixseq_alex_first_frame.clear()
+                self.gui.pixseq_alex_first_frame.addItems(["Donor", "Acceptor"])
+                self.gui.pixseq_alex_first_frame.setHidden(False)
+                self.gui.pixseq_alex_first_frame_label.setHidden(False)
             else:
-                self.pixseq_alex_first_frame.setEnabled(False)
-                self.pixseq_alex_first_frame.clear()
-                self.pixseq_alex_first_frame.setHidden(True)
-                self.pixseq_alex_first_frame_label.setHidden(True)
+                self.gui.pixseq_alex_first_frame.setEnabled(False)
+                self.gui.pixseq_alex_first_frame.clear()
+                self.gui.pixseq_alex_first_frame.setHidden(True)
+                self.gui.pixseq_alex_first_frame_label.setHidden(True)
 
-        import_mode = self.pixseq_import_mode.currentText()
+        import_mode = self.gui.pixseq_import_mode.currentText()
 
         if import_mode in ["Donor", "Acceptor"]:
             update_channel_layout(self, show = False)
@@ -648,9 +648,9 @@ class _events_utils:
 
         try:
 
-            dataset_name = self.update_labels_dataset.currentText()
-            gap_label = self.gap_label.currentText()
-            sequence_label = self.sequence_label.currentText()
+            dataset_name = self.gui.update_labels_dataset.currentText()
+            gap_label = self.gui.gap_label.currentText()
+            sequence_label = self.gui.sequence_label.currentText()
 
             if dataset_name in self.dataset_dict.keys():
                 for channel_dict in self.dataset_dict[dataset_name].values():
@@ -674,7 +674,7 @@ class _events_utils:
 
         try:
 
-            dataset_name = self.delete_dataset_name.currentText()
+            dataset_name = self.gui.delete_dataset_name.currentText()
 
             if dataset_name in self.dataset_dict.keys():
 
@@ -705,8 +705,8 @@ class _events_utils:
 
         try:
 
-            old_name = self.pixseq_old_dataset_name.currentText()
-            new_name = self.pixseq_new_dataset_name.text()
+            old_name = self.gui.pixseq_old_dataset_name.currentText()
+            new_name = self.gui.pixseq_new_dataset_name.text()
 
             if old_name != "":
 
@@ -756,9 +756,9 @@ class _events_utils:
 
     def update_picasso_options(self):
 
-        if self.picasso_detect_mode.currentText() == "Fiducials":
-            self.picasso_frame_mode.clear()
-            self.picasso_frame_mode.addItems(["Active", "All"])
+        if self.gui.picasso_detect_mode.currentText() == "Fiducials":
+            self.gui.picasso_frame_mode.clear()
+            self.gui.picasso_frame_mode.addItems(["Active", "All"])
         else:
-            self.picasso_frame_mode.clear()
-            self.picasso_frame_mode.addItem("Active")
+            self.gui.picasso_frame_mode.clear()
+            self.gui.picasso_frame_mode.addItem("Active")

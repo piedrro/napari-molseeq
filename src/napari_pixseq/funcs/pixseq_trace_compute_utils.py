@@ -666,7 +666,7 @@ class _trace_compute_utils:
 
         try:
 
-            self.traces_spot_size = self.findChild(QComboBox, "traces_spot_size")
+            self.traces_spot_size = self.gui.traces_spot_size
 
             spot_size = int(self.traces_spot_size.currentText())
             spot_shape = self.traces_spot_shape.currentText()

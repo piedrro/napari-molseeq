@@ -127,18 +127,18 @@ class _import_utils:
             if self.verbose:
                 print("Populating import lists/metadata...")
 
-            import_mode = self.pixseq_import_mode.currentText()
-            import_limit_combo = self.pixseq_import_limt.currentText()
-            channel_layout = self.pixseq_channel_layout.currentText()
-            alex_first_frame = self.pixseq_alex_first_frame.currentText()
+            import_mode = self.gui.pixseq_import_mode.currentText()
+            import_limit_combo = self.gui.pixseq_import_limt.currentText()
+            channel_layout = self.gui.pixseq_channel_layout.currentText()
+            alex_first_frame = self.gui.pixseq_alex_first_frame.currentText()
 
             for path_index, path in enumerate(paths):
 
                 path = self.format_import_path(path)
                 file_name = os.path.basename(path)
 
-                if self.pixseq_append.isChecked():
-                    dataset_name = self.pixseq_append_dataset.currentText()
+                if self.gui.pixseq_append.isChecked():
+                    dataset_name = self.gui.pixseq_append_dataset.currentText()
                 else:
                     dataset_name = file_name
 
@@ -150,7 +150,7 @@ class _import_utils:
                 if import_mode.lower() in ["donor", "acceptor", "dd", "da", "ad", "aa"]:
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.pixseq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -193,7 +193,7 @@ class _import_utils:
                 elif import_mode.lower() == "fret":
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.pixseq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -240,7 +240,7 @@ class _import_utils:
                 elif import_mode.lower() == "alex":
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.pixseq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -305,8 +305,8 @@ class _import_utils:
 
                     image_list.append(image_dict)
 
-                channel_layout = self.pixseq_channel_layout.currentText()
-                alex_first_frame = self.pixseq_alex_first_frame.currentText()
+                channel_layout = self.gui.pixseq_channel_layout.currentText()
+                alex_first_frame = self.gui.pixseq_alex_first_frame.currentText()
 
                 if dataset_name not in import_dict.keys():
                     import_dict[dataset_name] = {"path":path,
@@ -491,25 +491,25 @@ class _import_utils:
 
             dataset_names = list(self.dataset_dict.keys())
 
-            self.pixseq_dataset_selector.blockSignals(True)
-            self.pixseq_dataset_selector.clear()
-            self.pixseq_dataset_selector.addItems(dataset_names)
-            self.pixseq_dataset_selector.blockSignals(False)
+            self.gui.pixseq_dataset_selector.blockSignals(True)
+            self.gui.pixseq_dataset_selector.clear()
+            self.gui.pixseq_dataset_selector.addItems(dataset_names)
+            self.gui.pixseq_dataset_selector.blockSignals(False)
 
-            self.cluster_dataset.blockSignals(True)
-            self.cluster_dataset.clear()
-            self.cluster_dataset.addItems(dataset_names)
-            self.cluster_dataset.blockSignals(False)
+            self.gui.cluster_dataset.blockSignals(True)
+            self.gui.cluster_dataset.clear()
+            self.gui.cluster_dataset.addItems(dataset_names)
+            self.gui.cluster_dataset.blockSignals(False)
 
             self.tform_compute_dataset.blockSignals(True)
             self.tform_compute_dataset.clear()
             self.tform_compute_dataset.addItems(dataset_names)
             self.tform_compute_dataset.blockSignals(False)
 
-            self.pixseq_old_dataset_name.blockSignals(True)
-            self.pixseq_old_dataset_name.clear()
-            self.pixseq_old_dataset_name.addItems(dataset_names)
-            self.pixseq_old_dataset_name.blockSignals(False)
+            self.gui.pixseq_old_dataset_name.blockSignals(True)
+            self.gui.pixseq_old_dataset_name.clear()
+            self.gui.pixseq_old_dataset_name.addItems(dataset_names)
+            self.gui.pixseq_old_dataset_name.blockSignals(False)
 
             self.align_reference_dataset.blockSignals(True)
             self.align_reference_dataset.clear()
@@ -521,25 +521,25 @@ class _import_utils:
             self.colo_dataset.addItems(dataset_names)
             self.colo_dataset.blockSignals(False)
 
-            self.pixseq_append_dataset.blockSignals(True)
-            self.pixseq_append_dataset.clear()
-            self.pixseq_append_dataset.addItems(dataset_names)
-            self.pixseq_append_dataset.blockSignals(False)
+            self.gui.pixseq_append_dataset.blockSignals(True)
+            self.gui.pixseq_append_dataset.clear()
+            self.gui.pixseq_append_dataset.addItems(dataset_names)
+            self.gui.pixseq_append_dataset.blockSignals(False)
 
-            self.delete_dataset_name.blockSignals(True)
-            self.delete_dataset_name.clear()
-            self.delete_dataset_name.addItems(dataset_names)
-            self.delete_dataset_name.blockSignals(False)
+            self.gui.delete_dataset_name.blockSignals(True)
+            self.gui.delete_dataset_name.clear()
+            self.gui.delete_dataset_name.addItems(dataset_names)
+            self.gui.delete_dataset_name.blockSignals(False)
 
-            self.update_labels_dataset.blockSignals(True)
-            self.update_labels_dataset.clear()
-            self.update_labels_dataset.addItems(dataset_names)
-            self.update_labels_dataset.blockSignals(False)
+            self.gui.update_labels_dataset.blockSignals(True)
+            self.gui.update_labels_dataset.clear()
+            self.gui.update_labels_dataset.addItems(dataset_names)
+            self.gui.update_labels_dataset.blockSignals(False)
 
-            self.import_picasso_dataset.blockSignals(True)
-            self.import_picasso_dataset.clear()
-            self.import_picasso_dataset.addItems(dataset_names)
-            self.import_picasso_dataset.blockSignals(False)
+            self.gui.import_picasso_dataset.blockSignals(True)
+            self.gui.import_picasso_dataset.clear()
+            self.gui.import_picasso_dataset.addItems(dataset_names)
+            self.gui.import_picasso_dataset.blockSignals(False)
 
             self.picasso_filter_dataset.blockSignals(True)
             self.picasso_filter_dataset.clear()
@@ -549,20 +549,20 @@ class _import_utils:
             if len(dataset_names) > 1:
                 dataset_names.insert(0, "All Datasets")
 
-            self.traces_export_dataset.blockSignals(True)
-            self.traces_export_dataset.clear()
-            self.traces_export_dataset.addItems(dataset_names)
-            self.traces_export_dataset.blockSignals(False)
+            self.gui.traces_export_dataset.blockSignals(True)
+            self.gui.traces_export_dataset.clear()
+            self.gui.traces_export_dataset.addItems(dataset_names)
+            self.gui.traces_export_dataset.blockSignals(False)
 
-            self.filtering_datasets.blockSignals(True)
-            self.filtering_datasets.clear()
-            self.filtering_datasets.addItems(dataset_names)
-            self.filtering_datasets.blockSignals(False)
+            self.gui.filtering_datasets.blockSignals(True)
+            self.gui.filtering_datasets.clear()
+            self.gui.filtering_datasets.addItems(dataset_names)
+            self.gui.filtering_datasets.blockSignals(False)
 
-            self.picasso_dataset.blockSignals(True)
-            self.picasso_dataset.clear()
-            self.picasso_dataset.addItems(dataset_names)
-            self.picasso_dataset.blockSignals(False)
+            self.gui.picasso_dataset.blockSignals(True)
+            self.gui.picasso_dataset.clear()
+            self.gui.picasso_dataset.addItems(dataset_names)
+            self.gui.picasso_dataset.blockSignals(False)
 
             self.undrift_dataset_selector.blockSignals(True)
             self.undrift_dataset_selector.clear()
@@ -574,20 +574,20 @@ class _import_utils:
             self.export_dataset.addItems(dataset_names)
             self.export_dataset.blockSignals(False)
 
-            self.locs_export_dataset.blockSignals(True)
-            self.locs_export_dataset.clear()
-            self.locs_export_dataset.addItems(dataset_names)
-            self.locs_export_dataset.blockSignals(False)
+            self.gui.locs_export_dataset.blockSignals(True)
+            self.gui.locs_export_dataset.clear()
+            self.gui.locs_export_dataset.addItems(dataset_names)
+            self.gui.locs_export_dataset.blockSignals(False)
 
             self.simple_plot_dataset.blockSignals(True)
             self.simple_plot_dataset.clear()
             self.simple_plot_dataset.addItems(dataset_names)
             self.simple_plot_dataset.blockSignals(False)
 
-            self.picasso_render_dataset.blockSignals(True)
-            self.picasso_render_dataset.clear()
-            self.picasso_render_dataset.addItems(dataset_names)
-            self.picasso_render_dataset.blockSignals(False)
+            self.gui.picasso_render_dataset.blockSignals(True)
+            self.gui.picasso_render_dataset.clear()
+            self.gui.picasso_render_dataset.addItems(dataset_names)
+            self.gui.picasso_render_dataset.blockSignals(False)
 
         except:
             print(traceback.format_exc())
@@ -639,9 +639,9 @@ class _import_utils:
 
         try:
 
-            append_dataset = self.pixseq_append_dataset.currentText()
+            append_dataset = self.gui.pixseq_append_dataset.currentText()
 
-            if self.pixseq_append.isChecked() and append_dataset not in self.dataset_dict.keys():
+            if self.gui.pixseq_append.isChecked() and append_dataset not in self.dataset_dict.keys():
                 print("Please select a dataset to append to")
             else:
 
@@ -656,7 +656,7 @@ class _import_utils:
 
                     self.worker = Worker(self._pixseq_import_data, paths=paths)
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.pixseq_import_progressbar))
+                        progress_bar=self.gui.pixseq_import_progressbar))
                     self.worker.signals.finished.connect(self._pixseq_import_data_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)

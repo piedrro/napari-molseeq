@@ -24,9 +24,9 @@ class _export_traces_utils:
 
         if self.traces_dict != {}:
 
-            dataset_name = self.traces_export_dataset.currentText()
-            export_channel = self.traces_export_channel.currentText()
-            export_mode = self.traces_export_mode.currentText()
+            dataset_name = self.gui.traces_export_dataset.currentText()
+            export_channel = self.gui.traces_export_channel.currentText()
+            export_mode = self.gui.traces_export_mode.currentText()
 
             if dataset_name == "All Datasets":
                 dataset_name = list(self.traces_dict.keys())[0]
@@ -253,10 +253,10 @@ class _export_traces_utils:
 
     def populate_json_dict(self, progress_callback=None):
 
-        dataset_name = self.traces_export_dataset.currentText()
-        channel_name = self.traces_export_channel.currentText()
-        metric_name = self.traces_export_metric.currentText()
-        background_mode = self.traces_export_background.currentText()
+        dataset_name = self.gui.traces_export_dataset.currentText()
+        channel_name = self.gui.traces_export_channel.currentText()
+        metric_name = self.gui.traces_export_metric.currentText()
+        background_mode = self.gui.traces_export_background.currentText()
 
         metric_key = self.get_dict_key(self.metric_dict, metric_name)
 
@@ -404,10 +404,10 @@ class _export_traces_utils:
         export_dict = {}
 
         try:
-            dataset_name = self.traces_export_dataset.currentText()
-            channel_name = self.traces_export_channel.currentText()
-            metric_name = self.traces_export_metric.currentText()
-            background_mode = self.traces_export_background.currentText()
+            dataset_name = self.gui.traces_export_dataset.currentText()
+            channel_name = self.gui.traces_export_channel.currentText()
+            metric_name = self.gui.traces_export_metric.currentText()
+            background_mode = self.gui.traces_export_background.currentText()
 
             metric_key = self.get_dict_key(self.metric_dict, metric_name)
 
@@ -525,7 +525,7 @@ class _export_traces_utils:
 
                 self.update_ui(init=True)
 
-                export_mode = self.traces_export_mode.currentText()
+                export_mode = self.gui.traces_export_mode.currentText()
 
                 if export_mode == "JSON Dataset":
 
@@ -640,10 +640,10 @@ class _export_traces_utils:
 
         try:
 
-            dataset_name = self.traces_export_dataset.currentText()
-            channel_name = self.traces_export_channel.currentText()
-            metric_name = self.traces_export_metric.currentText()
-            background_mode = self.traces_export_background.currentText()
+            dataset_name = self.gui.traces_export_dataset.currentText()
+            channel_name = self.gui.traces_export_channel.currentText()
+            metric_name = self.gui.traces_export_metric.currentText()
+            background_mode = self.gui.traces_export_background.currentText()
 
             metric_key = self.get_dict_key(self.metric_dict, metric_name)
 
@@ -749,8 +749,8 @@ class _export_traces_utils:
         try:
             export_channel_list = []
 
-            export_mode = self.traces_export_mode.currentText()
-            export_dataset = self.traces_export_dataset.currentText()
+            export_mode = self.gui.traces_export_mode.currentText()
+            export_dataset = self.gui.traces_export_dataset.currentText()
 
             if export_dataset != "":
 
@@ -792,15 +792,15 @@ class _export_traces_utils:
                     multi_channel_list = ["All Channels", "FRET Data", "ALEX Data"]
                     export_channel_list = [chan for chan in export_channel_list if chan not in multi_channel_list]
 
-                self.traces_export_channel.blockSignals(True)
-                self.traces_export_channel.clear()
-                self.traces_export_channel.addItems(export_channel_list)
-                self.traces_export_channel.blockSignals(True)
+                self.gui.traces_export_channel.blockSignals(True)
+                self.gui.traces_export_channel.clear()
+                self.gui.traces_export_channel.addItems(export_channel_list)
+                self.gui.traces_export_channel.blockSignals(True)
 
                 # if hasattr(self, "traces_dict"):
                 #
-                #     dataset_name = self.traces_export_dataset.currentText()
-                #     channel_name = self.traces_export_channel.currentText()
+                #     dataset_name = self.gui.traces_export_dataset.currentText()
+                #     channel_name = self.gui.traces_export_channel.currentText()
                 #
                 #     if dataset_name in self.traces_dict.keys():
                 #
@@ -824,15 +824,15 @@ class _export_traces_utils:
                 #                 traces_channel_dict = self.traces_dict[dataset_name][channel_name.lower()]
                 #                 metric_names = traces_channel_dict[0].keys()
                 #
-                #                 # self.traces_export_metric.blockSignals(True)
+                #                 # self.gui.traces_export_metric.blockSignals(True)
                 #                 #
-                #                 # self.traces_export_metric.clear()
+                #                 # self.gui.traces_export_metric.clear()
                 #                 #
                 #                 # for metric in metric_names:
                 #                 #     if metric in self.metric_dict.keys():
-                #                 #         self.traces_export_metric.addItem(self.metric_dict[metric])
+                #                 #         self.gui.traces_export_metric.addItem(self.metric_dict[metric])
                 #                 #
-                #                 # self.traces_export_metric.blockSignals(False)
+                #                 # self.gui.traces_export_metric.blockSignals(False)
 
         except:
             print(traceback.format_exc())

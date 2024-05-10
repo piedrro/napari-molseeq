@@ -9,7 +9,7 @@ class _cluster_utils:
     def _cluster_localisations_finished(self):
 
         try:
-            mode = self.cluster_mode.currentText()
+            mode = self.gui.cluster_mode.currentText()
 
             if "fiducials" in mode.lower():
                 self.draw_fiducials(update_vis=True)
@@ -56,9 +56,9 @@ class _cluster_utils:
 
         try:
 
-            mode = self.cluster_mode.currentText()
-            dataset = self.cluster_dataset.currentText()
-            channel = self.cluster_channel.currentText()
+            mode = self.gui.cluster_mode.currentText()
+            dataset = self.gui.cluster_dataset.currentText()
+            channel = self.gui.cluster_channel.currentText()
             remove_overlapping = self.dbscan_remove_overlapping.isChecked()
 
             loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type = "fiducials")
@@ -133,9 +133,9 @@ class _cluster_utils:
 
                 locs, loc_centers, render_locs = result
 
-                mode = self.cluster_mode.currentText()
-                dataset = self.cluster_dataset.currentText()
-                channel = self.cluster_channel.currentText()
+                mode = self.gui.cluster_mode.currentText()
+                dataset = self.gui.cluster_dataset.currentText()
+                channel = self.gui.cluster_channel.currentText()
 
                 fiducial_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
                 bbox_dict = self.localisation_dict["bounding_boxes"]
@@ -153,7 +153,7 @@ class _cluster_utils:
                     if "box_size" in fiducial_dict.keys():
                         box_size = fiducial_dict["box_size"]
                     else:
-                        box_size = int(self.picasso_box_size.currentText())
+                        box_size = int(self.gui.picasso_box_size.currentText())
 
                     bbox_dict["localisations"] = locs
                     bbox_dict["localisation_centres"] = loc_centers
@@ -180,11 +180,11 @@ class _cluster_utils:
 
         try:
 
-            dataset = self.cluster_dataset.currentText()
-            channel = self.cluster_channel.currentText()
-            mode = self.cluster_mode.currentText()
-            eps = self.cluster_eps.text()
-            min_samples = self.dbscan_min_samples.text()
+            dataset = self.gui.cluster_dataset.currentText()
+            channel = self.gui.cluster_channel.currentText()
+            mode = self.gui.cluster_mode.currentText()
+            eps = self.gui.cluster_eps.text()
+            min_samples = self.gui.dbscan_min_samples.text()
 
             eps = self.check_number(eps)
             min_samples = self.check_number(min_samples)

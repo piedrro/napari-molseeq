@@ -1,10 +1,5 @@
-
-from typing import TYPE_CHECKING
-
-from qtpy.QtWidgets import QPushButton
 from qtpy.QtCore import QThreadPool
-from qtpy.QtWidgets import (QWidget,QVBoxLayout, QFrame, QSizePolicy, QSlider, QComboBox,
-    QLineEdit, QProgressBar, QLabel, QCheckBox, QGridLayout, QDoubleSpinBox)
+from qtpy.QtWidgets import (QWidget,QVBoxLayout)
 
 import numpy as np
 import traceback
@@ -12,6 +7,7 @@ from multiprocessing import Manager
 from functools import partial
 import matplotlib.colors as mcolors
 
+from napari_pixseq.GUI import Ui_Frame as gui
 from napari_pixseq.funcs.pixseq_utils_compute import _utils_compute
 from napari_pixseq.funcs.pixseq_undrift_utils import _undrift_utils
 from napari_pixseq.funcs.pixseq_picasso_detect import _picasso_detect_utils
@@ -34,7 +30,7 @@ import napari
 
 
 
-class PixSeqWidget(QWidget,
+class PixSeqWidget(QWidget, gui,
     _undrift_utils, _picasso_detect_utils,
     _import_utils, _events_utils, _export_images_utils,
     _tranform_utils, _trace_compute_utils, _plot_utils,
@@ -49,258 +45,157 @@ class PixSeqWidget(QWidget,
 
         self.viewer = viewer
 
-        from napari_pixseq.GUI.pixseq_ui import Ui_Frame
-
         #create UI
-        self.setLayout(QVBoxLayout())
-        self.form = Ui_Frame()
-        self.pixseq_ui = QFrame()
-        self.pixseq_ui.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        self.pixseq_ui.setMinimumSize(450, 500)
+        self.gui = gui()
+        self.gui.setupUi(self)
 
-        self.form.setupUi(self.pixseq_ui)
-        self.layout().addWidget(self.pixseq_ui)
 
         #create pyqt graph container(s)
-        self.graph_container = self.findChild(QWidget, "graph_container")
-        self.graph_container.setLayout(QVBoxLayout())
-
+        self.gui.graph_container.setLayout(QVBoxLayout())
         self.graph_canvas = CustomPyQTGraphWidget(self)
-        self.graph_container.layout().addWidget(self.graph_canvas)
+        self.gui.graph_container.layout().addWidget(self.graph_canvas)
 
-        self.simple_graph_container = self.findChild(QWidget, "simple_graph_container")
-        self.simple_graph_container.setLayout(QVBoxLayout())
-
+        self.gui.simple_graph_container.setLayout(QVBoxLayout())
         self.simple_graph_canvas = CustomPyQTGraphWidget(self)
-        self.simple_graph_container.layout().addWidget(self.simple_graph_canvas)
+        self.gui.simple_graph_container.layout().addWidget(self.simple_graph_canvas)
 
-        self.filter_graph_container = self.findChild(QWidget, "filter_graph_container")
-        self.filter_graph_container.setLayout(QVBoxLayout())
-
+        self.gui.filter_graph_container.setLayout(QVBoxLayout())
         self.filter_graph_canvas = CustomPyQTGraphWidget(self)
-        self.filter_graph_container.layout().addWidget(self.filter_graph_canvas)
+        self.gui.filter_graph_container.layout().addWidget(self.filter_graph_canvas)
 
 
         # register controls
-        self.pixseq_import_mode = self.findChild(QComboBox, 'pixseq_import_mode')
-        self.pixseq_import_limt = self.findChild(QComboBox, 'pixseq_import_limt')
-        self.pixseq_channel_layout = self.findChild(QComboBox, 'pixseq_channel_layout')
-        self.pixseq_channel_layout_label = self.findChild(QLabel, 'pixseq_channel_layout_label')
-        self.pixseq_alex_first_frame = self.findChild(QComboBox, 'pixseq_alex_first_frame')
-        self.pixseq_alex_first_frame_label = self.findChild(QLabel, 'pixseq_alex_first_frame_label')
-        self.pixseq_import = self.findChild(QPushButton, 'pixseq_import')
-        self.pixseq_import_progressbar = self.findChild(QProgressBar, 'pixseq_import_progressbar')
-        self.pixseq_append = self.findChild(QCheckBox, 'pixseq_append')
-        self.pixseq_append_dataset = self.findChild(QComboBox, 'pixseq_append_dataset')
-        self.pixseq_append_dataset_label = self.findChild(QLabel, 'pixseq_append_dataset_label')
-
-        self.pixseq_old_dataset_name = self.findChild(QComboBox, 'pixseq_old_dataset_name')
-        self.pixseq_new_dataset_name = self.findChild(QLineEdit, 'pixseq_new_dataset_name')
-        self.pixseq_update_dataset_name = self.findChild(QPushButton, 'pixseq_update_dataset_name')
-
-        self.delete_dataset_name = self.findChild(QComboBox, 'delete_dataset_name')
-        self.pixseq_delete_dataset = self.findChild(QPushButton, 'pixseq_delete_dataset')
-
-        self.update_labels_dataset = self.findChild(QComboBox, 'update_labels_dataset')
-        self.sequence_label = self.findChild(QComboBox, 'sequence_label')
-        self.gap_label = self.findChild(QComboBox, 'gap_label')
-        self.pixseq_update_labels = self.findChild(QPushButton, 'pixseq_update_labels')
-
-        self.pixseq_dataset_selector = self.findChild(QComboBox, 'pixseq_dataset_selector')
-        self.pixseq_show_dd = self.findChild(QPushButton, 'pixseq_show_dd')
-        self.pixseq_show_da = self.findChild(QPushButton, 'pixseq_show_da')
-        self.pixseq_show_aa = self.findChild(QPushButton, 'pixseq_show_aa')
-        self.pixseq_show_ad = self.findChild(QPushButton, 'pixseq_show_ad')
-
-        self.import_alex_data = self.findChild(QPushButton, 'import_alex_data')
-        self.channel_selector = self.findChild(QComboBox, 'channel_selector')
-
-        self.import_picasso_type = self.findChild(QComboBox, "import_picasso_type")
-        self.import_picasso_dataset = self.findChild(QComboBox, 'import_picasso_dataset')
-        self.import_picasso_channel = self.findChild(QComboBox, 'import_picasso_channel')
-        self.import_picasso = self.findChild(QPushButton, 'import_picasso')
-
-        self.picasso_dataset = self.findChild(QComboBox, 'picasso_dataset')
-        self.picasso_channel = self.findChild(QComboBox, 'picasso_channel')
-        self.picasso_min_net_gradient = self.findChild(QLineEdit, 'picasso_min_net_gradient')
-        self.picasso_roi_border_width = self.findChild(QLineEdit, 'picasso_roi_border_width')
-        self.picasso_box_size = self.findChild(QComboBox, 'picasso_box_size')
-        self.picasso_frame_mode = self.findChild(QComboBox, 'picasso_frame_mode')
-        self.picasso_detect = self.findChild(QPushButton, 'picasso_detect')
-        self.picasso_fit = self.findChild(QPushButton, 'picasso_fit')
-        self.picasso_detectfit = self.findChild(QPushButton, 'picasso_detectfit')
-        self.picasso_detect_mode = self.findChild(QComboBox, 'picasso_detect_mode')
-        self.picasso_window_cropping = self.findChild(QCheckBox, 'picasso_window_cropping')
-        self.picasso_remove_overlapping = self.findChild(QCheckBox, 'picasso_remove_overlapping')
-        self.picasso_progressbar = self.findChild(QProgressBar, 'picasso_progressbar')
-
-        self.picasso_vis_mode = self.findChild(QComboBox, 'picasso_vis_mode')
-        self.picasso_vis_size = self.findChild(QComboBox, 'picasso_vis_size')
-        self.picasso_vis_opacity = self.findChild(QComboBox, 'picasso_vis_opacity')
-        self.picasso_vis_edge_width = self.findChild(QComboBox, 'picasso_vis_edge_width')
-
-        self.picasso_render_dataset = self.findChild(QComboBox, 'picasso_render_dataset')
-        self.picasso_render_channel = self.findChild(QComboBox, 'picasso_render_channel')
-        self.picasso_render_blur_method = self.findChild(QComboBox, 'picasso_render_blur_method')
-        self.picasso_render_min_blur = self.findChild(QDoubleSpinBox, 'picasso_render_min_blur')
-        self.picasso_render = self.findChild(QPushButton, 'picasso_render')
-
-        self.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-
-        self.cluster_localisations = self.findChild(QPushButton, 'cluster_localisations')
-        self.cluster_mode = self.findChild(QComboBox, 'cluster_mode')
-        self.cluster_channel = self.findChild(QComboBox, 'cluster_channel')
-        self.cluster_dataset = self.findChild(QComboBox, 'cluster_dataset')
-        self.cluster_eps = self.findChild(QLineEdit, "cluster_eps")
-        self.dbscan_min_samples = self.findChild(QLineEdit, "dbscan_min_samples")
-
-        self.undrift_dataset_selector = self.findChild(QComboBox, 'undrift_dataset_selector')
-        self.undrift_channel_selector = self.findChild(QComboBox, 'undrift_channel_selector')
-        self.picasso_undrift = self.findChild(QPushButton, 'picasso_undrift')
-        self.undrift_progressbar = self.findChild(QProgressBar, 'undrift_progressbar')
-
-        self.filtering_datasets = self.findChild(QComboBox, 'filtering_datasets')
-        self.filtering_channels = self.findChild(QComboBox, 'filtering_channels')
-        self.filtering_mode = self.findChild(QComboBox, 'filtering_mode')
-        self.filtering_filter_size = self.findChild(QComboBox, 'filtering_filter_size')
-        self.filtering_start = self.findChild(QPushButton, 'filtering_start')
-        self.filtering_progressbar = self.findChild(QProgressBar, 'filtering_progressbar')
-
-        self.align_reference_dataset = self.findChild(QComboBox, 'align_reference_dataset')
-        self.align_reference_channel = self.findChild(QComboBox, 'align_reference_channel')
-        self.pixseq_align_datasets = self.findChild(QPushButton, 'pixseq_align_datasets')
-        self.align_progressbar = self.findChild(QProgressBar, 'align_progressbar')
-
-        self.pixseq_import_tform = self.findChild(QPushButton, 'pixseq_import_tform')
-
-        self.tform_compute_dataset = self.findChild(QComboBox, 'tform_compute_dataset')
-        self.tform_compute_ref_channel = self.findChild(QComboBox, 'tform_compute_ref_channel')
-        self.tform_compute_target_channel = self.findChild(QComboBox, 'tform_compute_target_channel')
-        self.pixseq_compute_tform = self.findChild(QPushButton, 'pixseq_compute_tform')
-        self.tform_apply_target = self.findChild(QComboBox, 'tform_apply_target')
-        self.pixseq_apply_tform = self.findChild(QPushButton, 'pixseq_apply_tform')
-        self.tform_apply_progressbar = self.findChild(QProgressBar, 'tform_apply_progressbar')
-        self.save_tform = self.findChild(QCheckBox, 'save_tform')
-
-        self.pixseq_link_localisations = self.findChild(QPushButton, 'pixseq_link_localisations')
-
-        self.export_dataset = self.findChild(QComboBox, 'export_dataset')
-        self.export_channel = self.findChild(QComboBox, 'export_channel')
-        self.pixseq_export_data = self.findChild(QPushButton, 'pixseq_export_data')
-
-        self.traces_export_mode = self.findChild(QComboBox, 'traces_export_mode')
-        self.traces_export_dataset = self.findChild(QComboBox, 'traces_export_dataset')
-        self.traces_export_channel = self.findChild(QComboBox, 'traces_export_channel')
-        self.traces_export_metric = self.findChild(QComboBox, 'traces_export_metric')
-        self.traces_export_background = self.findChild(QComboBox, 'traces_export_background')
-        self.pixseq_export_traces = self.findChild(QPushButton, 'pixseq_export_traces')
-        self.export_progressbar = self.findChild(QProgressBar, 'export_progressbar')
-
-        self.locs_export_mode = self.findChild(QComboBox, 'locs_export_mode')
-        self.locs_export_dataset = self.findChild(QComboBox, 'locs_export_dataset')
-        self.locs_export_channel = self.findChild(QComboBox, 'locs_export_channel')
-        self.pixseq_export_locs = self.findChild(QPushButton, 'pixseq_export_locs')
-
-        self.traces_spot_size = self.findChild(QComboBox, "traces_spot_size")
-        self.traces_spot_shape = self.findChild(QComboBox, "traces_spot_shape")
-        self.traces_background_buffer = self.findChild(QComboBox, "traces_background_buffer")
-        self.traces_background_width = self.findChild(QComboBox, "traces_background_width")
-        self.compute_with_picasso = self.findChild(QCheckBox, "compute_with_picasso")
-        self.compute_global_background = self.findChild(QCheckBox, "compute_global_background")
-        self.traces_visualise_masks = self.findChild(QPushButton, 'traces_visualise_masks')
-        self.traces_visualise_bg_masks = self.findChild(QPushButton, 'traces_visualise_bg_masks')
-        self.traces_channel_selection_layout = self.findChild(QGridLayout, 'traces_channel_selection_layout')
-        self.compute_traces = self.findChild(QPushButton, 'compute_traces')
-        self.compute_traces_progressbar = self.findChild(QProgressBar, 'compute_traces_progressbar')
-
-        self.plot_data = self.findChild(QComboBox, 'plot_data')
-        self.plot_channel = self.findChild(QComboBox, 'plot_channel')
-        self.plot_metric = self.findChild(QComboBox, 'plot_metric')
-        self.plot_background_mode = self.findChild(QComboBox, 'plot_background_mode')
-        self.split_plots = self.findChild(QCheckBox, 'split_plots')
-        self.normalise_plots = self.findChild(QCheckBox, 'normalise_plots')
-        self.focus_on_bbox = self.findChild(QCheckBox, 'focus_on_bbox')
-        self.plot_compute_progress = self.findChild(QProgressBar, 'plot_compute_progress')
-        self.plot_localisation_number = self.findChild(QSlider, 'plot_localisation_number')
-        self.plot_localisation_number_label = self.findChild(QLabel, 'plot_localisation_number_label')
-
-        self.colo_dataset = self.findChild(QComboBox, 'colo_dataset')
-        self.colo_channel1 = self.findChild(QComboBox, 'colo_channel1')
-        self.colo_channel2 = self.findChild(QComboBox, 'colo_channel2')
-        self.colo_max_dist = self.findChild(QComboBox, 'colo_max_dist')
-        self.colo_bboxes = self.findChild(QCheckBox, 'colo_bboxes')
-        self.colo_fiducials = self.findChild(QCheckBox, 'colo_fiducials')
-        self.pixseq_colocalize = self.findChild(QPushButton, 'pixseq_colocalize')
 
 
-        self.add_line = self.findChild(QPushButton, 'add_line')
-        self.add_box = self.findChild(QPushButton, 'add_box')
-        self.add_background = self.findChild(QPushButton, 'add_background')
-        self.simple_plot_mode = self.findChild(QComboBox, 'simple_plot_mode')
-        self.simple_plot_channel = self.findChild(QComboBox, 'simple_plot_channel')
-        self.simple_plot_dataset = self.findChild(QComboBox, 'simple_plot_dataset')
-        self.simple_subtract_background = self.findChild(QCheckBox, 'simple_subtract_background')
+        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
 
-        self.picasso_filter_type = self.findChild(QComboBox, 'picasso_filter_type')
-        self.picasso_filter_dataset = self.findChild(QComboBox, 'picasso_filter_dataset')
-        self.picasso_filter_dataset_label = self.findChild(QLabel, 'picasso_filter_dataset_label')
-        self.picasso_filter_channel = self.findChild(QComboBox, 'picasso_filter_channel')
-        self.filter_criterion = self.findChild(QComboBox, 'filter_criterion')
-        self.filter_min = self.findChild(QDoubleSpinBox, 'filter_min')
-        self.filter_max = self.findChild(QDoubleSpinBox, 'filter_max')
-        self.filter_localisations = self.findChild(QPushButton, 'filter_localisations')
 
-        self.dev_verbose = self.findChild(QCheckBox, 'dev_verbose')
+        self.undrift_dataset_selector = self.gui.undrift_dataset_selector
+        self.undrift_channel_selector = self.gui.undrift_channel_selector
+        self.picasso_undrift = self.gui.picasso_undrift
+        self.undrift_progressbar = self.gui.undrift_progressbar
+
+        self.align_reference_dataset = self.gui.align_reference_dataset
+        self.align_reference_channel = self.gui.align_reference_channel
+        self.pixseq_align_datasets = self.gui.pixseq_align_datasets
+        self.align_progressbar = self.gui.align_progressbar
+
+        self.tform_compute_dataset = self.gui.tform_compute_dataset
+        self.tform_compute_ref_channel = self.gui.tform_compute_ref_channel
+        self.tform_compute_target_channel = self.gui.tform_compute_target_channel
+        self.pixseq_compute_tform = self.gui.pixseq_compute_tform
+        self.tform_apply_target = self.gui.tform_apply_target
+        self.pixseq_apply_tform = self.gui.pixseq_apply_tform
+        self.tform_apply_progressbar = self.gui.tform_apply_progressbar
+        self.save_tform = self.gui.save_tform
+
+        self.export_dataset = self.gui.export_dataset
+        self.export_channel = self.gui.export_channel
+        self.pixseq_export_data = self.gui.pixseq_export_data
+
+        self.pixseq_export_traces = self.gui.pixseq_export_traces
+        self.export_progressbar = self.gui.export_progressbar
+
+        self.pixseq_export_locs = self.gui.pixseq_export_locs
+
+        self.traces_spot_size = self.gui.traces_spot_size
+        self.traces_spot_shape = self.gui.traces_spot_shape
+        self.traces_background_buffer = self.gui.traces_background_buffer
+        self.traces_background_width = self.gui.traces_background_width
+        self.compute_with_picasso = self.gui.compute_with_picasso
+        self.compute_global_background = self.gui.compute_global_background
+        self.traces_visualise_masks = self.gui.traces_visualise_masks
+        self.traces_channel_selection_layout = self.gui.traces_channel_selection_layout
+        self.compute_traces = self.gui.compute_traces
+        self.compute_traces_progressbar = self.gui.compute_traces_progressbar
+
+        self.plot_data = self.gui.plot_data
+        self.plot_channel = self.gui.plot_channel
+        self.plot_metric = self.gui.plot_metric
+        self.plot_background_mode = self.gui.plot_background_mode
+        self.split_plots = self.gui.split_plots
+        self.normalise_plots = self.gui.normalise_plots
+        self.focus_on_bbox = self.gui.focus_on_bbox
+        self.plot_compute_progress = self.gui.plot_compute_progress
+        self.plot_localisation_number = self.gui.plot_localisation_number
+        self.plot_localisation_number_label = self.gui.plot_localisation_number_label
+
+        self.colo_dataset = self.gui.colo_dataset
+        self.colo_channel1 = self.gui.colo_channel1
+        self.colo_channel2 = self.gui.colo_channel2
+        self.colo_max_dist = self.gui.colo_max_dist
+        self.colo_bboxes = self.gui.colo_bboxes
+        self.colo_fiducials = self.gui.colo_fiducials
+        self.pixseq_colocalize = self.gui.pixseq_colocalize
+
+        self.add_line = self.gui.add_line
+        self.add_box = self.gui.add_box
+        self.add_background = self.gui.add_background
+        self.simple_plot_mode = self.gui.simple_plot_mode
+        self.simple_plot_channel = self.gui.simple_plot_channel
+        self.simple_plot_dataset = self.gui.simple_plot_dataset
+        self.simple_subtract_background = self.gui.simple_subtract_background
+
+        self.picasso_filter_type = self.gui.picasso_filter_type
+        self.picasso_filter_dataset = self.gui.picasso_filter_dataset
+        self.picasso_filter_dataset_label = self.gui.picasso_filter_dataset_label
+        self.picasso_filter_channel = self.gui.picasso_filter_channel
+        self.filter_criterion = self.gui.filter_criterion
+        self.filter_min = self.gui.filter_min
+        self.filter_max = self.gui.filter_max
+        self.filter_localisations = self.gui.filter_localisations
+
+        self.dev_verbose = self.gui.dev_verbose
         self.dev_verbose.stateChanged.connect(self.toggle_verbose)
         self.verbose = False
 
-        self.pixseq_import.clicked.connect(self.pixseq_import_data)
-        self.pixseq_import_mode.currentIndexChanged.connect(self.update_import_options)
-        self.pixseq_update_dataset_name.clicked.connect(self.update_dataset_name)
-        self.pixseq_delete_dataset.clicked.connect(self.delete_dataset)
-        self.pixseq_update_labels.clicked.connect(self.update_nucleotide)
+        self.gui.pixseq_import.clicked.connect(self.pixseq_import_data)
+        self.gui.pixseq_import_mode.currentIndexChanged.connect(self.update_import_options)
+        self.gui.pixseq_update_dataset_name.clicked.connect(self.update_dataset_name)
+        self.gui.pixseq_delete_dataset.clicked.connect(self.delete_dataset)
+        self.gui.pixseq_update_labels.clicked.connect(self.update_nucleotide)
 
-        self.import_picasso.clicked.connect(self.import_picaaso_localisations)
+        self.gui.import_picasso.clicked.connect(self.import_picaaso_localisations)
 
-        self.picasso_detect.clicked.connect(partial(self.pixseq_picasso, detect = True, fit=False))
-        self.picasso_fit.clicked.connect(partial(self.pixseq_picasso, detect = False, fit=True))
-        self.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
-        self.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
-        self.dbscan_remove_overlapping = self.findChild(QCheckBox, "dbscan_remove_overlapping")
+        self.gui.picasso_detect.clicked.connect(partial(self.pixseq_picasso, detect = True, fit=False))
+        self.gui.picasso_fit.clicked.connect(partial(self.pixseq_picasso, detect = False, fit=True))
+        self.gui.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
+        self.gui.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
+        self.dbscan_remove_overlapping = self.gui.dbscan_remove_overlapping
 
-        self.picasso_render.clicked.connect(self.initialise_picasso_render)
+        self.gui.picasso_render.clicked.connect(self.initialise_picasso_render)
 
-        self.pixseq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
-        self.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
-            dataset = self.pixseq_dataset_selector.currentText()))
+        self.gui.pixseq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
+        self.gui.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
+            dataset = self.gui.pixseq_dataset_selector.currentText()))
 
         self.picasso_undrift.clicked.connect(self.undrift_images)
 
         self.pixseq_align_datasets.clicked.connect(self.align_datasets)
         self.align_reference_dataset.currentIndexChanged.connect(self.update_align_reference_channel)
 
-        self.pixseq_import_tform.clicked.connect(self.import_transform_matrix)
+        self.gui.pixseq_import_tform.clicked.connect(self.import_transform_matrix)
         self.pixseq_compute_tform.clicked.connect(self.compute_transform_matrix)
         self.pixseq_apply_tform.clicked.connect(self.apply_transform_matrix)
 
-        self.picasso_detect_mode.currentIndexChanged.connect(self.update_picasso_options)
+        self.gui.picasso_detect_mode.currentIndexChanged.connect(self.update_picasso_options)
 
         self.pixseq_export_data.clicked.connect(self.export_data)
         self.export_dataset.currentIndexChanged.connect(self.update_export_options)
 
         self.pixseq_export_locs.clicked.connect(self.initialise_export_locs)
-        self.locs_export_mode.currentIndexChanged.connect(self.update_loc_export_options)
-        self.locs_export_dataset.currentIndexChanged.connect(self.update_loc_export_options)
+        self.gui.locs_export_mode.currentIndexChanged.connect(self.update_loc_export_options)
+        self.gui.locs_export_dataset.currentIndexChanged.connect(self.update_loc_export_options)
 
         self.pixseq_export_traces.clicked.connect(self.export_traces)
-        self.traces_export_dataset.currentIndexChanged.connect(self.populate_export_combos)
+        self.gui.traces_export_dataset.currentIndexChanged.connect(self.populate_export_combos)
 
         self.viewer.dims.events.current_step.connect(partial(self.draw_fiducials, update_vis = False))
 
@@ -324,14 +219,14 @@ class PixSeqWidget(QWidget,
         self.plot_localisation_number.valueChanged.connect(lambda: self.update_slider_label("plot_localisation_number"))
         self.plot_localisation_number.valueChanged.connect(partial(self.plot_traces))
 
-        self.filtering_start.clicked.connect(self.pixseq_temporal_filtering)
-        self.filtering_datasets.currentIndexChanged.connect(self.update_filtering_channels)
+        self.gui.filtering_start.clicked.connect(self.pixseq_temporal_filtering)
+        self.gui.filtering_datasets.currentIndexChanged.connect(self.update_filtering_channels)
 
-        self.pixseq_append.stateChanged.connect(self.update_import_append_options)
+        self.gui.pixseq_append.stateChanged.connect(self.update_import_append_options)
 
-        self.picasso_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_dataset", channel_selector="picasso_channel"))
+        self.gui.picasso_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_dataset", channel_selector="picasso_channel"))
         self.undrift_dataset_selector.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector"))
-        self.cluster_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="cluster_dataset", channel_selector="cluster_channel"))
+        self.gui.cluster_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="cluster_dataset", channel_selector="cluster_channel"))
         self.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_ref_channel", channel_type="donor"))
         self.tform_compute_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor"))
         self.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
@@ -339,7 +234,7 @@ class PixSeqWidget(QWidget,
         self.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
 
 
-        self.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
+        self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
 
         self.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
@@ -423,7 +318,7 @@ class PixSeqWidget(QWidget,
     def dev_function(self, event):
 
         print("Dev function called")
-        self.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
+        self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
     def select_image_layer(self):
 
@@ -440,10 +335,10 @@ class PixSeqWidget(QWidget,
         try:
             layer_names = [layer.name for layer in self.viewer.layers]
 
-            vis_mode = self.picasso_vis_mode.currentText()
-            vis_size = float(self.picasso_vis_size.currentText())
-            vis_opacity = float(self.picasso_vis_opacity.currentText())
-            vis_edge_width = float(self.picasso_vis_edge_width.currentText())
+            vis_mode = self.gui.picasso_vis_mode.currentText()
+            vis_size = float(self.gui.picasso_vis_size.currentText())
+            vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
+            vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
 
             if vis_mode.lower() == "square":
                 symbol = "square"
@@ -522,10 +417,10 @@ class PixSeqWidget(QWidget,
 
                     # print(f"Drawing {len(localisation_centres)} bounding boxes")
 
-                    vis_mode = self.picasso_vis_mode.currentText()
-                    vis_size = float(self.picasso_vis_size.currentText())
-                    vis_opacity = float(self.picasso_vis_opacity.currentText())
-                    vis_edge_width = float(self.picasso_vis_edge_width.currentText())
+                    vis_mode = self.gui.picasso_vis_mode.currentText()
+                    vis_size = float(self.gui.picasso_vis_size.currentText())
+                    vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
+                    vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
 
                     if vis_mode.lower() == "square":
                         symbol = "square"
@@ -583,7 +478,7 @@ class PixSeqWidget(QWidget,
 
                 active_frame = self.viewer.dims.current_step[0]
 
-                dataset_name = self.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.pixseq_dataset_selector.currentText()
                 image_channel = self.active_channel
 
                 if image_channel != "" and dataset_name != "":
@@ -595,10 +490,10 @@ class PixSeqWidget(QWidget,
 
                             render_locs = localisation_dict["render_locs"]
 
-                            vis_mode = self.picasso_vis_mode.currentText()
-                            vis_size = float(self.picasso_vis_size.currentText())
-                            vis_opacity = float(self.picasso_vis_opacity.currentText())
-                            vis_edge_width = float(self.picasso_vis_edge_width.currentText())
+                            vis_mode = self.gui.picasso_vis_mode.currentText()
+                            vis_size = float(self.gui.picasso_vis_size.currentText())
+                            vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
+                            vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
 
                             if vis_mode.lower() == "square":
                                 symbol = "square"
