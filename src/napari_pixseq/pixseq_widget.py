@@ -49,8 +49,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui = gui()
         self.gui.setupUi(self)
 
-
-        #create pyqt graph container(s)
+        #initialise graph PyQtGraph canvases
         self.gui.graph_container.setLayout(QVBoxLayout())
         self.graph_canvas = CustomPyQTGraphWidget(self)
         self.gui.graph_container.layout().addWidget(self.graph_canvas)
@@ -63,21 +62,44 @@ class PixSeqWidget(QWidget, gui,
         self.filter_graph_canvas = CustomPyQTGraphWidget(self)
         self.gui.filter_graph_container.layout().addWidget(self.filter_graph_canvas)
 
+        #register events
+        self.register_events()
 
-        # register controls
+        #initialise variables
+        self.dataset_dict = {}
+        self.traces_dict = {}
+        self.plot_dict = {}
+        self.contrast_dict = {}
+        self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
+        self.metric_dict = {"spot_mean": "Mean", "spot_median": "Median", "spot_sum": "Sum", "spot_max": "Maximum",
+                            "spot_std": "std", "spot_photons": "Picasso Photons", }
 
-
-        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
-        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-
-        self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
+        self.background_dict = {"None":"None",
+                                "_local_bg": "Local Background",
+                                "_masked_local_bg": "Masked Local Background",
+                                "_global_bg": "Global Background",
+                                "_masked_global_bg": "Masked Global Background",
+                                "_local_bg": "Local Background",
+                                "spot_lsp_bg": "LSP Background",
+                                }
+        self.active_dataset = None
+        self.active_channel = None
         self.verbose = False
+        self.worker = None
+        self.multiprocessing_active = False
+        self.transform_matrix = None
+
+        #create threadpool and stop event
+        self.threadpool = QThreadPool()
+        manager = Manager()
+        self.stop_event = manager.Event()
+
+
+        self.update_import_options()
+        self.update_import_append_options()
+
+
+    def register_events(self):
 
         self.gui.pixseq_import.clicked.connect(self.pixseq_import_data)
         self.gui.pixseq_import_mode.currentIndexChanged.connect(self.update_import_options)
@@ -156,49 +178,13 @@ class PixSeqWidget(QWidget, gui,
         self.gui.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
         self.gui.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
 
-
         self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
-
 
         self.gui.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
         self.gui.picasso_filter_channel.currentIndexChanged.connect(self.update_filter_criterion)
         self.gui.filter_criterion.currentIndexChanged.connect(self.update_criterion_ranges)
         self.gui.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
         self.gui.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
-
-        self.dataset_dict = {}
-        self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
-        self.traces_dict = {}
-        self.plot_dict = {}
-        self.contrast_dict = {}
-
-        self.active_dataset = None
-        self.active_channel = None
-
-        self.threadpool = QThreadPool()
-
-        manager = Manager()
-        self.stop_event = manager.Event()
-
-        self.worker = None
-        self.multiprocessing_active = False
-
-        self.transform_matrix = None
-
-        self.update_import_options()
-        self.update_import_append_options()
-
-        self.metric_dict = {"spot_mean": "Mean", "spot_median": "Median", "spot_sum": "Sum", "spot_max": "Maximum",
-                            "spot_std": "std", "spot_photons": "Picasso Photons", }
-
-        self.background_dict = {"None":"None",
-                                "_local_bg": "Local Background",
-                                "_masked_local_bg": "Masked Local Background",
-                                "_global_bg": "Global Background",
-                                "_masked_global_bg": "Masked Global Background",
-                                "_local_bg": "Local Background",
-                                "spot_lsp_bg": "LSP Background",
-                                }
 
         self.viewer.bind_key('D', self.dev_function)
 
@@ -217,6 +203,18 @@ class PixSeqWidget(QWidget, gui,
         self.gui.add_line.clicked.connect(lambda: self.draw_shapes(mode="line"))
         self.gui.add_box.clicked.connect(lambda: self.draw_shapes(mode="box"))
         self.gui.add_background.clicked.connect(lambda: self.draw_shapes(mode="background"))
+
+        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
+
+        self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
+
 
     def on_add_layer(self, event):
         if event.value.name == "Shapes":

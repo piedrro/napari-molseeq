@@ -162,9 +162,6 @@ class _tranform_utils:
 
             if self.dataset_dict != {}:
 
-                from qtpy.QtWidgets import QComboBox
-                self.gui.tform_apply_target = self.gui.self.gui.tform_apply_target
-
                 apply_channel = self.gui.tform_apply_target.currentText()
 
                 if "donor" in apply_channel.lower():
