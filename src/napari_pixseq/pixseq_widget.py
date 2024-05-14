@@ -25,6 +25,7 @@ from napari_pixseq.funcs.pixseq_temporal_filtering import _utils_temporal_filter
 from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
 from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
 from napari_pixseq.funcs.pixseq_filter_utils import _filter_utils
+from napari_pixseq.funcs.pixseq_segmentation_utils import _segmentation_utils
 
 import napari
 
@@ -36,7 +37,8 @@ class PixSeqWidget(QWidget, gui,
     _tranform_utils, _trace_compute_utils, _plot_utils,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
-    _cluster_utils, _simple_analysis_utils, _filter_utils):
+    _cluster_utils, _simple_analysis_utils,
+    _filter_utils, _segmentation_utils):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -98,6 +100,7 @@ class PixSeqWidget(QWidget, gui,
         self.update_import_options()
         self.update_import_append_options()
 
+        self.widget_notifications = True
 
     def register_events(self):
 
@@ -213,7 +216,18 @@ class PixSeqWidget(QWidget, gui,
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
 
+        self.gui.segment_active.clicked.connect(partial(self.initialise_cellpose, mode = "active"))
+        self.gui.segment_all.clicked.connect(partial(self.initialise_cellpose, mode = "all"))
+        self.gui.cellpose_load_model.clicked.connect(self.load_cellpose_model)
+
+        self.gui.cellpose_flowthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_flowthresh", "cellpose_flowthresh_label"))
+        self.gui.cellpose_maskthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_maskthresh", "cellpose_maskthresh_label"))
+        self.gui.cellpose_minsize.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_minsize", "cellpose_minsize_label"))
+        self.gui.cellpose_diameter.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_diameter", "cellpose_diameter_label"))
+
         self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
+
+
 
 
     def on_add_layer(self, event):

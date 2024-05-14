@@ -29,6 +29,9 @@ class _events_utils:
                         "pixseq_colocalize",
                         "cluster_localisations",
                         "filter_localisations",
+                        "segment_active",
+                        "segment_all",
+                        "cellpose_load_model"
                         ]
 
             progressbars = ["pixseq_import_progressbar",
@@ -420,6 +423,7 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
             self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
+            self.update_channel_selector(dataset_selector="cellpose_dataset", channel_selector="cellpose_channel")
 
         except:
             print(traceback.format_exc())
@@ -762,3 +766,15 @@ class _events_utils:
         else:
             self.gui.picasso_frame_mode.clear()
             self.gui.picasso_frame_mode.addItem("Active")
+
+    def update_cellpose_sliders(self, slider_name, label_name):
+
+        slider = getattr(self.gui, slider_name)
+        label = getattr(self.gui, label_name)
+
+        slider_value = slider.value()
+
+        if (slider_name == "cellpose_flowthresh" or slider_name == "cellpose_maskthresh"):
+            label.setText(str(slider_value / 100))
+        else:
+            label.setText(str(slider_value))

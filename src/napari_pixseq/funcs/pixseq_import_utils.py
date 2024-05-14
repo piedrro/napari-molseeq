@@ -546,6 +546,11 @@ class _import_utils:
             self.gui.picasso_filter_dataset.addItems(dataset_names)
             self.gui.picasso_filter_dataset.blockSignals(False)
 
+            self.gui.cellpose_dataset.blockSignals(True)
+            self.gui.cellpose_dataset.clear()
+            self.gui.cellpose_dataset.addItems(dataset_names)
+            self.gui.cellpose_dataset.blockSignals(False)
+
             if len(dataset_names) > 1:
                 dataset_names.insert(0, "All Datasets")
 

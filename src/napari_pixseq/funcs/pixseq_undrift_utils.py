@@ -76,7 +76,7 @@ def detect_dataset_drift(dat, progress_dict, index):
         if type(segmentation) == int:
             if n_frames > segmentation:
 
-                drift, _ = picasso_undrift(undrift_locs,
+                drift, undrifted_locs = picasso_undrift(undrift_locs,
                     picasso_info,
                     segmentation=segmentation,
                     display=False,
@@ -85,6 +85,7 @@ def detect_dataset_drift(dat, progress_dict, index):
                     )
 
                 dataset_dict["drift"] = drift
+                dataset_dict["undrifted_locs"] = undrifted_locs
 
             else:
                 progress_dict[index] = 100
