@@ -31,7 +31,8 @@ class _events_utils:
                         "filter_localisations",
                         "segment_active",
                         "segment_all",
-                        "cellpose_load_model"
+                        "cellpose_load_model",
+                        "link_localisations",
                         ]
 
             progressbars = ["pixseq_import_progressbar",
@@ -424,6 +425,7 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
             self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
             self.update_channel_selector(dataset_selector="cellpose_dataset", channel_selector="cellpose_channel")
+            self.update_channel_selector(dataset_selector="tracking_dataset", channel_selector="tracking_channel")
 
         except:
             print(traceback.format_exc())

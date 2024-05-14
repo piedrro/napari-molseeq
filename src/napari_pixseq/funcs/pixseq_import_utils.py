@@ -546,6 +546,11 @@ class _import_utils:
             self.gui.picasso_filter_dataset.addItems(dataset_names)
             self.gui.picasso_filter_dataset.blockSignals(False)
 
+            self.gui.tracking_dataset.blockSignals(True)
+            self.gui.tracking_dataset.clear()
+            self.gui.tracking_dataset.addItems(dataset_names)
+            self.gui.tracking_dataset.blockSignals(False)
+
             self.gui.cellpose_dataset.blockSignals(True)
             self.gui.cellpose_dataset.clear()
             self.gui.cellpose_dataset.addItems(dataset_names)

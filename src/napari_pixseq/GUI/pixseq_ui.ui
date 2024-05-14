@@ -1570,7 +1570,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget_6">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab_21">
           <attribute name="title">
@@ -2050,6 +2050,115 @@
               <size>
                <width>413</width>
                <height>173</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="tab_27">
+          <attribute name="title">
+           <string>Tracking</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_29">
+           <item>
+            <widget class="QLabel" name="label_80">
+             <property name="font">
+              <font>
+               <weight>75</weight>
+               <bold>true</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>Link Localisations (TrackPy)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QFormLayout" name="formLayout_25">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_95">
+               <property name="text">
+                <string>Dataset</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="tracking_dataset"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_96">
+               <property name="text">
+                <string>Channel</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="tracking_channel"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_98">
+               <property name="text">
+                <string>Search Range (Pixels)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="trackpy_search_range">
+               <property name="value">
+                <double>1.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_99">
+               <property name="text">
+                <string>Memory (Frames)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="trackpy_memory"/>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_100">
+               <property name="text">
+                <string>Min Track Length (Frames)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QSpinBox" name="min_track_length">
+               <property name="minimum">
+                <number>1</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="remove_unlinked">
+             <property name="text">
+              <string>Remove Unlinked Localisations</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="link_localisations">
+             <property name="text">
+              <string>Link Localisatons</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_26">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>122</height>
               </size>
              </property>
             </spacer>

@@ -26,6 +26,7 @@ from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
 from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
 from napari_pixseq.funcs.pixseq_filter_utils import _filter_utils
 from napari_pixseq.funcs.pixseq_segmentation_utils import _segmentation_utils
+from napari_pixseq.funcs.pixseq_tracking_utils import _tracking_utils
 
 import napari
 
@@ -38,7 +39,7 @@ class PixSeqWidget(QWidget, gui,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
     _cluster_utils, _simple_analysis_utils,
-    _filter_utils, _segmentation_utils):
+    _filter_utils, _segmentation_utils, _tracking_utils,):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -224,6 +225,8 @@ class PixSeqWidget(QWidget, gui,
         self.gui.cellpose_maskthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_maskthresh", "cellpose_maskthresh_label"))
         self.gui.cellpose_minsize.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_minsize", "cellpose_minsize_label"))
         self.gui.cellpose_diameter.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_diameter", "cellpose_diameter_label"))
+
+        self.gui.link_localisations.clicked.connect(self.initialise_tracking)
 
         self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
 
