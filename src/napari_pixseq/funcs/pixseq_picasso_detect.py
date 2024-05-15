@@ -316,8 +316,16 @@ class _picasso_detect_utils:
 
             channel_list = [image_channel.lower()]
 
-            self.shared_frames = self.create_shared_frames(dataset_list=dataset_list,
-                channel_list=channel_list)
+            if frame_mode.lower() == "active":
+                frame_index = self.viewer.dims.current_step[0]
+            else:
+                frame_index = None
+
+            self.shared_frames = self.create_shared_frames(
+                dataset_list=dataset_list,
+                channel_list=channel_list,
+                frame_index=frame_index,
+            )
 
             segmentation_polygons = self.get_segmentation_polygons()
 
@@ -451,11 +459,14 @@ class _picasso_detect_utils:
                         loc_dict[dataset] = locs
                     total_locs += len(locs)
 
+
             self.restore_shared_frames()
+
             self.update_ui()
 
         except:
             print(traceback.format_exc())
+
             self.restore_shared_frames()
 
             self.update_ui()
@@ -493,7 +504,9 @@ class _picasso_detect_utils:
                         min_net_gradient=min_net_gradient,
                         image_channel=image_channel,)
 
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.picasso_progressbar))
+                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                        progress_bar=self.gui.picasso_progressbar))
+
                     self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
