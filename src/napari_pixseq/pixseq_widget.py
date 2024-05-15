@@ -28,6 +28,7 @@ from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_ut
 from napari_pixseq.funcs.pixseq_filter_utils import _filter_utils
 from napari_pixseq.funcs.pixseq_segmentation_utils import _segmentation_utils
 from napari_pixseq.funcs.pixseq_tracking_utils import _tracking_utils
+from napari_pixseq.funcs.pixseq_segmentation_events import _segmentation_events
 
 import napari
 
@@ -40,7 +41,8 @@ class PixSeqWidget(QWidget, gui,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
     _cluster_utils, _simple_analysis_utils,
-    _filter_utils, _segmentation_utils, _tracking_utils,):
+    _filter_utils, _segmentation_utils, _tracking_utils,
+    _segmentation_events):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -236,6 +238,17 @@ class PixSeqWidget(QWidget, gui,
 
         self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
 
+        self.viewer.bind_key(key="a", func=lambda event: self.segmentation_modify_mode(mode="add"), overwrite=True)
+        self.viewer.bind_key(key="e", func=lambda event: self.segmentation_modify_mode(mode="extend"), overwrite=True)
+        self.viewer.bind_key(key="j", func=lambda event: self.segmentation_modify_mode(mode="join"), overwrite=True)
+        self.viewer.bind_key(key="s", func=lambda event: self.segmentation_modify_mode(mode="split"), overwrite=True)
+        self.viewer.bind_key(key="d", func=lambda event: self.segmentation_modify_mode(mode="delete"), overwrite=True)
+
+
+        # self.viewer.bind_key(key="e", func=self.segmentation_modify_mode(mode="extend"), overwrite=True)
+        # self.viewer.bind_key(key="j", func=self.segmentation_modify_mode(mode="join"), overwrite=True)
+        # self.viewer.bind_key(key="s", func=self.segmentation_modify_mode(mode="split"), overwrite=True)
+        # self.viewer.bind_key(key="d", func=self.segmentation_modify_mode(mode="delete"), overwrite=True)
 
 
 
