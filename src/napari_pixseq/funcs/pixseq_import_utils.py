@@ -10,7 +10,7 @@ from multiprocessing import shared_memory, Manager
 from functools import partial
 import tifffile
 import concurrent.futures
-
+from astropy.io import fits
 
 def import_image_data(dat, progress_dict={}, index=0):
 
@@ -22,33 +22,64 @@ def import_image_data(dat, progress_dict={}, index=0):
         channel_frame_list = dat["channel_frame_list"]
         channel_images = dat["channel_images"]
 
+        base, ext = os.path.splitext(path)
+
         n_frames = len(frame_list)
 
-        with Image.open(path) as image:
+        if ext.lower() == ".tif":
 
-            for (frame_index, channels, channel_frame) in zip(frame_list, channel_list, channel_frame_list):
+            with Image.open(path) as image:
 
-                image_shape = dat["image_shape"]
-                stop_event = dat["stop_event"]
+                for (frame_index, channels, channel_frame) in zip(frame_list, channel_list, channel_frame_list):
 
-                if not stop_event.is_set():
+                    image_shape = dat["image_shape"]
+                    stop_event = dat["stop_event"]
 
-                    image.seek(frame_index)
-                    img_frame = np.array(image)
+                    if not stop_event.is_set():
 
-                    if len(channels) == 1:
-                        img_frames = [img_frame]
-                    else:
-                        img_frames = np.array_split(img_frame, 2, axis=-1)
+                        image.seek(frame_index)
+                        img_frame = np.array(image)
 
-                    for channel, channel_img in zip(channels, img_frames):
+                        if len(channels) == 1:
+                            img_frames = [img_frame]
+                        else:
+                            img_frames = np.array_split(img_frame, 2, axis=-1)
 
-                        shared_mem = channel_images[channel]
-                        np_array = np.ndarray(image_shape, dtype=dat["dtype"], buffer=shared_mem.buf)
-                        np_array[channel_frame] = channel_img
+                        for channel, channel_img in zip(channels, img_frames):
 
-                progress = int(((frame_index + 1) / n_frames)*100)
-                progress_dict[index] = progress
+                            shared_mem = channel_images[channel]
+                            np_array = np.ndarray(image_shape, dtype=dat["dtype"], buffer=shared_mem.buf)
+                            np_array[channel_frame] = channel_img
+
+                    progress = int(((frame_index + 1) / n_frames)*100)
+                    progress_dict[index] = progress
+
+        elif ext.lower() == ".fits":
+
+            with fits.open(path) as hdul:
+
+                for (frame_index, channels, channel_frame) in zip(frame_list, channel_list, channel_frame_list):
+
+                    image_shape = dat["image_shape"]
+                    stop_event = dat["stop_event"]
+
+                    if not stop_event.is_set():
+
+                        img_frame = hdul[0].data[frame_index]
+
+                        if len(channels) == 1:
+                            img_frames = [img_frame]
+                        else:
+                            img_frames = np.array_split(img_frame, 2, axis=-1)
+
+                        for channel, channel_img in zip(channels, img_frames):
+
+                            shared_mem = channel_images[channel]
+                            np_array = np.ndarray(image_shape, dtype=dat["dtype"], buffer=shared_mem.buf)
+                            np_array[channel_frame] = channel_img
+
+                    progress = int(((frame_index + 1) / n_frames)*100)
+                    progress_dict[index] = progress
 
     except:
         print(traceback.format_exc())
@@ -80,14 +111,45 @@ class _import_utils:
         if self.verbose:
             print(f"Getting image info for {path}")
 
-        image_size = os.path.getsize(path)  # Get file size directly
+        base, ext = os.path.splitext(path)
 
-        with tifffile.TiffFile(path) as tif:
-            n_frames = len(tif.pages)  # Number of pages (frames)
-            page_shape = tif.pages[0].shape  # Dimensions of the first page
-            dtype = tif.pages[0].dtype  # Data type of the first page
+        if ext.lower() == ".tif":
 
-        image_shape = (n_frames, page_shape[0], page_shape[1])
+            image_size = os.path.getsize(path)  # Get file size directly
+
+            with tifffile.TiffFile(path) as tif:
+                n_frames = len(tif.pages)  # Number of pages (frames)
+                page_shape = tif.pages[0].shape  # Dimensions of the first page
+                dtype = tif.pages[0].dtype  # Data type of the first page
+
+            image_shape = (n_frames, page_shape[0], page_shape[1])
+
+        elif ext.lower() == ".fits":
+
+            image_size = os.path.getsize(path)
+
+            with fits.open(path, mode='readonly', ignore_missing_end=True) as hdul:
+
+                header = hdul[0].header
+
+                # Extract shape information from the header
+                if header['NAXIS'] == 3:
+                    image_shape = (header['NAXIS3'], header['NAXIS2'], header['NAXIS1'])
+                else:
+                    image_shape = (header['NAXIS2'], header['NAXIS1'])
+
+                n_frames = image_shape[0] if len(image_shape) == 3 else 1
+                page_shape = image_shape[1:] if len(image_shape) == 3 else image_shape
+
+                # Determine the data type from BITPIX
+                bitpix_to_dtype = {8: np.dtype('uint8'),
+                                   16: np.dtype('uint16'),
+                                   32: np.dtype('uint32'),
+                                   -32: np.dtype('float32'),
+                                   -64: np.dtype('float64'),
+                                   }
+
+                dtype = bitpix_to_dtype[header['BITPIX']]
 
         return n_frames, image_shape, dtype, image_size
 
@@ -698,7 +760,7 @@ class _import_utils:
             else:
 
                 desktop = os.path.expanduser("~/Desktop")
-                paths = QFileDialog.getOpenFileNames(self, 'Open file', desktop, "Image files (*.tif *.tiff)")[0]
+                paths = QFileDialog.getOpenFileNames(self, 'Open file', desktop, "Image files (*.tif *.fits)")[0]
 
                 paths = [path for path in paths if path != ""]
 
