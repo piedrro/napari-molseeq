@@ -473,6 +473,8 @@ class _picasso_detect_utils:
 
                 min_net_gradient = self.gui.picasso_min_net_gradient.text()
                 image_channel = self.gui.picasso_channel.currentText()
+                frame_mode = self.gui.picasso_frame_mode.currentText()
+                minimise_ram = self.gui.picasso_minimise_ram.isChecked()
 
                 if min_net_gradient.isdigit() and image_channel != "":
 
@@ -482,6 +484,9 @@ class _picasso_detect_utils:
                     self.gui.picasso_detectfit.setEnabled(False)
 
                     self.update_ui(init=True)
+
+                    if minimise_ram == True and frame_mode.lower() != "active":
+                        self.clear_live_images()
 
                     self.worker = Worker(self._picasso_wrapper,
                         detect=detect, fit=fit,

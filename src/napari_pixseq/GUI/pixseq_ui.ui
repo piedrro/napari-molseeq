@@ -216,6 +216,13 @@
             </layout>
            </item>
            <item>
+            <widget class="QCheckBox" name="pixseq_concatenate">
+             <property name="text">
+              <string>Concatenate Files</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QCheckBox" name="pixseq_append">
              <property name="text">
               <string>Append Channel(s) To Exisiting Dataset</string>
@@ -1767,6 +1774,21 @@
                  <string>9</string>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>11</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>13</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>15</string>
+                </property>
+               </item>
               </widget>
              </item>
              <item row="6" column="0">
@@ -1805,7 +1827,14 @@
            <item>
             <widget class="QCheckBox" name="picasso_segmentation_filtering">
              <property name="text">
-              <string>Remove Localisation Outside Segmentations</string>
+              <string>Remove Localisations Outside Segmentations</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="picasso_minimise_ram">
+             <property name="text">
+              <string>Minimise RAM usage</string>
              </property>
             </widget>
            </item>

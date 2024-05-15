@@ -5,7 +5,7 @@ import traceback
 import sys
 from multiprocessing import Process, shared_memory, Pool
 import numpy as np
-
+import napari
 
 class _utils_compute:
 
@@ -184,8 +184,6 @@ class _utils_compute:
             image_layers = [layer for layer in self.viewer.layers if isinstance(layer, napari.layers.Image)]
 
             for layer in image_layers:
-
-                # self.viewer.layers.remove(layer)
 
                 frame_shape = layer.data.shape[1:]
                 empty_frame = np.zeros(frame_shape, dtype=layer.data.dtype)

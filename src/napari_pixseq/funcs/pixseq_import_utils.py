@@ -484,6 +484,8 @@ class _import_utils:
 
         try:
 
+            concat_images = self.gui.pixseq_concatenate.isChecked()
+
             if self.verbose:
                 print("Populating dataset dict")
 
@@ -547,13 +549,35 @@ class _import_utils:
                     image_dict[channel_name]["gap_label"] = None
                     image_dict[channel_name]["sequence_label"] = None
 
-                if dataset_name not in self.dataset_dict.keys():
-                    self.dataset_dict[dataset_name] = image_dict
+                if concat_images == False:
+
+                    if dataset_name not in self.dataset_dict.keys():
+                        self.dataset_dict[dataset_name] = image_dict
+                    else:
+                        for channel_name, channel_dict in image_dict.items():
+                            self.dataset_dict[dataset_name][channel_name] = channel_dict
+
                 else:
-                    for channel_name, channel_dict in image_dict.items():
-                        self.dataset_dict[dataset_name][channel_name] = channel_dict
+                    dataset_name = list(import_dict.keys())[0]
+
+                    if dataset_name not in self.dataset_dict.keys():
+                        self.dataset_dict[dataset_name] = image_dict
+                    else:
+                        for channel_name, channel_dict in image_dict.items():
+                            if channel_name not in self.dataset_dict[dataset_name].keys():
+                                self.dataset_dict[dataset_name][channel_name] = channel_dict
+                            else:
+                                dataset_image = self.dataset_dict[dataset_name][channel_name]["data"]
+                                new_image = image_dict[channel_name]["data"]
+
+                                if dataset_image.shape[1:] == new_image.shape[1:]:
+
+                                    dataset_image = np.concatenate([dataset_image, new_image], axis=0)
+
+                                    self.dataset_dict[dataset_name][channel_name]["data"] = dataset_image
 
         except:
+            print(traceback.format_exc())
             pass
 
     def closed_import_shared_images(self):
