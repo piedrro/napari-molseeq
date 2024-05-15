@@ -1,5 +1,8 @@
 import numpy as np
 import traceback
+
+import pandas as pd
+
 from napari_pixseq.funcs.pixseq_utils_compute import Worker
 import time
 import os
@@ -11,6 +14,7 @@ from functools import partial
 import concurrent.futures
 import multiprocessing
 from picasso.render import render
+from shapely.geometry import Point, Polygon
 
 def remove_overlapping_locs(locs, box_size):
 
@@ -72,6 +76,8 @@ def picasso_detect(dat):
         fit = dat["fit"]
         remove_overlapping = dat["remove_overlapping"]
         stop_event = dat["stop_event"]
+        polygon_filter = dat["polygon_filter"]
+        polygons = dat["polygons"]
 
         if not stop_event.is_set():
 
@@ -120,11 +126,36 @@ def picasso_detect(dat):
             for loc in locs:
                 loc.frame = frame_index
 
-            render_locs= {}
-            render_locs[frame_index] = np.vstack((locs.y, locs.x)).T.tolist()
+            if polygon_filter:
 
-            locs = [loc for loc in locs if len(loc) == expected_loc_length]
-            locs = np.array(locs).view(np.recarray)
+                if len(polygons) > 0 and len(locs) > 0:
+
+                    expected_loc_length += 1
+
+                    loclist = pd.DataFrame(locs).to_dict(orient="records")
+
+                    filtered_locs = []
+
+                    for loc in loclist:
+                        point = Point(loc["x"], loc["y"])
+
+                        for polygon_index, polygon in enumerate(polygons):
+                            if polygon.contains(point):
+                                loc["segmentation"] = polygon_index
+                                filtered_locs.append(loc)
+
+                    locs = pd.DataFrame(filtered_locs).to_records(index=False)
+
+                else:
+                    locs = []
+
+            render_locs = {frame_index: []}
+
+            if len(locs) > 0:
+                render_locs[frame_index] = np.vstack((locs.y, locs.x)).T.tolist()
+
+                locs = [loc for loc in locs if len(loc) == expected_loc_length]
+                locs = np.array(locs).view(np.recarray)
 
             result = {"dataset": dataset, "channel": channel, "frame_index": frame_index,
                       "locs": locs,"render_locs": render_locs}
@@ -138,9 +169,8 @@ def picasso_detect(dat):
 
 class _picasso_detect_utils:
 
-
-
-    def populate_localisation_dict(self, loc_dict, render_loc_dict, detect_mode, image_channel, box_size, fitted=False):
+    def populate_localisation_dict(self, loc_dict, render_loc_dict, detect_mode,
+            image_channel, box_size, fitted=False):
 
         if self.verbose:
             print("Populating localisation dictionary...")
@@ -151,9 +181,14 @@ class _picasso_detect_utils:
 
             for dataset_name, locs in loc_dict.items():
 
-                render_locs = render_loc_dict[dataset_name]
-
                 if detect_mode == "fiducials":
+
+                    if dataset_name not in self.localisation_dict["fiducials"].keys():
+                        self.localisation_dict["fiducials"][dataset_name] = {}
+                    if image_channel not in self.localisation_dict["fiducials"][dataset_name].keys():
+                        self.localisation_dict["fiducials"][dataset_name][image_channel.lower()] = {}
+
+                    render_locs = render_loc_dict[dataset_name]
 
                     loc_centres = self.get_localisation_centres(locs)
 
@@ -165,11 +200,6 @@ class _picasso_detect_utils:
 
                     fiducial_dict["fitted"] = fitted
                     fiducial_dict["box_size"] = box_size
-
-                    if dataset_name not in self.localisation_dict["fiducials"].keys():
-                        self.localisation_dict["fiducials"][dataset_name] = {}
-                    if image_channel not in self.localisation_dict["fiducials"][dataset_name].keys():
-                        self.localisation_dict["fiducials"][dataset_name][image_channel.lower()] = {}
 
                     self.localisation_dict["fiducials"][dataset_name][image_channel.lower()] = fiducial_dict.copy()
 
@@ -231,6 +261,7 @@ class _picasso_detect_utils:
             self.update_active_image(channel=image_channel.lower(), dataset=dataset_name)
 
             self.draw_bounding_boxes()
+            self.draw_fiducials()
 
             self.update_filter_criterion()
             self.update_criterion_ranges()
@@ -240,6 +271,9 @@ class _picasso_detect_utils:
         except:
             print(traceback.format_exc())
 
+
+
+
     def get_frame_locs(self, dataset_name, image_channel, frame_index):
 
         try:
@@ -248,6 +282,8 @@ class _picasso_detect_utils:
                 image_channel.lower(), type = "fiducials")
 
             if "localisations" not in loc_dict.keys():
+                return None
+            elif len(loc_dict["localisations"]) == 0:
                 return None
             else:
                 locs = loc_dict["localisations"]
@@ -270,6 +306,7 @@ class _picasso_detect_utils:
             dataset_name = self.gui.picasso_dataset.currentText()
             frame_mode = self.gui.picasso_frame_mode.currentText()
             remove_overlapping = self.gui.picasso_remove_overlapping.isChecked()
+            polygon_filter = self.gui.picasso_segmentation_filtering.isChecked()
             roi = self.generate_roi()
 
             if dataset_name == "All Datasets":
@@ -279,7 +316,10 @@ class _picasso_detect_utils:
 
             channel_list = [image_channel.lower()]
 
-            self.shared_frames = self.create_shared_frames(dataset_list=dataset_list, channel_list=channel_list)
+            self.shared_frames = self.create_shared_frames(dataset_list=dataset_list,
+                channel_list=channel_list)
+
+            segmentation_polygons = self.get_segmentation_polygons()
 
             compute_jobs = []
 
@@ -299,6 +339,14 @@ class _picasso_detect_utils:
                     frame_list = list(range(n_frames))
 
                 for frame_index in frame_list:
+
+                    polygons = []
+                    if type(segmentation_polygons) == dict:
+                        if frame_index in segmentation_polygons.keys():
+                            polygons = segmentation_polygons[frame_index]
+                    if type(segmentation_polygons) == list:
+                        polygons = segmentation_polygons
+
                     frame_dict = image_dict["frame_dict"][frame_index]
 
                     time_start = time.time()
@@ -310,9 +358,25 @@ class _picasso_detect_utils:
 
                     if detect == False and frame_locs is None:
                         continue
+                    # elif polygon_filter is True and len(polygons) == 0:
+                    #     continue
                     else:
-                        compute_job = {"dataset": frame_dict["dataset"], "channel": frame_dict["channel"], "frame_index": frame_index, "shared_memory_name": frame_dict["shared_memory_name"], "shape": frame_dict["shape"], "dtype": frame_dict[
-                            "dtype"], "detect": detect, "fit": fit, "min_net_gradient": int(min_net_gradient), "box_size": int(box_size), "roi": roi, "frame_locs": frame_locs, "remove_overlapping": remove_overlapping, "stop_event": self.stop_event, }
+                        compute_job = {"dataset": frame_dict["dataset"],
+                                       "channel": frame_dict["channel"],
+                                       "frame_index": frame_index,
+                                       "shared_memory_name": frame_dict["shared_memory_name"],
+                                       "shape": frame_dict["shape"],
+                                       "dtype": frame_dict["dtype"],
+                                       "detect": detect,
+                                       "fit": fit,
+                                       "min_net_gradient": int(min_net_gradient),
+                                       "box_size": int(box_size),
+                                       "roi": roi,
+                                       "frame_locs": frame_locs,
+                                       "remove_overlapping": remove_overlapping,
+                                       "polygon_filter":polygon_filter,
+                                       "polygons": polygons,
+                                       "stop_event": self.stop_event, }
 
                     compute_jobs.append(compute_job)
 
@@ -359,7 +423,9 @@ class _picasso_detect_utils:
                                 locs = result["locs"]
                                 render_locs = result["render_locs"]
 
-                                loc_dict[dataset_name].extend(locs)
+                                if len(locs) > 0:
+                                    loc_dict[dataset_name].extend(locs)
+
                                 render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs, }
 
                             iter += 1
@@ -378,10 +444,11 @@ class _picasso_detect_utils:
 
                 total_locs = 0
                 for dataset, locs in loc_dict.items():
-                    locs = np.hstack(locs).view(np.recarray).copy()
-                    locs.sort(kind="mergesort", order="frame")
-                    locs = np.array(locs).view(np.recarray)
-                    loc_dict[dataset] = locs
+                    if len(locs) > 0:
+                        locs = np.hstack(locs).view(np.recarray).copy()
+                        locs.sort(kind="mergesort", order="frame")
+                        locs = np.array(locs).view(np.recarray)
+                        loc_dict[dataset] = locs
                     total_locs += len(locs)
 
             self.restore_shared_frames()

@@ -1,3 +1,4 @@
+import pandas as pd
 from qtpy.QtCore import QThreadPool
 from qtpy.QtWidgets import (QWidget,QVBoxLayout)
 
@@ -181,6 +182,10 @@ class PixSeqWidget(QWidget, gui,
         self.gui.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel1"))
         self.gui.colo_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="colo_dataset", channel_selector="colo_channel2"))
         self.gui.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
+        self.gui.simple_plot_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True))
+        self.gui.picasso_render_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel"))
+        self.gui.cellpose_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="cellpose_dataset", channel_selector="cellpose_channel"))
+        self.gui.tracking_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tracking_dataset", channel_selector="tracking_channel"))
 
         self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
 
@@ -256,7 +261,15 @@ class PixSeqWidget(QWidget, gui,
     def dev_function(self, event):
 
         print("Dev function called")
-        self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
+
+        # channel = self.gui.picasso_channel.currentText()
+        # dataset = self.gui.picasso_dataset.currentText()
+        #
+        # loc_dict, _, _ = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+        #
+        # locs = loc_dict["localisations"]
+        #
+        # print(locs.dtype.names)
 
     def select_image_layer(self):
 
@@ -266,7 +279,6 @@ class PixSeqWidget(QWidget, gui,
         except:
             print(traceback.format_exc())
             pass
-
 
     def add_lsp_localisation(self, position = None):
 

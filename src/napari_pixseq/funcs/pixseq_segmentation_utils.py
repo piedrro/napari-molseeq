@@ -9,6 +9,7 @@ import os
 from functools import partial
 import cv2
 from qtpy.QtWidgets import QFileDialog
+from shapely.geometry import Point, Polygon
 
 class _segmentation_utils:
 
@@ -412,3 +413,47 @@ class _segmentation_utils:
             post_processed_mask = mask
 
         return post_processed_mask
+
+    def get_segmentation_polygons(self):
+
+        filter = self.gui.picasso_segmentation_filtering.isChecked()
+        layer_names = [layer.name for layer in self.viewer.layers]
+
+        if "Segmentations" in layer_names and filter:
+
+            segmentations = self.viewer.layers["Segmentations"].data.copy()
+
+            if len(segmentations) > 0:
+
+                ndim = segmentations[0].shape[1]
+
+                if ndim == 2:
+
+                    polygons = []
+
+                    for seg in segmentations:
+                        seg = np.fliplr(seg)
+                        poly = Polygon(seg)
+                        polygons.append(poly)
+
+                    return polygons
+
+                elif ndim == 3:
+
+                    polygons = {}
+
+                    for seg in segmentations:
+
+                        frame = int(seg[0, 0])
+                        if frame not in polygons.keys():
+                            polygons[frame] = []
+
+                        seg = seg[:, 1:]
+                        seg = np.fliplr(seg)
+                        poly = Polygon(seg)
+
+                        polygons[frame].append(poly)
+
+                    return polygons
+
+        return []

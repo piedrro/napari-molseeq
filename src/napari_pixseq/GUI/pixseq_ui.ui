@@ -1736,6 +1736,13 @@
             </widget>
            </item>
            <item>
+            <widget class="QCheckBox" name="picasso_segmentation_filtering">
+             <property name="text">
+              <string>Remove Localisation Outside Segmentations</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <layout class="QGridLayout" name="gridLayout_6">
              <item row="0" column="1">
               <widget class="QPushButton" name="picasso_fit">

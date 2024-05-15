@@ -302,13 +302,23 @@ class _events_utils:
 
                         self.image_layer.mouse_drag_callbacks.append(self._mouse_event)
 
-
                     else:
                         self.image_layer.data = image
                         self.image_layer.name = layer_name
                         self.image_layer.refresh()
 
                     self.image_layer_auto_contrast(image, dataset_name, channel)
+
+                    dataset_names = self.dataset_dict.keys()
+                    active_dataset_index = list(dataset_names).index(dataset_name)
+
+                    dataset_selector = self.gui.pixseq_dataset_selector
+
+                    dataset_selector.blockSignals(True)
+                    dataset_selector.clear()
+                    dataset_selector.addItems(dataset_names)
+                    dataset_selector.setCurrentIndex(active_dataset_index)
+                    dataset_selector.blockSignals(False)
 
             else:
                 if hasattr(self, "image_layer"):
@@ -420,7 +430,6 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor")
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel1")
             self.update_channel_selector(dataset_selector="colo_dataset", channel_selector="colo_channel2")
-
             self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
             self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
