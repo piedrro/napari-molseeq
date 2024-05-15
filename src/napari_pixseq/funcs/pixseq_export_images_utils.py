@@ -41,7 +41,7 @@ class _export_images_utils:
 
                     import_mode_list.append(channel_data["import_mode"])
 
-                    if channel_name.lower() in ["donor", "acceptor"]:
+                    if channel_name.lower() in ["donor", "acceptor", "data"]:
                         channel_name = channel_name.capitalize()
                     else:
                         channel_name = channel_name.upper()
@@ -140,8 +140,12 @@ class _export_images_utils:
                 dataset_dict = self.dataset_dict[dataset_name]
 
                 if export_channel != "Import Channel(s)":
+
                     path = dataset_dict[export_channel.lower()]["path"]
-                    export_jobs.append({"dataset_name": dataset_name, "export_channel": export_channel, "import_path": path})
+
+                    export_jobs.append({"dataset_name": dataset_name,
+                                        "export_channel": export_channel,
+                                        "import_path": path})
 
                     n_frames = dataset_dict[export_channel.lower()]["data"].shape[0]
                     total_frames += n_frames
@@ -152,7 +156,10 @@ class _export_images_utils:
                     import_paths = np.unique([channel_dict["path"] for channel_dict in dataset_dict.values()])
 
                     for path, mode, channel in zip(import_paths, import_modes, channel_names):
-                        export_jobs.append({"dataset_name": dataset_name, "export_channel": mode.upper(), "import_path": path})
+
+                        export_jobs.append({"dataset_name": dataset_name,
+                                            "export_channel": mode.upper(),
+                                            "import_path": path})
 
                         n_frames = dataset_dict[channel]["data"].shape[0]
                         total_frames += n_frames
@@ -171,6 +178,7 @@ class _export_images_utils:
 
                 n_frames = dataset_dict[export_channel.lower()]["data"].shape[0]
                 total_frames += n_frames
+
             else:
                 import_modes = np.unique([channel_dict["import_mode"] for channel_dict in dataset_dict.values()])
                 channel_names = np.unique([channel_name for channel_name in dataset_dict.keys()])
@@ -197,7 +205,7 @@ class _export_images_utils:
             file_name, file_extension = os.path.splitext(file_name)
             file_name = file_name.replace("_pixseq_processed", "")
 
-            if export_channel.lower() not in ["alex", "fret"]:
+            if export_channel.lower() not in ["alex", "fret", "single channel"]:
                 name_modifier = f"_{export_channel}_pixseq_processed.tif"
                 if name_modifier not in file_name:
                     export_path = os.path.join(export_dir, file_name + name_modifier)
@@ -263,6 +271,16 @@ class _export_images_utils:
                     elif export_channel.lower() == "fret":
                         self.worker = Worker(self.export_fret_data,
                             dataset_name=dataset_name,
+                            export_path=export_path)
+                        self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
+                        self.worker.signals.finished.connect(self.export_data_finished)
+                        self.worker.signals.error.connect(self.update_ui)
+                        self.threadpool.start(self.worker)
+
+                    elif export_channel.lower() == "single channel":
+                        self.worker = Worker(self.export_channel_data,
+                            dataset_name=dataset_name,
+                            export_channel="Data",
                             export_path=export_path)
                         self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
                         self.worker.signals.finished.connect(self.export_data_finished)

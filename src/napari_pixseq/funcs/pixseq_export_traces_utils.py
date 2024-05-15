@@ -772,7 +772,7 @@ class _export_traces_utils:
                     if export_dataset in self.dataset_dict.keys():
                         for channel_name in self.dataset_dict[export_dataset].keys():
 
-                            if channel_name.lower() in ["donor", "acceptor"]:
+                            if channel_name.lower() in ["donor", "acceptor", "data"]:
                                 channel_name = channel_name.capitalize()
                             else:
                                 channel_name = channel_name.upper()

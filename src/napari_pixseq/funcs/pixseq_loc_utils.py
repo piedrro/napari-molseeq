@@ -364,7 +364,7 @@ class _loc_utils():
                     channel_names = [name for name in channel_names if "efficiency" not in name.lower()]
 
                     for channel_index, channel_name in enumerate(channel_names):
-                        if channel_name in ["donor", "acceptor"]:
+                        if channel_name in ["donor", "acceptor","data"]:
                             channel_names[channel_index] = channel_name.capitalize()
                         else:
                             channel_names[channel_index] = channel_name.upper()

@@ -999,6 +999,20 @@ class _trace_compute_utils:
                             self.traces_dict[dataset_name][channel][spot_index]["bleach_index"] = bleach_index
                             self.traces_dict[dataset_name][channel][spot_index]["donor_bleach_index"] = donor_bleach_index
                             self.traces_dict[dataset_name][channel][spot_index]["acceptor_bleach_index"] = acceptor_bleach_index
+                else:
+
+                    for spot_index in dataset_dict[channel_list[0]].keys():
+
+                        data = dataset_dict[channel_list[0]][spot_index][spot_metric].copy()
+                        background_data = dataset_dict[channel_list[0]][spot_index][background_metric].copy()
+
+                        bleach_index = self.find_bleach_indices(data, background_data, mode=mode)
+
+                        for channel in dataset_dict.keys():
+                            self.traces_dict[dataset_name][channel][spot_index]["bleach_index"] = bleach_index
+                            self.traces_dict[dataset_name][channel][spot_index]["donor_bleach_index"] = bleach_index
+                            self.traces_dict[dataset_name][channel][spot_index]["acceptor_bleach_index"] = bleach_index
+
 
         except:
             print(traceback.format_exc())

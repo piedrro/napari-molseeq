@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>661</width>
-    <height>626</height>
+    <height>625</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -63,6 +63,11 @@
              </item>
              <item row="0" column="1">
               <widget class="QComboBox" name="pixseq_import_mode">
+               <item>
+                <property name="text">
+                 <string>Single Channel</string>
+                </property>
+               </item>
                <item>
                 <property name="text">
                  <string>FRET</string>

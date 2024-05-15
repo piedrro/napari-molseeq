@@ -190,6 +190,48 @@ class _import_utils:
 
                     image_list.append(image_dict)
 
+                elif import_mode.lower() == "single channel":
+
+                    if import_limit_combo != "None":
+                        import_limit = int(self.gui.pixseq_import_limt.currentText())
+                    else:
+                        import_limit = n_frames
+
+                    image_shape = (import_limit, image_shape[1], image_shape[2])
+
+                    frame_list = list(range(n_frames))[:import_limit]
+
+                    unique_frames = np.unique(frame_list)
+                    n_frames = len(unique_frames)
+
+                    channel_names = ["data"]
+                    channel_list = [channel_names] * n_frames
+
+                    channel_images = {}
+                    for channel in channel_names:
+                        if self.verbose:
+                            print(f"Creating image memory for {dataset_name} {channel}...")
+
+                        shared_image = self.create_import_shared_image(image_size)
+                        channel_images[channel] = shared_image
+                        shared_images[dataset_name][channel] = shared_image
+
+                    image_dict = {"path": path,
+                                  "dataset_name": dataset_name,
+                                  "n_frames": n_frames,
+                                  "channel_names": channel_names,
+                                  "channel_list": channel_list,
+                                  "frame_list": frame_list,
+                                  "channel_frame_list": frame_list,
+                                  "channel_images": channel_images,
+                                  "image_shape": image_shape,
+                                  "channel_layout": channel_layout,
+                                  "alex_first_frame": alex_first_frame,
+                                  "dtype": dtype,
+                                  "import_mode": import_mode.lower()}
+
+                    image_list.append(image_dict)
+
                 elif import_mode.lower() == "fret":
 
                     if import_limit_combo != "None":

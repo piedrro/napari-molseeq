@@ -370,7 +370,7 @@ class _events_utils:
 
                             if channel in ["da", "dd", "aa", "ad"]:
                                 channel_selector_list.append(channel.upper())
-                            elif channel in ["donor", "acceptor"]:
+                            elif channel in ["donor", "acceptor","data"]:
                                 channel_selector_list.append(channel.capitalize())
 
                             if efficiency == True:
@@ -395,7 +395,7 @@ class _events_utils:
 
                             if channel in ["da", "dd", "aa", "ad"]:
                                 channel_selector_list.append(channel.upper())
-                            elif channel in ["donor", "acceptor"]:
+                            elif channel in ["donor", "acceptor", "data"]:
                                 channel_selector_list.append(channel.capitalize())
 
                             if efficiency == True:
@@ -453,18 +453,22 @@ class _events_utils:
                 if self.verbose:
                     print(f"Updating channel select buttons for dataset {datast_name}")
 
+                import_modes = [self.dataset_dict[datast_name][channel]["import_mode"] for channel in self.dataset_dict[datast_name].keys()]
                 fret_modes = [self.dataset_dict[datast_name][channel]["FRET"] for channel in self.dataset_dict[datast_name].keys()]
                 channel_refs = [self.dataset_dict[datast_name][channel]["channel_ref"] for channel in self.dataset_dict[datast_name].keys()]
 
                 channel_refs = list(set(channel_refs))
                 fret_mode = list(set(fret_modes))[0]
+                import_mode = list(set(import_modes))[0]
+
+                print(datast_name, import_mode)
 
                 self.gui.pixseq_show_dd.clicked.connect(lambda: None)
                 self.gui.pixseq_show_da.clicked.connect(lambda: None)
                 self.gui.pixseq_show_aa.clicked.connect(lambda: None)
                 self.gui.pixseq_show_ad.clicked.connect(lambda: None)
 
-                if fret_mode == True:
+                if import_mode.lower() == "fret":
 
                     self.gui.pixseq_show_dd.setVisible(True)
                     self.gui.pixseq_show_da.setVisible(True)
@@ -488,6 +492,13 @@ class _events_utils:
                     else:
                         self.gui.pixseq_show_da.setEnabled(False)
                         self.gui.pixseq_show_da.setText("")
+
+                elif import_mode.lower() == "single channel":
+
+                    self.gui.pixseq_show_dd.setVisible(False)
+                    self.gui.pixseq_show_da.setVisible(False)
+                    self.gui.pixseq_show_aa.setVisible(False)
+                    self.gui.pixseq_show_ad.setVisible(False)
 
                 else:
 
@@ -604,10 +615,13 @@ class _events_utils:
             update_channel_layout(self, show = True)
             update_alex_first_frame(self, show = True)
 
-        elif import_mode in ["DA", "DD", "AA","AD"]:
+        elif import_mode in ["DA", "DD", "AA", "AD"]:
             update_channel_layout(self, show = False)
             update_alex_first_frame(self, show = False)
 
+        elif import_mode == "Single Channel":
+            update_channel_layout(self, show = False)
+            update_alex_first_frame(self, show = False)
 
     def pixseq_progress(self, progress, progress_bar):
 

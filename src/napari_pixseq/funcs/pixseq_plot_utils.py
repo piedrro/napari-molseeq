@@ -91,7 +91,7 @@ class _plot_utils:
                         for channel_index, channel_name in enumerate(channel_names):
                             if channel_name.lower() in ["dd","da","ad","aa"]:
                                 plot_channel_list.append(channel_name.upper())
-                            elif channel_name.lower() in ["donor","acceptor"]:
+                            elif channel_name.lower() in ["donor","acceptor","data"]:
                                 plot_channel_list.append(channel_name.capitalize())
                             else:
                                 pass
@@ -389,14 +389,13 @@ class _plot_utils:
 
                 if channel_name == "All Channels" or "efficiency" in channel_name.lower():
                     dataset_channels = self.traces_dict[dataset_name].keys()
-                    if set(["dd", "da"]).issubset(dataset_channels):
 
+                    if set(["dd", "da"]).issubset(dataset_channels):
                         self.compute_alex_efficiency(dataset_name, metric_key,
                             background_metric_key, progress_callback,
                             clip_data=True)
 
                     elif set(["donor", "acceptor"]).issubset(dataset_channels):
-
                         self.compute_fret_efficiency(dataset_name, metric_key,
                             background_metric_key, progress_callback,
                             clip_data=True)
