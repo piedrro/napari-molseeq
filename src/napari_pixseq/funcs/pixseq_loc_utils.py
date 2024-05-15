@@ -11,6 +11,7 @@ from pathlib import Path
 import traceback
 import numpy as np
 from qtpy.QtWidgets import QFileDialog
+import pandas as pd
 
 class picasso_loc_utils():
 
@@ -169,6 +170,61 @@ def format_picasso_path(path):
             path = '\\\\?\\UNC\\' + path[2:]
 
     return Path(path)
+
+
+def initialise_localisation_export(loc_data):
+
+    try:
+
+        export_mode = loc_data["export_mode"]
+
+        if export_mode == "Picasso HDF5":
+            export_picasso_localisation(loc_data)
+        else:
+            export_localisation_data(loc_data)
+
+    except:
+        print(traceback.format_exc())
+        pass
+
+
+def export_localisation_data(loc_data):
+
+    try:
+
+        export_mode = loc_data["export_mode"]
+        export_path = loc_data["export_path"]
+        locs = loc_data["locs"]
+
+        if export_mode == "CSV":
+
+            df = pd.DataFrame(locs)
+
+            df.to_csv(export_path, index=False)
+
+        elif export_mode == "POS.OUT":
+
+            localisation_data = pd.DataFrame(locs)
+
+            pos_locs = localisation_data[["frame", "x", "y", "photons", "bg", "sx", "sy", ]].copy()
+
+            pos_locs.dropna(axis=0, inplace=True)
+
+            pos_locs.columns = ["FRAME", "XCENTER", "YCENTER", "BRIGHTNESS", "BG", "S_X", "S_Y", ]
+
+            pos_locs.loc[:, "I0"] = 0
+            pos_locs.loc[:, "THETA"] = 0
+            pos_locs.loc[:, "ECC"] = (pos_locs["S_X"] / pos_locs["S_Y"])
+            pos_locs.loc[:, "FRAME"] = pos_locs["FRAME"] + 1
+
+            pos_locs = pos_locs[["FRAME", "XCENTER", "YCENTER", "BRIGHTNESS", "BG", "I0", "S_X", "S_Y", "THETA", "ECC", ]]
+
+            pos_locs.to_csv(export_path, sep="\t", index=False)
+
+    except:
+        print(traceback.format_exc())
+
+
 
 def export_picasso_localisation(loc_data):
 
@@ -385,7 +441,9 @@ class _loc_utils():
 
         try:
 
+            export_loc_type = self.gui.locs_export_type.currentText()
             export_loc_mode = self.gui.locs_export_mode.currentText()
+
             export_loc_jobs = []
 
             if export_dataset == "All Datasets":
@@ -393,9 +451,9 @@ class _loc_utils():
             else:
                 dataset_list = [export_dataset]
 
-            if export_loc_mode == "Localisations":
+            if export_loc_type == "Localisations":
                 loc_type_list = ["Localisations"]
-            elif export_loc_mode == "Bounding Boxes":
+            elif export_loc_type == "Bounding Boxes":
                 loc_type_list = ["Bounding Boxes"]
             else:
                 loc_type_list = ["Localisations", "Bounding Boxes"]
@@ -443,9 +501,25 @@ class _loc_utils():
                                 if loc_type == "Bounding Boxes":
                                     hdf5_path = base + f"_picasso_bboxes.hdf5"
                                     info_path = base + f"_picasso_bboxes.yaml"
+
+                                    if export_loc_mode == "CSV":
+                                        export_path = base + f"_picasso_bboxes.csv"
+                                    elif export_loc_mode == "POS.OUT":
+                                        export_path = base + f"_picasso_bboxes.pos.out"
+                                    else:
+                                        export_path = ""
+
                                 else:
                                     hdf5_path = base + f"_picasso_{export_channel_name}_localisations.hdf5"
                                     info_path = base + f"_picasso_{export_channel_name}_localisations.yaml"
+
+                                    if export_loc_mode == "CSV":
+                                        export_path = base + f"_picasso_{export_channel_name}_localisations.csv"
+                                    elif export_loc_mode == "POS.OUT":
+                                        export_path = base + f"_picasso_{export_channel_name}_localisations.pos.out"
+
+                                    else:
+                                        export_path = ""
 
                                 picasso_info = [{"Byte Order": "<", "Data Type": "uint16", "File": import_path,
                                                  "Frames": image_shape[0], "Height": image_shape[1],
@@ -458,16 +532,19 @@ class _loc_utils():
                                                    "loc_type": loc_type,
                                                    "locs": locs,
                                                    "fitted": fitted,
+                                                   "export_mode": export_loc_mode,
                                                    "hdf5_path": hdf5_path,
                                                    "info_path": info_path,
+                                                   "export_path": export_path,
                                                    "picasso_info": picasso_info,
                                                   }
+
                             export_loc_jobs.append(export_loc_job)
 
             if len(export_loc_jobs) > 0:
 
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    futures = [executor.submit(export_picasso_localisation, job) for job in export_loc_jobs]
+                    futures = [executor.submit(initialise_localisation_export, job) for job in export_loc_jobs]
 
                     for future in concurrent.futures.as_completed(futures):
                         try:
@@ -480,8 +557,6 @@ class _loc_utils():
 
                         if progress_callback is not None:
                             progress_callback.emit(progress)
-
-
 
 
         except:

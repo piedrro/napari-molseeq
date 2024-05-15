@@ -142,7 +142,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.export_dataset.currentIndexChanged.connect(self.update_export_options)
 
         self.gui.pixseq_export_locs.clicked.connect(self.initialise_export_locs)
-        self.gui.locs_export_mode.currentIndexChanged.connect(self.update_loc_export_options)
+        self.gui.locs_export_type.currentIndexChanged.connect(self.update_loc_export_options)
         self.gui.locs_export_dataset.currentIndexChanged.connect(self.update_loc_export_options)
 
         self.gui.pixseq_export_traces.clicked.connect(self.export_traces)
