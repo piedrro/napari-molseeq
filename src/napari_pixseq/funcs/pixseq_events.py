@@ -33,6 +33,7 @@ class _events_utils:
                         "segment_all",
                         "cellpose_load_model",
                         "link_localisations",
+                        "dilate_segmentations",
                         ]
 
             progressbars = ["pixseq_import_progressbar",

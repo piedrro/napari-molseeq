@@ -684,4 +684,4 @@ class _picasso_detect_utils:
 
         except:
             print(traceback.format_exc())
-            self.update_ui(init=True)
+            self.update_ui()

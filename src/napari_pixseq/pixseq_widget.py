@@ -225,6 +225,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.segment_active.clicked.connect(partial(self.initialise_cellpose, mode = "active"))
         self.gui.segment_all.clicked.connect(partial(self.initialise_cellpose, mode = "all"))
         self.gui.cellpose_load_model.clicked.connect(self.load_cellpose_model)
+        self.gui.dilate_segmentations.clicked.connect(self.dilate_segmentations)
 
         self.gui.cellpose_flowthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_flowthresh", "cellpose_flowthresh_label"))
         self.gui.cellpose_maskthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_maskthresh", "cellpose_maskthresh_label"))

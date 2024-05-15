@@ -235,12 +235,13 @@ class _segmentation_utils:
                 self.segLayer = self.viewer.add_shapes(name="Segmentations", shape_type="polygon",
                     opacity=0.5, face_color="red", edge_color="black", edge_width=1)
 
+            self.segLayer.data = []
+
             if mode == "active":
+
                 shapes = self.mask_to_shape(masks[0])
                 self.segLayer.data = shapes
             else:
-
-                self.segLayer.data = []
 
                 for i, mask in enumerate(masks):
                     shapes = self.mask_to_shape(mask, frame = i)
@@ -457,3 +458,68 @@ class _segmentation_utils:
                     return polygons
 
         return []
+
+
+    def dilate_segmentations(self, viewer = None, simplify = True):
+
+        try:
+
+            layer_names = [layer.name for layer in self.viewer.layers]
+
+            buffer = float(self.gui.dilatation_size.value())
+
+            if "Segmentations" in layer_names and filter:
+
+                self.update_ui(init=True)
+
+                segLayer = self.viewer.layers["Segmentations"]
+
+                segmentations = segLayer.data.copy()
+
+                for index, seg in enumerate(segmentations):
+
+                    ndim = segmentations[0].shape[1]
+
+                    if ndim == 2:
+
+                        seg = np.fliplr(seg)
+                        poly = Polygon(seg)
+                        poly = poly.buffer(buffer)
+
+                        if simplify == True:
+                            poly = poly.simplify(0.1)
+
+                        seg = np.array(poly.exterior.coords)
+                        seg = np.fliplr(seg)
+                        seg = seg.astype(float)
+                        seg = seg[:-1]
+                        segmentations[index] = seg
+
+                    if ndim == 3:
+
+                        frame = int(seg[0, 0])
+                        seg = seg[:, 1:]
+                        seg = np.fliplr(seg)
+                        poly = Polygon(seg)
+                        poly = poly.buffer(buffer)
+
+                        if simplify == True:
+                            poly = poly.simplify(0.1)
+
+                        seg = np.array(poly.exterior.coords)
+                        seg = np.fliplr(seg)
+                        seg = seg.astype(float)
+                        seg = seg[:-1]
+                        seg = np.insert(seg, 0, frame, axis=1)
+                        segmentations[index] = seg
+
+
+                # update layer
+                segLayer.data = []
+                segLayer.data = segmentations
+
+                self.update_ui()
+
+        except:
+            self.update_ui()
+            print(traceback.format_exc())
