@@ -18,7 +18,7 @@ class _tracking_utils:
 
             n_frames = self.dataset_dict[dataset][channel.lower()]["data"].shape[0]
 
-            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="localisations")
 
             if n_locs > 0 and fitted == True:
 
@@ -81,16 +81,16 @@ class _tracking_utils:
                             frame_locs = filtered_locs[filtered_locs["frame"] == frame].copy()
                             render_locs[frame] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
 
-                        loc_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
+                        loc_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
 
                         loc_dict["localisations"] = filtered_locs
                         loc_dict["render_locs"] = render_locs
 
-                        self.draw_fiducials(update_vis=True)
+                        self.draw_localisations(update_vis=True)
 
 
             else:
-                print(f"No fiducials found for {dataset} - {channel}`")
+                print(f"No localisations found for {dataset} - {channel}`")
 
         except:
             print(traceback.format_exc())

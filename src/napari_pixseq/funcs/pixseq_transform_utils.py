@@ -73,9 +73,9 @@ class _tranform_utils:
                 target_locs = None
                 reference_locs = None
 
-                if dataset_name in self.localisation_dict["fiducials"].keys():
+                if dataset_name in self.localisation_dict["localisations"].keys():
 
-                    fiducial_dict = self.localisation_dict["fiducials"][dataset_name]
+                    fiducial_dict = self.localisation_dict["localisations"][dataset_name]
 
                     if target_channel.lower() in fiducial_dict.keys():
                         target_locs = fiducial_dict[target_channel.lower()]["localisations"]

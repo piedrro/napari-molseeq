@@ -222,7 +222,7 @@ class _loc_utils():
         try:
             self.update_ui()
 
-            self.draw_fiducials(update_vis=True)
+            self.draw_localisations(update_vis=True)
             self.draw_bounding_boxes(update_vis=True)
 
         except:
@@ -238,11 +238,11 @@ class _loc_utils():
             channel = self.gui.import_picasso_channel.currentText()
             type = self.gui.import_picasso_type.currentText()
 
-            if type == "Fiducials":
-                if dataset not in self.localisation_dict["fiducials"].keys():
-                    self.localisation_dict["fiducials"][dataset] = {}
-                if channel.lower() not in self.localisation_dict["fiducials"][dataset].keys():
-                    self.localisation_dict["fiducials"][dataset][channel.lower()] = {}
+            if type == "Localisations":
+                if dataset not in self.localisation_dict["localisations"].keys():
+                    self.localisation_dict["localisations"][dataset] = {}
+                if channel.lower() not in self.localisation_dict["localisations"][dataset].keys():
+                    self.localisation_dict["localisations"][dataset][channel.lower()] = {}
 
             yaml_path = path.replace(".hdf5", ".yaml")
 
@@ -272,7 +272,7 @@ class _loc_utils():
                 if "Box Size" in info[1].keys():
                     box_size = info[1]["Box Size"]
 
-            if type == "Fiducials":
+            if type == "Localisations":
 
                 if self.verbose:
                     print("Creating render locs")
@@ -287,11 +287,11 @@ class _loc_utils():
                 if self.verbose:
                     print("Updating localisation dict")
 
-                self.localisation_dict["fiducials"][dataset][channel.lower()]["localisations"] = locs.copy()
-                self.localisation_dict["fiducials"][dataset][channel.lower()]["localisation_centres"] = loc_centres.copy()
-                self.localisation_dict["fiducials"][dataset][channel.lower()]["render_locs"] = render_locs
-                self.localisation_dict["fiducials"][dataset][channel.lower()]["fitted"] = True
-                self.localisation_dict["fiducials"][dataset][channel.lower()]["box_size"] = box_size
+                self.localisation_dict["localisations"][dataset][channel.lower()]["localisations"] = locs.copy()
+                self.localisation_dict["localisations"][dataset][channel.lower()]["localisation_centres"] = loc_centres.copy()
+                self.localisation_dict["localisations"][dataset][channel.lower()]["render_locs"] = render_locs
+                self.localisation_dict["localisations"][dataset][channel.lower()]["fitted"] = True
+                self.localisation_dict["localisations"][dataset][channel.lower()]["box_size"] = box_size
 
             else:
                 unique_frames = np.unique(locs.frame)
@@ -393,12 +393,12 @@ class _loc_utils():
             else:
                 dataset_list = [export_dataset]
 
-            if export_loc_mode == "Fiducials":
-                loc_type_list = ["Fiducials"]
+            if export_loc_mode == "Localisations":
+                loc_type_list = ["Localisations"]
             elif export_loc_mode == "Bounding Boxes":
                 loc_type_list = ["Bounding Boxes"]
             else:
-                loc_type_list = ["Fiducials", "Bounding Boxes"]
+                loc_type_list = ["Localisations", "Bounding Boxes"]
 
             for dataset_name in dataset_list:
 
@@ -413,8 +413,8 @@ class _loc_utils():
 
                     for loc_type in loc_type_list:
 
-                        if loc_type == "Fiducials":
-                            loc_dict, n_locs, fitted = self.get_loc_dict(dataset_name, channel_name, type="fiducials")
+                        if loc_type == "Localisations":
+                            loc_dict, n_locs, fitted = self.get_loc_dict(dataset_name, channel_name, type="localisations")
                         elif loc_type == "Bounding Boxes":
                             loc_dict, n_locs, fitted = self.get_loc_dict(dataset_name, channel_name, type="bounding_boxes")
 
@@ -444,8 +444,8 @@ class _loc_utils():
                                     hdf5_path = base + f"_picasso_bboxes.hdf5"
                                     info_path = base + f"_picasso_bboxes.yaml"
                                 else:
-                                    hdf5_path = base + f"_picasso_{export_channel_name}_fiducials.hdf5"
-                                    info_path = base + f"_picasso_{export_channel_name}_fiducials.yaml"
+                                    hdf5_path = base + f"_picasso_{export_channel_name}_localisations.hdf5"
+                                    info_path = base + f"_picasso_{export_channel_name}_localisations.yaml"
 
                                 picasso_info = [{"Byte Order": "<", "Data Type": "uint16", "File": import_path,
                                                  "Frames": image_shape[0], "Height": image_shape[1],
@@ -522,7 +522,7 @@ class _loc_utils():
             self.update_ui()
             pass
 
-    def get_loc_dict(self, dataset_name="", channel_name="", type = "fiducials"):
+    def get_loc_dict(self, dataset_name="", channel_name="", type = "localisations"):
 
         loc_dict = {}
         n_localisations = 0
@@ -530,15 +530,15 @@ class _loc_utils():
 
         try:
 
-            if type.lower() == "fiducials":
+            if type.lower() == "localisations":
 
-                if dataset_name not in self.localisation_dict["fiducials"].keys():
-                    self.localisation_dict["fiducials"][dataset_name] = {}
+                if dataset_name not in self.localisation_dict["localisations"].keys():
+                    self.localisation_dict["localisations"][dataset_name] = {}
                 else:
-                    if channel_name not in self.localisation_dict["fiducials"][dataset_name].keys():
-                        self.localisation_dict["fiducials"][dataset_name][channel_name] = {}
+                    if channel_name not in self.localisation_dict["localisations"][dataset_name].keys():
+                        self.localisation_dict["localisations"][dataset_name][channel_name] = {}
                     else:
-                        loc_dict = self.localisation_dict["fiducials"][dataset_name][channel_name].copy()
+                        loc_dict = self.localisation_dict["localisations"][dataset_name][channel_name].copy()
 
             else:
 
@@ -560,12 +560,12 @@ class _loc_utils():
         return loc_dict, n_localisations, fitted
 
 
-    def update_loc_dict(self, dataset_name="", channel_name="", type = "fiducials", loc_dict = {}):
+    def update_loc_dict(self, dataset_name="", channel_name="", type = "localisations", loc_dict = {}):
 
         try:
 
-            if type == "fiducials":
-                self.localisation_dict["fiducials"][dataset_name][channel_name] = loc_dict
+            if type == "localisations":
+                self.localisation_dict["localisations"][dataset_name][channel_name] = loc_dict
             else:
                 self.localisation_dict["bounding_boxes"] = loc_dict
 
@@ -643,10 +643,10 @@ class _loc_utils():
             frame = self.viewer.dims.current_step[0]
             net_gradient = self.compute_net_gradient(position, box_size=box_size)
 
-            if mode == "fiducials":
+            if mode == "localisations":
 
                 loc_dict, n_locs, _ = self.get_loc_dict(active_dataset, active_channel,
-                    type = "fiducials")
+                    type = "localisations")
 
 
                 if n_locs > 0:
@@ -691,8 +691,8 @@ class _loc_utils():
                             loc_dict["localisation_centres"] = loc_centers
                             loc_dict["render_locs"] = render_locs
 
-                            self.update_loc_dict(active_dataset, active_channel, "fiducials", loc_dict)
-                            self.draw_fiducials(update_vis=True)
+                            self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
+                            self.draw_localisations(update_vis=True)
 
                         else:
 
@@ -710,8 +710,8 @@ class _loc_utils():
                             loc_dict["localisation_centres"] = loc_centers
                             loc_dict["render_locs"] = render_locs
 
-                            self.update_loc_dict(active_dataset, active_channel, "fiducials", loc_dict)
-                            self.draw_fiducials(update_vis=True)
+                            self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
+                            self.draw_localisations(update_vis=True)
 
                     else:
 
@@ -732,8 +732,8 @@ class _loc_utils():
                         loc_dict["localisation_centres"] = loc_centers
                         loc_dict["render_locs"] = render_locs
 
-                        self.update_loc_dict(active_dataset, active_channel, "fiducials", loc_dict)
-                        self.draw_fiducials(update_vis=True)
+                        self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
+                        self.draw_localisations(update_vis=True)
 
                 else:
                     x, y = position
@@ -754,8 +754,8 @@ class _loc_utils():
                     loc_dict["fitted"] = False
                     loc_dict["box_size"] = box_size
 
-                    self.update_loc_dict(active_dataset, active_channel, "fiducials", loc_dict)
-                    self.draw_fiducials(update_vis=True)
+                    self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
+                    self.draw_localisations(update_vis=True)
 
             elif mode == "bounding_box":
 

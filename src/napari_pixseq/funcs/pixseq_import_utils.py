@@ -605,7 +605,7 @@ class _import_utils:
     def initialise_localisation_dict(self):
 
         if hasattr(self, "localisation_dict"):
-            self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
+            self.localisation_dict = {"bounding_boxes": {}, "localisations": {}}
 
         if hasattr(self, "dataset_dict"):
 
@@ -615,15 +615,15 @@ class _import_utils:
             for dataset_name, dataset_dict in self.dataset_dict.items():
 
                 if dataset_name not in self.localisation_dict.keys():
-                    self.localisation_dict["fiducials"][dataset_name] = {}
+                    self.localisation_dict["localisations"][dataset_name] = {}
 
-                fiducial_dict = self.localisation_dict["fiducials"][dataset_name]
+                fiducial_dict = self.localisation_dict["localisations"][dataset_name]
 
                 for channel_name, channel_dict in dataset_dict.items():
                     if channel_name not in fiducial_dict.keys():
                         fiducial_dict[channel_name.lower()] = {}
 
-                self.localisation_dict["fiducials"][dataset_name] = fiducial_dict
+                self.localisation_dict["localisations"][dataset_name] = fiducial_dict
 
     def _pixseq_import_data_finished(self):
 

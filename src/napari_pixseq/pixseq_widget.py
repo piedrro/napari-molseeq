@@ -1,4 +1,3 @@
-import pandas as pd
 from qtpy.QtCore import QThreadPool
 from qtpy.QtWidgets import (QWidget,QVBoxLayout)
 
@@ -76,7 +75,7 @@ class PixSeqWidget(QWidget, gui,
         self.traces_dict = {}
         self.plot_dict = {}
         self.contrast_dict = {}
-        self.localisation_dict = {"bounding_boxes": {}, "fiducials": {}}
+        self.localisation_dict = {"bounding_boxes": {}, "localisations": {}}
         self.metric_dict = {"spot_mean": "Mean", "spot_median": "Median", "spot_sum": "Sum", "spot_max": "Maximum",
                             "spot_std": "std", "spot_photons": "Picasso Photons", }
 
@@ -149,7 +148,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.pixseq_export_traces.clicked.connect(self.export_traces)
         self.gui.traces_export_dataset.currentIndexChanged.connect(self.populate_export_combos)
 
-        self.viewer.dims.events.current_step.connect(partial(self.draw_fiducials, update_vis = False))
+        self.viewer.dims.events.current_step.connect(partial(self.draw_localisations, update_vis = False))
 
         self.gui.compute_traces.clicked.connect(self.pixseq_compute_traces)
         self.gui.traces_visualise_masks.clicked.connect(self.visualise_spot_masks)
@@ -166,7 +165,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.plot_background_mode.currentIndexChanged.connect(self.initialize_plot)
         self.gui.focus_on_bbox.stateChanged.connect(self.initialize_plot)
 
-        self.gui.pixseq_colocalize.clicked.connect(self.pixseq_colocalize_fiducials)
+        self.gui.pixseq_colocalize.clicked.connect(self.pixseq_colocalize_localisations)
 
         self.gui.plot_localisation_number.valueChanged.connect(lambda: self.update_slider_label("plot_localisation_number"))
         self.gui.plot_localisation_number.valueChanged.connect(partial(self.plot_traces))
@@ -215,13 +214,13 @@ class PixSeqWidget(QWidget, gui,
         self.gui.add_box.clicked.connect(lambda: self.draw_shapes(mode="box"))
         self.gui.add_background.clicked.connect(lambda: self.draw_shapes(mode="background"))
 
-        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_localisations, update_vis=True))
         self.gui.picasso_vis_mode.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_localisations, update_vis=True))
         self.gui.picasso_vis_size.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_localisations, update_vis=True))
         self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_fiducials, update_vis=True))
+        self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_localisations, update_vis=True))
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
 
         self.gui.segment_active.clicked.connect(partial(self.initialise_cellpose, mode = "active"))
@@ -279,7 +278,7 @@ class PixSeqWidget(QWidget, gui,
         # channel = self.gui.picasso_channel.currentText()
         # dataset = self.gui.picasso_dataset.currentText()
         #
-        # loc_dict, _, _ = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+        # loc_dict, _, _ = self.get_loc_dict(dataset, channel.lower(), type="localisations")
         #
         # locs = loc_dict["localisations"]
         #
@@ -425,18 +424,18 @@ class PixSeqWidget(QWidget, gui,
                     self.viewer.layers[layer].refresh()
 
 
-    def draw_fiducials(self, update_vis=False):
+    def draw_localisations(self, update_vis=False):
 
-        remove_fiducials = True
+        remove_localisations = True
 
         if hasattr(self, "localisation_dict") and hasattr(self, "active_channel"):
 
             if hasattr(self, "fiducial_layer"):
-                show_fiducials = self.fiducial_layer.visible
+                show_localisations = self.fiducial_layer.visible
             else:
-                show_fiducials = True
+                show_localisations = True
 
-            if show_fiducials:
+            if show_localisations:
 
                 layer_names = [layer.name for layer in self.viewer.layers]
 
@@ -447,8 +446,8 @@ class PixSeqWidget(QWidget, gui,
 
                 if image_channel != "" and dataset_name != "":
 
-                    if image_channel.lower() in self.localisation_dict["fiducials"][dataset_name].keys():
-                        localisation_dict = self.localisation_dict["fiducials"][dataset_name][image_channel.lower()].copy()
+                    if image_channel.lower() in self.localisation_dict["localisations"][dataset_name].keys():
+                        localisation_dict = self.localisation_dict["localisations"][dataset_name][image_channel.lower()].copy()
 
                         if "render_locs" in localisation_dict.keys():
 
@@ -468,12 +467,12 @@ class PixSeqWidget(QWidget, gui,
 
                             if active_frame in render_locs.keys():
 
-                                remove_fiducials = False
+                                remove_localisations = False
 
-                                if "fiducials" not in layer_names:
+                                if "localisations" not in layer_names:
 
                                     if self.verbose:
-                                        print("Drawing fiducials")
+                                        print("Drawing localisations")
 
                                     self.fiducial_layer = self.viewer.add_points(
                                         render_locs[active_frame],
@@ -481,13 +480,13 @@ class PixSeqWidget(QWidget, gui,
                                         edge_color="red",
                                         face_color=[0,0,0,0],
                                         opacity=vis_opacity,
-                                        name="fiducials",
+                                        name="localisations",
                                         symbol=symbol,
                                         size=vis_size,
                                         edge_width=vis_edge_width, )
 
                                     self.fiducial_layer.mouse_drag_callbacks.append(self._mouse_event)
-                                    self.fiducial_layer.events.visible.connect(self.draw_fiducials)
+                                    self.fiducial_layer.events.visible.connect(self.draw_localisations)
 
                                     update_vis = True
 
@@ -515,15 +514,15 @@ class PixSeqWidget(QWidget, gui,
 
 
 
-                if remove_fiducials:
-                    if "fiducials" in layer_names:
-                        self.viewer.layers["fiducials"].data = []
+                if remove_localisations:
+                    if "localisations" in layer_names:
+                        self.viewer.layers["localisations"].data = []
 
                 for layer in layer_names:
                     self.viewer.layers[layer].refresh()
 
 
-    def get_localisation_centres(self, locs, mode = "fiducials"):
+    def get_localisation_centres(self, locs, mode = "localisations"):
 
         loc_centres = []
 
@@ -531,7 +530,7 @@ class PixSeqWidget(QWidget, gui,
 
             for loc in locs:
                 frame = int(loc.frame)
-                if mode == "fiducials":
+                if mode == "localisations":
                     loc_centres.append([frame, loc.y, loc.x])
                 else:
                     loc_centres.append([loc.y, loc.x])

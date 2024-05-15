@@ -11,8 +11,8 @@ class _cluster_utils:
         try:
             mode = self.gui.cluster_mode.currentText()
 
-            if "fiducials" in mode.lower():
-                self.draw_fiducials(update_vis=True)
+            if "localisations" in mode.lower():
+                self.draw_localisations(update_vis=True)
             else:
                 self.draw_bounding_boxes()
 
@@ -61,7 +61,7 @@ class _cluster_utils:
             channel = self.gui.cluster_channel.currentText()
             remove_overlapping = self.gui.dbscan_remove_overlapping.isChecked()
 
-            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type = "fiducials")
+            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type = "localisations")
 
             locs = loc_dict["localisations"]
             box_size = loc_dict["box_size"]
@@ -94,7 +94,7 @@ class _cluster_utils:
                 cluster_centers = self.remove_overlapping_coords(cluster_centers,
                     min_distance = box_size)
 
-            if "fiducials" not in mode.lower():
+            if "localisations" not in mode.lower():
                 n_frames = 1
 
             clustered_locs = []
@@ -137,12 +137,12 @@ class _cluster_utils:
                 dataset = self.gui.cluster_dataset.currentText()
                 channel = self.gui.cluster_channel.currentText()
 
-                fiducial_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
+                fiducial_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
                 bbox_dict = self.localisation_dict["bounding_boxes"]
 
-                if "fiducials" in mode.lower():
+                if "localisations" in mode.lower():
 
-                    fiducial_dict = self.localisation_dict["fiducials"][dataset][channel.lower()]
+                    fiducial_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
 
                     fiducial_dict["localisations"] = locs
                     fiducial_dict["localisation_centres"] = loc_centers
@@ -192,7 +192,7 @@ class _cluster_utils:
             loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower())
 
             if n_locs == 0 or fitted == False:
-                self.pixseq_notification("Localisation clustering requires fitted fiducials.")
+                self.pixseq_notification("Localisation clustering requires fitted localisations.")
 
             if n_locs > 0 and fitted and eps is not None and min_samples is not None:
 

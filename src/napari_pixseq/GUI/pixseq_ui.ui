@@ -264,7 +264,7 @@
               <widget class="QComboBox" name="import_picasso_type">
                <item>
                 <property name="text">
-                 <string>Fiducials</string>
+                 <string>Localisations</string>
                 </property>
                </item>
                <item>
@@ -394,7 +394,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Compute Transform Matrix (with Fiducials)</string>
+              <string>Compute Transform Matrix (with Localisations)</string>
              </property>
             </widget>
            </item>
@@ -539,7 +539,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Compute Image Drift using Fitted Fiducials</string>
+              <string>Compute Image Drift using Fitted Localisations</string>
              </property>
             </widget>
            </item>
@@ -616,7 +616,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Align Datasets Using Fitted Fiducials</string>
+              <string>Align Datasets Using Fitted Localisations</string>
              </property>
             </widget>
            </item>
@@ -1665,7 +1665,7 @@
               <widget class="QComboBox" name="picasso_detect_mode">
                <item>
                 <property name="text">
-                 <string>Fiducials</string>
+                 <string>Localisations</string>
                 </property>
                </item>
                <item>
@@ -1783,7 +1783,7 @@
            <item>
             <widget class="QCheckBox" name="picasso_remove_overlapping">
              <property name="text">
-              <string>Remove Overlapping Fiducials/Bounding Boxes (determined by Picaso Box Size)</string>
+              <string>Remove Overlapping Localisations/Bounding Boxes (determined by Picaso Box Size)</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -1921,7 +1921,7 @@
               <widget class="QComboBox" name="picasso_filter_type">
                <item>
                 <property name="text">
-                 <string>Fiducials</string>
+                 <string>Localisations</string>
                 </property>
                </item>
                <item>
@@ -2025,7 +2025,7 @@
               </font>
              </property>
              <property name="text">
-              <string>Render Fiducials (Picasso)</string>
+              <string>Render Localisations (Picasso)</string>
              </property>
             </widget>
            </item>
@@ -2512,7 +2512,7 @@
        <item>
         <widget class="QTabWidget" name="traces_tab_widget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="compute_tab_2">
           <attribute name="title">
@@ -3243,7 +3243,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string>Fiducials</string>
+                 <string>Localisations</string>
                 </property>
                </item>
               </widget>
@@ -3758,7 +3758,7 @@
                </item>
                <item>
                 <property name="text">
-                 <string>Create Fiducials From Cluster Centers</string>
+                 <string>Create Localisations From Cluster Centers</string>
                 </property>
                </item>
               </widget>

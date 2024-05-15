@@ -181,12 +181,12 @@ class _picasso_detect_utils:
 
             for dataset_name, locs in loc_dict.items():
 
-                if detect_mode == "fiducials":
+                if detect_mode == "localisations":
 
-                    if dataset_name not in self.localisation_dict["fiducials"].keys():
-                        self.localisation_dict["fiducials"][dataset_name] = {}
-                    if image_channel not in self.localisation_dict["fiducials"][dataset_name].keys():
-                        self.localisation_dict["fiducials"][dataset_name][image_channel.lower()] = {}
+                    if dataset_name not in self.localisation_dict["localisations"].keys():
+                        self.localisation_dict["localisations"][dataset_name] = {}
+                    if image_channel not in self.localisation_dict["localisations"][dataset_name].keys():
+                        self.localisation_dict["localisations"][dataset_name][image_channel.lower()] = {}
 
                     render_locs = render_loc_dict[dataset_name]
 
@@ -201,7 +201,7 @@ class _picasso_detect_utils:
                     fiducial_dict["fitted"] = fitted
                     fiducial_dict["box_size"] = box_size
 
-                    self.localisation_dict["fiducials"][dataset_name][image_channel.lower()] = fiducial_dict.copy()
+                    self.localisation_dict["localisations"][dataset_name][image_channel.lower()] = fiducial_dict.copy()
 
                 else:
 
@@ -261,7 +261,7 @@ class _picasso_detect_utils:
             self.update_active_image(channel=image_channel.lower(), dataset=dataset_name)
 
             self.draw_bounding_boxes()
-            self.draw_fiducials()
+            self.draw_localisations()
 
             self.update_filter_criterion()
             self.update_criterion_ranges()
@@ -279,7 +279,7 @@ class _picasso_detect_utils:
         try:
 
             loc_dict, n_locs, _ = self.get_loc_dict(dataset_name,
-                image_channel.lower(), type = "fiducials")
+                image_channel.lower(), type = "localisations")
 
             if "localisations" not in loc_dict.keys():
                 return None
@@ -516,7 +516,7 @@ class _picasso_detect_utils:
             generate_roi = False
 
             if window_cropping:
-                layers_names = [layer.name for layer in self.viewer.layers if layer.name not in ["bounding_boxes", "fiducials"]]
+                layers_names = [layer.name for layer in self.viewer.layers if layer.name not in ["bounding_boxes", "localisations"]]
 
                 crop = self.viewer.layers[layers_names[0]].corner_pixels[:, -2:]
                 [[y1, x1], [y2, x2]] = crop
@@ -654,8 +654,8 @@ class _picasso_detect_utils:
             blur_method = self.gui.picasso_render_blur_method.currentText()
             min_blur_width = float(self.gui.picasso_render_min_blur.text())
 
-            if (image_channel.lower() in self.localisation_dict["fiducials"][dataset_name].keys()):
-                localisation_dict = self.localisation_dict["fiducials"][dataset_name][image_channel.lower()].copy()
+            if (image_channel.lower() in self.localisation_dict["localisations"][dataset_name].keys()):
+                localisation_dict = self.localisation_dict["localisations"][dataset_name][image_channel.lower()].copy()
 
                 if localisation_dict["fitted"] == True:
                     locs = localisation_dict["localisations"]

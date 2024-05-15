@@ -107,7 +107,7 @@ class _undrift_utils:
 
             for dataset_name, dataset_data in self.dataset_dict.items():
                 for channel_name, channel_data in self.dataset_dict[dataset_name].items():
-                    fiducial_dict = self.localisation_dict["fiducials"][dataset_name][channel_name.lower()].copy()
+                    fiducial_dict = self.localisation_dict["localisations"][dataset_name][channel_name.lower()].copy()
 
                     if "drift" in channel_data.keys() and "localisations" in fiducial_dict.keys():
                         locs = fiducial_dict["localisations"]
@@ -128,9 +128,9 @@ class _undrift_utils:
 
                         localisation_centres = self.get_localisation_centres(locs)
 
-                        self.localisation_dict["fiducials"][dataset_name][channel_name.lower()]["localisations"] = locs
-                        self.localisation_dict["fiducials"][dataset_name][channel_name.lower()]["localisation_centres"] = localisation_centres
-                        self.localisation_dict["fiducials"][dataset_name][channel_name.lower()]["render_locs"] = render_locs
+                        self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisations"] = locs
+                        self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisation_centres"] = localisation_centres
+                        self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["render_locs"] = render_locs
 
         except:
             print(traceback.format_exc())
@@ -143,7 +143,7 @@ class _undrift_utils:
             self.image_layer.data = self.dataset_dict[self.active_dataset][self.active_channel]["data"]
 
             self.undrift_localisations()
-            self.draw_fiducials(update_vis=True)
+            self.draw_localisations(update_vis=True)
 
             for layer in self.viewer.layers:
                 layer.refresh()

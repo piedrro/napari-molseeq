@@ -328,7 +328,7 @@ class _events_utils:
                 self.active_dataset = None
                 self.active_channel = None
 
-            self.draw_fiducials(update_vis=True)
+            self.draw_localisations(update_vis=True)
             self.update_overlay_text()
 
         except:
@@ -635,7 +635,7 @@ class _events_utils:
             if "Shift" in modifiers or "Control" in modifiers:
 
                 if "Shift" in modifiers:
-                    mode = "fiducials"
+                    mode = "localisations"
                 elif "Control" in modifiers:
                     mode = "bounding_box"
 
@@ -698,7 +698,7 @@ class _events_utils:
                     print("Deleting dataset {dataset_name}")
 
                 self.dataset_dict.pop(dataset_name)
-                self.localisation_dict["fiducials"].pop(dataset_name)
+                self.localisation_dict["localisations"].pop(dataset_name)
 
                 if hasattr(self, "traces_dict"):
                     if dataset_name in self.traces_dict.keys():
@@ -738,8 +738,8 @@ class _events_utils:
                     dataset_data = self.dataset_dict.pop(old_name)
                     self.dataset_dict[new_name] = dataset_data
 
-                    localisation_data = self.localisation_dict["fiducials"].pop(old_name)
-                    self.localisation_dict["fiducials"][new_name] = localisation_data
+                    localisation_data = self.localisation_dict["localisations"].pop(old_name)
+                    self.localisation_dict["localisations"][new_name] = localisation_data
 
                     if hasattr(self, "traces_dict"):
                         if old_name in self.traces_dict.keys():
@@ -772,7 +772,7 @@ class _events_utils:
 
     def update_picasso_options(self):
 
-        if self.gui.picasso_detect_mode.currentText() == "Fiducials":
+        if self.gui.picasso_detect_mode.currentText() == "Localisations":
             self.gui.picasso_frame_mode.clear()
             self.gui.picasso_frame_mode.addItems(["Active", "All"])
         else:

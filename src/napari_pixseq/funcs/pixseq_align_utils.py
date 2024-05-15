@@ -192,17 +192,17 @@ class _align_utils:
                 align_dict = {}
 
                 for dataset_name in self.dataset_dict.keys():
-                    if dataset_name not in self.localisation_dict["fiducials"].keys():
+                    if dataset_name not in self.localisation_dict["localisations"].keys():
                         missing_fiducial_list.append(dataset_name)
                     else:
                         dataset_channels = list(self.dataset_dict[dataset_name].keys())
                         reference_channels = [channel.lower() for channel in dataset_channels if channel in target_channels]
 
                         for channel in reference_channels:
-                            if channel not in self.localisation_dict["fiducials"][dataset_name].keys():
+                            if channel not in self.localisation_dict["localisations"][dataset_name].keys():
                                 missing_fiducial_list.append(dataset_name)
                             else:
-                                localisation_dict = self.localisation_dict["fiducials"][dataset_name][channel]
+                                localisation_dict = self.localisation_dict["localisations"][dataset_name][channel]
                                 if "fitted" not in localisation_dict.keys():
                                     missing_fiducial_list.append(dataset_name)
                                 else:
@@ -214,7 +214,7 @@ class _align_utils:
 
                 if len(missing_fiducial_list) > 0:
                     missing_fiducial_list = ", ".join(missing_fiducial_list)
-                    self.pixseq_notification(f"Missing fitted {channel_mode} fiducials for {missing_fiducial_list}")
+                    self.pixseq_notification(f"Missing fitted {channel_mode} localisations for {missing_fiducial_list}")
                 else:
 
                     self.update_ui(init=True)

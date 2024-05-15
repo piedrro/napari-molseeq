@@ -17,8 +17,8 @@ class _filter_utils:
 
             if dataset != "" and channel != "":
 
-                if localisation_type == "Fiducials":
-                    loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+                if localisation_type == "Localisations":
+                    loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="localisations")
                 else:
                     loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="bounding_boxes")
 
@@ -52,9 +52,9 @@ class _filter_utils:
                             loc_dict["localisations"] = locs
                             loc_dict["render_locs"] = render_locs
 
-                            if localisation_type == "Fiducials":
-                                self.localisation_dict["fiducials"][dataset][channel.lower()] = loc_dict
-                                self.draw_fiducials(update_vis=True)
+                            if localisation_type == "Localisations":
+                                self.localisation_dict["localisations"][dataset][channel.lower()] = loc_dict
+                                self.draw_localisations(update_vis=True)
                             else:
                                 self.localisation_dict["bounding_boxes"] = loc_dict
                                 self.draw_bounding_boxes(update_vis=True)
@@ -71,7 +71,7 @@ class _filter_utils:
 
     def update_filter_dataset(self, viewer=None):
 
-        if self.gui.picasso_filter_type.currentText() == "Fiducials":
+        if self.gui.picasso_filter_type.currentText() == "Localisations":
             self.gui.picasso_filter_dataset.setEnabled(True)
             self.gui.picasso_filter_dataset.show()
             self.gui.picasso_filter_dataset_label.show()
@@ -97,8 +97,8 @@ class _filter_utils:
 
             if dataset != "" and channel != "":
 
-                if localisation_type == "Fiducials":
-                    loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+                if localisation_type == "Localisations":
+                    loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="localisations")
                 else:
                     loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="bounding_boxes")
 
@@ -129,8 +129,8 @@ class _filter_utils:
             localisation_type = self.gui.picasso_filter_type.currentText()
             criterion = self.gui.filter_criterion.currentText()
 
-            if localisation_type == "Fiducials":
-                loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="fiducials")
+            if localisation_type == "Localisations":
+                loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="localisations")
             else:
                 loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type="bounding_boxes")
 

@@ -49,7 +49,7 @@ class _utils_colocalize:
 
 
 
-    def _pixseq_colocalize_fiducials(self, progress_callback=None):
+    def _pixseq_colocalize_localisations(self, progress_callback=None):
 
         try:
 
@@ -150,7 +150,7 @@ class _utils_colocalize:
 
         return result_dict
 
-    def _pixseq_colocalize_fiducials_result(self, colo_locs):
+    def _pixseq_colocalize_localisations_result(self, colo_locs):
 
         try:
 
@@ -160,17 +160,17 @@ class _utils_colocalize:
                 channel1 = self.gui.colo_channel1.currentText()
                 channel2 = self.gui.colo_channel2.currentText()
 
-                if self.gui.colo_fiducials.isChecked():
+                if self.gui.colo_localisations.isChecked():
 
-                    self.localisation_dict["fiducials"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
-                    self.localisation_dict["fiducials"][dataset][channel1.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
-                    self.localisation_dict["fiducials"][dataset][channel1.lower()]["render_locs"] = colo_locs["render_locs"]
+                    self.localisation_dict["localisations"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
+                    self.localisation_dict["localisations"][dataset][channel1.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
+                    self.localisation_dict["localisations"][dataset][channel1.lower()]["render_locs"] = colo_locs["render_locs"]
 
-                    self.localisation_dict["fiducials"][dataset][channel2.lower()]["localisations"] = colo_locs["localisations"]
-                    self.localisation_dict["fiducials"][dataset][channel2.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
-                    self.localisation_dict["fiducials"][dataset][channel2.lower()]["render_locs"] = colo_locs["render_locs"]
+                    self.localisation_dict["localisations"][dataset][channel2.lower()]["localisations"] = colo_locs["localisations"]
+                    self.localisation_dict["localisations"][dataset][channel2.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
+                    self.localisation_dict["localisations"][dataset][channel2.lower()]["render_locs"] = colo_locs["render_locs"]
 
-                    self.draw_fiducials(update_vis=True)
+                    self.draw_localisations(update_vis=True)
 
                 if self.gui.colo_bboxes.isChecked():
 
@@ -183,12 +183,12 @@ class _utils_colocalize:
             print(traceback.format_exc())
             pass
 
-    def _pixseq_colocalize_fiducials_finished(self):
+    def _pixseq_colocalize_localisations_finished(self):
 
         self.update_ui()
 
 
-    def pixseq_colocalize_fiducials(self):
+    def pixseq_colocalize_localisations(self):
 
         try:
 
@@ -208,9 +208,9 @@ class _utils_colocalize:
             else:
                 self.update_ui(init=True)
 
-                self.worker = Worker(self._pixseq_colocalize_fiducials)
-                self.worker.signals.result.connect(self._pixseq_colocalize_fiducials_result)
-                self.worker.signals.finished.connect(self._pixseq_colocalize_fiducials_finished)
+                self.worker = Worker(self._pixseq_colocalize_localisations)
+                self.worker.signals.result.connect(self._pixseq_colocalize_localisations_result)
+                self.worker.signals.finished.connect(self._pixseq_colocalize_localisations_finished)
                 self.worker.signals.error.connect(self.update_ui)
                 self.threadpool.start(self.worker)
 
