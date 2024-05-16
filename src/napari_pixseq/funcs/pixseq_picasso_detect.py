@@ -15,6 +15,7 @@ import concurrent.futures
 import multiprocessing
 from picasso.render import render
 from shapely.geometry import Point, Polygon
+from multiprocessing import Manager
 
 def remove_overlapping_locs(locs, box_size):
 
@@ -60,7 +61,7 @@ def cut_spots(movie, ids_frame, ids_x, ids_y, box):
     return spots
 
 
-def picasso_detect(dat):
+def picasso_detect(dat, progress_list):
 
     result = None
 
@@ -105,10 +106,6 @@ def picasso_detect(dat):
                     image = np.expand_dims(frame, axis=0)
                     camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
                     spot_data = get_spots(image, locs, box_size, camera_info)
-
-                    # frame = np.expand_dims(frame, axis=0)
-                    # locs.frame = 0
-                    # spot_data = cut_spots(frame, locs.frame, locs.x, locs.y, box_size)
 
                     theta, CRLBs, likelihoods, iterations = gaussmle(spot_data, eps=0.001, max_it=1000, method="sigma")
                     locs = localize.locs_from_fits(locs.copy(), theta, CRLBs, likelihoods, iterations, box_size)
@@ -163,6 +160,8 @@ def picasso_detect(dat):
     except:
         print(traceback.format_exc())
         pass
+
+    progress_list.append(dat["frame_index"])
 
     return result
 
@@ -393,6 +392,7 @@ class _picasso_detect_utils:
                         time_duration = time_end - time_start
                         print(f"Compute job created in {time_duration} seconds")
 
+
             if len(compute_jobs) > 0:
                 if self.verbose:
                     print(f"Starting Picasso {len(compute_jobs)} compute jobs...")
@@ -409,42 +409,47 @@ class _picasso_detect_utils:
                     executor_class = concurrent.futures.ProcessPoolExecutor
                     cpu_count = int(multiprocessing.cpu_count() * 0.9)
 
-                with executor_class(max_workers=cpu_count) as executor:
-                    futures = {executor.submit(picasso_detect, job): job for job in compute_jobs}
+                with Manager() as manager:
+                    progress_list = manager.list()
 
-                iter = 0
-                for future in concurrent.futures.as_completed(futures):
-                    if self.stop_event.is_set():
-                        future.cancel()
-                    else:
-                        job = futures[future]
-                        try:
-                            result = future.result(timeout=timeout_duration)  # Process result here
+                    with executor_class(max_workers=cpu_count) as executor:
+                        futures = {executor.submit(picasso_detect, job, progress_list): job for job in compute_jobs}
 
-                            if result is not None:
-                                dataset_name = result["dataset"]
+                        # Calculate and emit progress
+                        while any(not future.done() for future in futures):
+                            progress = (len(progress_list)/len(compute_jobs)) * 100
+                            if progress_callback is not None:
+                                progress_callback.emit(progress)
 
-                                if dataset_name not in loc_dict:
-                                    loc_dict[dataset_name] = []
-                                    render_loc_dict[dataset_name] = {}
+                        for future in concurrent.futures.as_completed(futures):
 
-                                locs = result["locs"]
-                                render_locs = result["render_locs"]
+                            if self.stop_event.is_set():
+                                future.cancel()
+                            else:
+                                job = futures[future]
+                                try:
+                                    result = future.result(timeout=timeout_duration)  # Process result here
 
-                                if len(locs) > 0:
-                                    loc_dict[dataset_name].extend(locs)
+                                    if result is not None:
+                                        dataset_name = result["dataset"]
 
-                                render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs, }
+                                        if dataset_name not in loc_dict:
+                                            loc_dict[dataset_name] = []
+                                            render_loc_dict[dataset_name] = {}
 
-                            iter += 1
-                            progress = int((iter / len(compute_jobs)) * 100)
-                            progress_callback.emit(progress)  # Emit the signal
+                                        locs = result["locs"]
+                                        render_locs = result["render_locs"]
 
-                        except concurrent.futures.TimeoutError:
-                            # print(f"Task {job} timed out after {timeout_duration} seconds.")
-                            pass
-                        except Exception as e:
-                            print(f"Error occurred in task {job}: {e}")  # Handle other exceptions
+                                        if len(locs) > 0:
+                                            loc_dict[dataset_name].extend(locs)
+
+                                        render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs, }
+
+                                except concurrent.futures.TimeoutError:
+                                    # print(f"Task {job} timed out after {timeout_duration} seconds.")
+                                    pass
+                                except Exception as e:
+                                    print(f"Error occurred in task {job}: {e}")  # Handle other exceptions
 
                 if self.verbose:
                     print("Finished Picasso compute jobs...")
