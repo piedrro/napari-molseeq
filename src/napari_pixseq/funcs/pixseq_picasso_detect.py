@@ -141,7 +141,10 @@ def picasso_detect(dat, progress_list):
                                 loc["segmentation"] = polygon_index
                                 filtered_locs.append(loc)
 
-                    locs = pd.DataFrame(filtered_locs).to_records(index=False)
+                    if len(filtered_locs):
+                        locs = pd.DataFrame(filtered_locs).to_records(index=False)
+                    else:
+                        locs = []
 
                 else:
                     locs = []
