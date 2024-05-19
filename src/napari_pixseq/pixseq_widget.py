@@ -196,7 +196,7 @@ class PixSeqWidget(QWidget, gui,
         self.gui.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
         self.gui.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
 
-        self.viewer.bind_key('D', self.dev_function)
+        self.viewer.bind_key('Control-D', self.dev_function)
 
         self.viewer.bind_key('PageUp', self.named_partial(self.increment_active_dataset, key='Up'), overwrite=True)
         self.viewer.bind_key('PageDown', self.named_partial(self.increment_active_dataset, key='Down'), overwrite=True)
@@ -275,14 +275,10 @@ class PixSeqWidget(QWidget, gui,
 
         print("Dev function called")
 
-        # channel = self.gui.picasso_channel.currentText()
-        # dataset = self.gui.picasso_dataset.currentText()
-        #
-        # loc_dict, _, _ = self.get_loc_dict(dataset, channel.lower(), type="localisations")
-        #
-        # locs = loc_dict["localisations"]
-        #
-        # print(locs.dtype.names)
+        self.create_shared_image_chunks()
+        self.restore_shared_image_chunks()
+
+
 
     def select_image_layer(self):
 

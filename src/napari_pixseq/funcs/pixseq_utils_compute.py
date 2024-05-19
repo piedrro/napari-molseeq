@@ -9,6 +9,146 @@ import napari
 
 class _utils_compute:
 
+    def create_shared_image_chunks(self, dataset_list = None,
+            channel_list = None, chunk_size = 100):
+
+        if self.verbose:
+            print("Creating shared images")
+
+        if dataset_list is None:
+            dataset_list = list(self.dataset_dict.keys())
+        else:
+            dataset_list = [dataset for dataset in dataset_list if dataset in self.dataset_dict.keys()]
+
+        self.shared_chunks = []
+
+        for dataset_name in dataset_list:
+
+            channel_names = list(self.dataset_dict[dataset_name].keys())
+
+            if channel_list is not None:
+                channel_names = [chan for chan in channel_list if chan in channel_names]
+
+            for channel_name in channel_names:
+                if channel_name in self.dataset_dict[dataset_name].keys():
+                    channel_dict = self.dataset_dict[dataset_name][channel_name]
+
+                    image = channel_dict.pop("data")
+
+                    n_frames = image.shape[0]
+
+                    n_chunks = int(np.ceil(n_frames / chunk_size))
+
+                    for chunk_index in range(n_chunks):
+
+
+
+                        start_index = chunk_index * chunk_size
+                        end_index = (chunk_index + 1) * chunk_size
+
+                        chunk_indices = np.arange(start_index, end_index)
+
+                        if end_index > n_frames:
+                            end_index = n_frames
+
+                        chunk = image[start_index:end_index]
+
+                        print(dataset_name, channel_name, chunk_index, n_chunks, chunk.shape)
+
+                        shared_mem = shared_memory.SharedMemory(create=True, size=chunk.nbytes)
+                        shared_memory_name = shared_mem.name
+                        shared_chunk = np.ndarray(chunk.shape, dtype=chunk.dtype, buffer=shared_mem.buf)
+                        shared_chunk[:] = chunk[:]
+
+                        self.shared_chunks.append({"dataset": dataset_name,
+                                                   "channel": channel_name,
+                                                   "gap_label": channel_dict["gap_label"],
+                                                   "sequence_label": channel_dict["sequence_label"],
+                                                   "n_frames": n_frames,
+                                                   "shape": chunk.shape,
+                                                   "dtype": chunk.dtype,
+                                                   "start_index": start_index,
+                                                   "end_index": end_index,
+                                                   "chunk_size": chunk_size,
+                                                   "shared_mem": shared_mem,
+                                                   "shared_memory_name": shared_memory_name})
+
+    def restore_shared_image_chunks(self):
+
+        if self.verbose:
+            print("Restoring shared images")
+
+        if hasattr(self, "shared_chunks"):
+
+            dataset_list = []
+            channel_list = []
+
+            for dat in self.shared_chunks:
+                try:
+                    dataset = dat["dataset"]
+                    channel = dat["channel"]
+                    shape = dat["shape"]
+                    dtype = dat["dtype"]
+                    start_index = dat["start_index"]
+                    shared_mem = dat["shared_mem"]
+
+                    np_array = np.ndarray(shape, dtype=dtype, buffer=shared_mem.buf).copy()
+                    shared_mem.close()
+                    shared_mem.unlink()
+
+                    image_dict = self.dataset_dict[dataset][channel]
+
+                    if "data" not in image_dict.keys():
+                        image_dict["data"] = []
+                        image_dict["chunk_idices"] = []
+
+                    image_dict["data"].append(np_array)
+                    image_dict["chunk_idices"].append(start_index)
+
+                    dataset_list.append(dataset)
+                    channel_list.append(channel)
+
+                except:
+                    print(traceback.format_exc())
+                    pass
+
+            dataset_list = list(set(dataset_list))
+            channel_list = list(set(channel_list))
+
+            for dataset in dataset_list:
+                for channel in channel_list:
+
+                    try:
+
+                        image_dict = self.dataset_dict[dataset][channel]
+
+                        if "data" in image_dict.keys():
+
+                            chunk_indices = image_dict["chunk_idices"]
+                            images = image_dict["data"]
+
+                            sorted_indices = np.argsort(chunk_indices)
+
+                            print(f"Restoring {dataset} {channel} {len(images)} chunks")
+                            print(f"Chunk indices: {chunk_indices}")
+                            print(f"Sorted indices: {sorted_indices}")
+
+                            sorted_images = [images[i] for i in sorted_indices]
+                            image = np.concatenate(sorted_images, axis=0)
+
+                            image_dict["data"] = image
+                            del image_dict["chunk_idices"]
+
+                    except:
+                        pass
+
+
+
+
+
+
+
+
     def create_shared_images(self, dataset_list = None, channel_list = None):
 
         if self.verbose:
