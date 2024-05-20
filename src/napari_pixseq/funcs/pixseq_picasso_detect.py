@@ -65,28 +65,46 @@ def cut_spots(movie, ids_frame, ids_x, ids_y, box):
     return spots
 
 
-def locs_from_fits(locs, theta, box, em=False):
+def locs_from_fits(locs, theta, box, em=False, gpu_fit=False):
 
     try:
 
-        box_offset = int(box / 2)
-        x = theta[:, 1] + locs.x - box_offset
-        y = theta[:, 2] + locs.y - box_offset
-        lpx = postprocess.localization_precision(theta[:, 0], theta[:, 3], theta[:, 5], em=em)
-        lpy = postprocess.localization_precision(theta[:, 0], theta[:, 4], theta[:, 5], em=em)
-        a = np.maximum(theta[:, 3], theta[:, 4])
-        b = np.minimum(theta[:, 3], theta[:, 4])
-        ellipticity = (a - b) / a
-        net_gradient = locs.net_gradient
+        if gpu_fit:
+            box_offset = int(box / 2)
+            x = theta[:, 1] + locs.x - box_offset
+            y = theta[:, 2] + locs.y - box_offset
+            lpx = postprocess.localization_precision(theta[:, 0], theta[:, 3], theta[:, 5], em=em)
+            lpy = postprocess.localization_precision(theta[:, 0], theta[:, 4], theta[:, 5], em=em)
+            a = np.maximum(theta[:, 3], theta[:, 4])
+            b = np.minimum(theta[:, 3], theta[:, 4])
+            ellipticity = (a - b) / a
+            photons = theta[:, 0]
+            sx = theta[:, 3]
+            sy = theta[:, 4]
+            bg = theta[:, 5]
+            net_gradient = locs.net_gradient
+        else:
+            x = theta[:, 0] + locs.x  # - box_offset
+            y = theta[:, 1] + locs.y  # - box_offset
+            lpx = postprocess.localization_precision(theta[:, 2], theta[:, 4], theta[:, 3], em=em)
+            lpy = postprocess.localization_precision(theta[:, 2], theta[:, 5], theta[:, 3], em=em)
+            a = np.maximum(theta[:, 4], theta[:, 5])
+            b = np.minimum(theta[:, 4], theta[:, 5])
+            ellipticity = (a - b) / a
+            photons = theta[:, 2]
+            sx = theta[:, 4]
+            sy = theta[:, 5]
+            bg = theta[:, 3]
+            net_gradient = locs.net_gradient
 
         locs = pd.DataFrame(locs)
 
         locs["x"] = x
         locs["y"] = y
-        locs["photons"] = theta[:, 0]
-        locs["sx"] = theta[:, 3]
-        locs["sy"] = theta[:, 4]
-        locs["bg"] = theta[:, 5]
+        locs["photons"] = photons
+        locs["sx"] = sx
+        locs["sy"] = sy
+        locs["bg"] = bg
         locs["lpx"] = lpx
         locs["lpy"] = lpy
         locs["ellipticity"] = ellipticity
@@ -109,10 +127,7 @@ def fit_spots_lq(spots, locs, box, progress_list):
         theta[i] = gausslq.fit_spot(spot)
         progress_list.append(1)
 
-    locs = locs_from_fits(locs.copy(), theta, box)
-
-    # theta, CRLBs, likelihoods, iterations = gaussmle(spots, eps=0.001, max_it=1000, method="sigma")
-    # locs = locs_from_fits(locs.copy(), theta, box)
+    locs = locs_from_fits(locs, theta, box, gpu_fit=False)
 
     return locs
 
@@ -451,7 +466,7 @@ class _picasso_detect_utils:
             print(traceback.format_exc())
             return None
 
-    def populate_picasso_compute_dict(self, detect, fit,
+    def populate_picasso_detect_jobs(self, detect, fit,
             min_net_gradient, roi):
 
         try:
@@ -578,7 +593,7 @@ class _picasso_detect_utils:
 
             parameters[:, 0] *= 2.0 * np.pi * parameters[:, 3] * parameters[:, 4]
 
-            locs = locs_from_fits(locs, parameters, box_size)
+            locs = locs_from_fits(locs, parameters, box_size, gpu_fit=True)
 
 
         except:
@@ -630,10 +645,6 @@ class _picasso_detect_utils:
         return locs
 
 
-
-
-
-
     def _picasso_wrapper(self, progress_callback, detect, fit,
             min_net_gradient, dataset_list = [], channel_list = [],
             frame_index = None, gpu_fit=True):
@@ -659,7 +670,7 @@ class _picasso_detect_utils:
                     self.create_shared_image_chunks(dataset_list=dataset_list,
                         channel_list=channel_list, frame_index=frame_index, )
 
-                    detect_jobs, n_frames = self.populate_picasso_compute_dict(detect,
+                    detect_jobs, n_frames = self.populate_picasso_detect_jobs(detect,
                         fit, min_net_gradient, roi)
 
                     if len(detect_jobs) > 0:
@@ -670,10 +681,6 @@ class _picasso_detect_utils:
 
                         locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
                             n_workers, n_frames, fit, progress_callback)
-
-                        # import matplotlib.pyplot as plt
-                        # plt.imshow(spots[0])
-                        # plt.show()
 
                         if len(locs) > 0 and fit == True:
 
@@ -712,57 +719,59 @@ class _picasso_detect_utils:
 
         try:
 
-            dataset_list = list(set(locs["dataset"]))
-            channel_list = list(set(locs["channel"]))
+            if len(locs) > 0:
 
-            for dataset in dataset_list:
-                for channel in channel_list:
+                dataset_list = list(set(locs["dataset"]))
+                channel_list = list(set(locs["channel"]))
 
-                    if channel in locs["channel"]:
+                for dataset in dataset_list:
+                    for channel in channel_list:
 
-                        if detect_mode.lower() == "localisations":
-
-                            if dataset not in self.localisation_dict.keys():
-                                self.localisation_dict["localisations"][dataset] = {}
-                            if channel not in self.localisation_dict["localisations"][dataset].keys():
-                                self.localisation_dict["localisations"][dataset][channel] = {}
-
-                            result_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
-
-                        else:
-
-                            result_dict = self.localisation_dict["bounding_boxes"]
-
-                        channel_locs = locs[(locs["dataset"] == dataset) & (locs["channel"] == channel)]
-
-                        if len(channel_locs) == 0:
-
-                            result_dict["localisations"] = []
-                            result_dict["localisation_centres"] = []
-                            result_dict["render_locs"] = {}
-                            result_dict["fitted"] = False
-                            result_dict["box_size"] = box_size
-
-                        else:
-
-                            channel_locs.sort(kind="mergesort", order="frame")
-                            channel_loc_centres = self.get_localisation_centres(channel_locs)
-
-                            result_dict["localisations"] = channel_locs.copy()
-                            result_dict["localisation_centres"] = channel_loc_centres.copy()
-                            result_dict["fitted"] = fitted
-                            result_dict["box_size"] = box_size
+                        if channel in locs["channel"]:
 
                             if detect_mode.lower() == "localisations":
 
-                                render_locs = {}
+                                if dataset not in self.localisation_dict.keys():
+                                    self.localisation_dict["localisations"][dataset] = {}
+                                if channel not in self.localisation_dict["localisations"][dataset].keys():
+                                    self.localisation_dict["localisations"][dataset][channel] = {}
 
-                                for frame_index in set(channel_locs.frame):
+                                result_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
 
-                                    frame_locs = channel_locs[channel_locs.frame == frame_index].copy()
-                                    render_locs[frame_index] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
+                            else:
 
-                                result_dict["render_locs"] = render_locs
+                                result_dict = self.localisation_dict["bounding_boxes"]
+
+                            channel_locs = locs[(locs["dataset"] == dataset) & (locs["channel"] == channel)]
+
+                            if len(channel_locs) == 0:
+
+                                result_dict["localisations"] = []
+                                result_dict["localisation_centres"] = []
+                                result_dict["render_locs"] = {}
+                                result_dict["fitted"] = False
+                                result_dict["box_size"] = box_size
+
+                            else:
+
+                                channel_locs.sort(kind="mergesort", order="frame")
+                                channel_loc_centres = self.get_localisation_centres(channel_locs)
+
+                                result_dict["localisations"] = channel_locs.copy()
+                                result_dict["localisation_centres"] = channel_loc_centres.copy()
+                                result_dict["fitted"] = fitted
+                                result_dict["box_size"] = box_size
+
+                                if detect_mode.lower() == "localisations":
+
+                                    render_locs = {}
+
+                                    for frame_index in set(channel_locs.frame):
+
+                                        frame_locs = channel_locs[channel_locs.frame == frame_index].copy()
+                                        render_locs[frame_index] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
+
+                                    result_dict["render_locs"] = render_locs
 
         except:
             print(traceback.format_exc())
