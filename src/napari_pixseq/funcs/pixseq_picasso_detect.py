@@ -466,6 +466,60 @@ class _picasso_detect_utils:
             print(traceback.format_exc())
             return None
 
+    def get_fit_data(self, detect_mode, dataset_list, channel_list, box_size, frame_index=None):
+
+        try:
+
+            loc_list = []
+            spot_list = []
+
+            for dataset in dataset_list:
+                for channel in channel_list:
+
+                    if detect_mode.lower() == "localisations":
+                        loc_dict, n_locs, _ = self.get_loc_dict(dataset, channel.lower(),
+                            type="localisations")
+                    else:
+                        loc_dict, n_locs, _ = self.get_loc_dict(dataset, channel.lower(),
+                            type="bounding_boxes")
+
+                    if n_locs > 0:
+
+                        image_dict = self.dataset_dict[dataset][channel.lower()]
+
+                        image = image_dict.pop("data")
+
+                        locs = loc_dict["localisations"].copy()
+
+                        if frame_index is not None:
+                            locs = locs[locs.frame == frame_index]
+
+                        if "dataset" not in locs.dtype.names:
+                            locs = pd.DataFrame(locs)
+                            locs.insert(0, "dataset", dataset)
+                            locs.insert(1, "channel", channel)
+                            locs = locs.to_records(index=False)
+
+                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                        spot_data = get_spots(image, locs, box_size, camera_info)
+
+                        image_dict["data"] = image
+
+                        loc_list.append(locs)
+                        spot_list.append(spot_data)
+
+        except:
+            print(traceback.format_exc())
+            pass
+
+        if len(loc_list) > 0:
+            loc_list = np.hstack(loc_list).view(np.recarray).copy()
+            spot_list = np.stack(spot_list, axis=0)
+
+        return loc_list, spot_list
+
+
+
     def populate_picasso_detect_jobs(self, detect, fit,
             min_net_gradient, roi):
 
@@ -545,22 +599,20 @@ class _picasso_detect_utils:
         spots = []
 
         for future in concurrent.futures.as_completed(futures):
-            if self.stop_event.is_set():
-                future.cancel()
-            else:
-                job = futures[future]
-                try:
-                    result = future.result(timeout=timeout_duration)  # Process result here
 
-                    if result is not None:
-                        result_locs, result_spots = result
-                        locs.extend(result_locs)
-                        spots.extend(result_spots)
+            job = futures[future]
+            try:
+                result = future.result(timeout=timeout_duration)  # Process result here
 
-                except concurrent.futures.TimeoutError:
-                    print(f"Task {job} timed out after {timeout_duration} seconds.")
-                except Exception as e:
-                    print(f"Error occurred in task {job}: {e}")
+                if result is not None:
+                    result_locs, result_spots = result
+                    locs.extend(result_locs)
+                    spots.extend(result_spots)
+
+            except concurrent.futures.TimeoutError:
+                print(f"Task {job} timed out after {timeout_duration} seconds.")
+            except Exception as e:
+                print(f"Error occurred in task {job}: {e}")
 
         if len(locs) > 0:
             locs = np.hstack(locs).view(np.recarray).copy()
@@ -650,6 +702,7 @@ class _picasso_detect_utils:
             frame_index = None, gpu_fit=True):
 
         try:
+            locs, fitted = [], False
 
             frame_mode = self.gui.picasso_frame_mode.currentText()
             detect_mode = self.gui.picasso_detect_mode.currentText()
@@ -667,43 +720,48 @@ class _picasso_detect_utils:
 
                 with executor_class(max_workers=n_workers) as executor:
 
-                    self.create_shared_image_chunks(dataset_list=dataset_list,
-                        channel_list=channel_list, frame_index=frame_index, )
+                    if detect is True:
 
-                    detect_jobs, n_frames = self.populate_picasso_detect_jobs(detect,
-                        fit, min_net_gradient, roi)
+                        self.create_shared_image_chunks(dataset_list=dataset_list,
+                            channel_list=channel_list, frame_index=frame_index, )
 
-                    if len(detect_jobs) > 0:
-                        if self.verbose:
-                            print(f"Starting Picasso {len(detect_jobs)} compute jobs...")
+                        detect_jobs, n_frames = self.populate_picasso_detect_jobs(detect,
+                            fit, min_net_gradient, roi)
 
-                        print(f"Detecting spots in {n_frames} frames...")
+                        if len(detect_jobs) > 0:
+                            if self.verbose:
+                                print(f"Starting Picasso {len(detect_jobs)} compute jobs...")
 
-                        locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
-                            n_workers, n_frames, fit, progress_callback)
+                            print(f"Detecting spots in {n_frames} frames...")
 
-                        if len(locs) > 0 and fit == True:
+                            locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
+                                n_workers, n_frames, fit, progress_callback)
 
-                            if gpu_fit:
+                    if detect is False and fit is True:
 
-                                print(f"Fitting {len(locs)} spots on GPU...")
+                        locs, spots = self.get_fit_data(detect_mode, dataset_list, channel_list, box_size, frame_index)
 
-                                locs = self.fit_spots_gpu(locs, spots, box_size)
+                    if len(locs) > 0 and fit == True:
 
-                            else:
+                        if gpu_fit:
 
-                                print(f"Fitting {len(locs)} spots on CPU...")
+                            print(f"Fitting {len(locs)} spots on GPU...")
 
-                                locs = self.fit_spots_parallel(locs, spots, box_size, executor, manager,
-                                    n_workers, detect, progress_callback)
-
-                            progress_callback.emit(100)
-                            fitted = True
+                            locs = self.fit_spots_gpu(locs, spots, box_size)
 
                         else:
-                            fitted = False
 
-                        self.process_locs(locs, detect_mode, box_size, fitted)
+                            print(f"Fitting {len(locs)} spots on CPU...")
+
+                            locs = self.fit_spots_parallel(locs, spots, box_size, executor, manager,
+                                n_workers, detect, progress_callback)
+
+                        fitted = True
+                    else:
+                        fitted = False
+
+            if progress_callback is not None:
+                progress_callback.emit(100)
 
             self.restore_shared_image_chunks()
             self.update_ui()
@@ -713,6 +771,8 @@ class _picasso_detect_utils:
 
             self.restore_shared_image_chunks()
             self.update_ui()
+
+        return locs, fitted
 
 
     def process_locs(self, locs, detect_mode, box_size, fitted=False):
@@ -778,9 +838,20 @@ class _picasso_detect_utils:
             return None
 
 
+    def _picasso_wrapper_result(self, result):
 
+        try:
 
+            locs, fitted = result
 
+            detect_mode = self.gui.picasso_detect_mode.currentText()
+            box_size = int(self.gui.picasso_box_size.currentText())
+
+            self.process_locs(locs, detect_mode, box_size, fitted)
+
+        except:
+            print(traceback.format_exc())
+            pass
 
 
 
@@ -835,7 +906,7 @@ class _picasso_detect_utils:
 
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
                         progress_bar=self.gui.picasso_progressbar))
-
+                    self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)
