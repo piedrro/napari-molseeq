@@ -487,8 +487,6 @@ class _picasso_detect_utils:
 
                         image_dict = self.dataset_dict[dataset][channel.lower()]
 
-                        image = image_dict.pop("data")
-
                         locs = loc_dict["localisations"].copy()
 
                         if frame_index is not None:
@@ -500,13 +498,24 @@ class _picasso_detect_utils:
                             locs.insert(1, "channel", channel)
                             locs = locs.to_records(index=False)
 
-                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
-                        spot_data = get_spots(image, locs, box_size, camera_info)
+                        for frame_index in set(locs.frame):
 
-                        image_dict["data"] = image
+                            frame_locs = locs[locs.frame == frame_index].copy()
 
-                        loc_list.append(locs)
-                        spot_list.append(spot_data)
+                            if len(frame_locs) == 0:
+                                continue
+
+                            frame_image = image_dict["data"][frame_index].copy()
+                            frame_image = np.expand_dims(frame_image, axis=0)
+                            frame_locs.frame = 0
+
+                            camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                            spot_data = get_spots(frame_image, frame_locs, box_size, camera_info)
+
+                            frame_locs.frame = frame_index
+
+                            loc_list.append(frame_locs)
+                            spot_list.append(spot_data)
 
         except:
             print(traceback.format_exc())
@@ -514,7 +523,7 @@ class _picasso_detect_utils:
 
         if len(loc_list) > 0:
             loc_list = np.hstack(loc_list).view(np.recarray).copy()
-            spot_list = np.stack(spot_list, axis=0)
+            spot_list = np.concatenate(spot_list, axis=0)
 
         return loc_list, spot_list
 
@@ -757,6 +766,9 @@ class _picasso_detect_utils:
                                 n_workers, detect, progress_callback)
 
                         fitted = True
+
+                        print(f"Fitted {len(locs)} spots")
+
                     else:
                         fitted = False
 
