@@ -150,8 +150,31 @@ def fit_spots_lq(spots, locs, box, progress_list):
     return locs
 
 
+def remove_segmentation_locs(locs, polygons):
 
+    if len(polygons) > 0 and len(locs) > 0:
 
+        loclist = pd.DataFrame(locs).to_dict(orient="records")
+
+        filtered_locs = []
+
+        for loc in loclist:
+            point = Point(loc["x"], loc["y"])
+
+            for polygon_index, polygon in enumerate(polygons):
+                if polygon.contains(point):
+                    loc["segmentation"] = polygon_index
+                    filtered_locs.append(loc)
+
+        if len(filtered_locs):
+            locs = pd.DataFrame(filtered_locs).to_records(index=False)
+        else:
+            locs = []
+
+    else:
+        locs = []
+
+    return locs
 
 
 
@@ -185,9 +208,6 @@ def detect_picaso_locs(dat, progress_list, fit_list):
 
             image_chunk = np_array.copy()
 
-            chunk_locs = []
-            chunk_spots = []
-
             for array_index, frame in enumerate(image_chunk):
 
                 frame_index = start_index + array_index
@@ -197,6 +217,9 @@ def detect_picaso_locs(dat, progress_list, fit_list):
 
                 if remove_overlapping:
                     locs = remove_overlapping_locs(locs, box_size)
+
+                if polygon_filter:
+                    locs = remove_segmentation_locs(locs, polygons)
 
                 if len(locs) > 0:
 
@@ -395,34 +418,6 @@ class _picasso_detect_utils:
             self.gui.picasso_detect.setEnabled(True)
             self.gui.picasso_fit.setEnabled(True)
             self.gui.picasso_detectfit.setEnabled(True)
-
-    def _picasso_wrapper_result(self, result):
-
-        try:
-
-            if self.verbose:
-                print("Picasso wrapper result received")
-
-            fitted, loc_dict, render_loc_dict, total_locs = result
-
-            detect_mode = self.gui.picasso_detect_mode.currentText()
-            image_channel = self.gui.picasso_channel.currentText()
-            box_size = int(self.gui.picasso_box_size.currentText())
-
-            dataset_names = list(loc_dict.keys())
-
-            if len(dataset_names) > 0:
-
-                self.populate_localisation_dict(loc_dict, render_loc_dict, detect_mode,
-                    image_channel, box_size, fitted)
-
-                if fitted:
-                    self.pixseq_notification("Fitted {} {}".format(total_locs, detect_mode))
-                else:
-                    self.pixseq_notification("Detected {} {}".format(total_locs, detect_mode))
-
-        except:
-            print(traceback.format_exc())
 
     def _picasso_wrapper_finished(self):
 
@@ -731,12 +726,16 @@ class _picasso_detect_utils:
 
                         if len(locs) > 0 and fit == True:
 
-                            print(f"Fitting {len(locs)} spots...")
-
                             if gpu_fit:
+
+                                print(f"Fitting {len(locs)} spots on GPU...")
+
                                 locs = self.fit_spots_gpu(locs, spots, box_size)
 
                             else:
+
+                                print(f"Fitting {len(locs)} spots on CPU...")
+
                                 locs = self.fit_spots_parallel(locs, spots, box_size, executor, manager,
                                     n_workers, detect, progress_callback)
 
@@ -746,7 +745,7 @@ class _picasso_detect_utils:
                         else:
                             fitted = False
 
-                    self.process_locs(locs, detect_mode, box_size, fitted)
+                        self.process_locs(locs, detect_mode, box_size, fitted)
 
             self.restore_shared_image_chunks()
 
@@ -842,6 +841,12 @@ class _picasso_detect_utils:
                 image_channel = self.gui.picasso_channel.currentText()
                 frame_mode = self.gui.picasso_frame_mode.currentText()
                 minimise_ram = self.gui.picasso_minimise_ram.isChecked()
+                picasso_use_gpufit = self.gui.picasso_use_gpufit.isChecked()
+
+                if self.gpufit_available and picasso_use_gpufit:
+                    gpu_fit = True
+                else:
+                    gpu_fit = False
 
                 if min_net_gradient.isdigit() and image_channel != "":
 
@@ -858,12 +863,12 @@ class _picasso_detect_utils:
                     self.worker = Worker(self._picasso_wrapper,
                         detect=detect, fit=fit,
                         min_net_gradient=min_net_gradient,
-                        image_channel=image_channel,)
+                        image_channel=image_channel,
+                        gpu_fit=gpu_fit)
 
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
                         progress_bar=self.gui.picasso_progressbar))
 
-                    # self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)
@@ -1051,7 +1056,7 @@ class _picasso_detect_utils:
                     self.update_ui(init=True)
 
                     worker = Worker(self.render_picasso_locs, locs=locs, image_shape=image_shape,
-                        blur_method=blur_method, min_blur_width=min_blur_width, pixel_size=pixel_size, )
+                        blur_method=blur_method, min_blur_width=min_blur_width, pixel_size=pixel_size)
                     worker.signals.result.connect(self.draw_picasso_render)
                     worker.signals.finished.connect(self.picasso_render_finished)
                     self.threadpool.start(worker)

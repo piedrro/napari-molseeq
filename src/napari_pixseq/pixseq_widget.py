@@ -103,6 +103,8 @@ class PixSeqWidget(QWidget, gui,
         self.update_import_options()
         self.update_import_append_options()
 
+        self.check_gpufit_availibility()
+
         self.widget_notifications = True
 
     def register_events(self):
@@ -251,6 +253,44 @@ class PixSeqWidget(QWidget, gui,
 
 
 
+    def check_gpufit_availibility(self):
+
+        self.gpufit_available = False
+
+        try:
+            from pygpufit import gpufit as gf
+            package_installed = True
+        except:
+            package_installed = False
+
+        if package_installed:
+
+            if not gf.cuda_available():
+                print("Pygpufit not available due to missing CUDA")
+            else:
+                runtime_version, driver_version = gf.get_cuda_version()
+
+                runtime_version = ".".join([str(v) for v in list(runtime_version)])
+                driver_version = ".".join([str(v) for v in list(driver_version)])
+
+                if runtime_version != driver_version:
+                    print(f"Pygpufit not available due to CUDA version mismatch. "
+                          f"Runtime: {runtime_version}, Driver: {driver_version}")
+
+                else:
+                    self.gpufit_available = True
+
+        else:
+            print("Pygpufit not available due to missing package")
+            print("Install pygpufit package into napari-PixSeq root directory")
+
+        if self.gpufit_available:
+            print("Pygpufit available")
+            self.gui.picasso_use_gpufit.setEnabled(True)
+        else:
+            self.gui.picasso_use_gpufit.setEnabled(False)
+
+
     def on_add_layer(self, event):
         if event.value.name == "Shapes":
             layer_list = [layer.name for layer in self.viewer.layers if layer.name != "Shapes"]
@@ -275,8 +315,7 @@ class PixSeqWidget(QWidget, gui,
 
         print("Dev function called")
 
-        self.create_shared_image_chunks()
-        self.restore_shared_image_chunks()
+        self.check_gpufit_availibility()
 
 
 
