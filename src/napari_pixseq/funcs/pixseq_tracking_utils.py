@@ -91,14 +91,8 @@ class _tracking_utils:
                 if n_removed > 0:
                     print(f"Removed {n_removed} unlinked localisations")
 
-                    render_locs = {}
-
-                    for frame in np.unique(filtered_locs["frame"]):
-                        frame_locs = filtered_locs[filtered_locs["frame"] == frame].copy()
-                        render_locs[frame] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
-
                     loc_dict["localisations"] = filtered_locs
-                    loc_dict["render_locs"] = render_locs
+
 
 
         except:

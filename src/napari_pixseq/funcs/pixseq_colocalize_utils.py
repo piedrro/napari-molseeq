@@ -6,8 +6,6 @@ from napari_pixseq.funcs.pixseq_utils_compute import Worker
 
 class _utils_colocalize:
 
-
-
     def filter_locs_by_matches(self, locs, coords, matches):
 
         try:
@@ -19,18 +17,11 @@ class _utils_colocalize:
             coords = np.float32([coords[m.queryIdx] for m in matches]).reshape(-1, 2)
 
             filtered_locs = []
-            filtered_render_locs = {}
 
             for loc in locs:
                 coord = [loc.x, loc.y]
-                frame = loc.frame
                 if coord in coords.tolist():
                     filtered_locs.append(loc)
-
-                    if frame not in filtered_render_locs.keys():
-                        filtered_render_locs[frame] = []
-
-                    filtered_render_locs[frame].append([loc.y, loc.x])
 
             filtered_locs = np.rec.fromrecords(filtered_locs, dtype=locs.dtype)
             filtered_loc_centers = self.get_localisation_centres(filtered_locs)
@@ -39,11 +30,10 @@ class _utils_colocalize:
         except:
             print(traceback.format_exc())
             filtered_locs = None
-            filtered_render_locs = None
             filtered_loc_centers = None
             pass
 
-        return filtered_locs, filtered_render_locs, filtered_loc_centers
+        return filtered_locs, filtered_loc_centers
 
 
 
@@ -79,47 +69,30 @@ class _utils_colocalize:
             ch2_coords = np.float32([ch2_coords[m.trainIdx] for m in matches]).reshape(-1, 2)
 
             filtered_ch1_locs = []
-            filter_ch1_render_locs = {}
 
             for loc in ch1_locs:
                 coord = [loc.x, loc.y]
-                frame = loc.frame
                 if coord in ch1_coords.tolist():
                     filtered_ch1_locs.append(loc)
-
-                    if frame not in filter_ch1_render_locs.keys():
-                        filter_ch1_render_locs[frame] = []
-
-                    filter_ch1_render_locs[frame].append([loc.y, loc.x])
 
             filtered_ch1_locs = np.rec.fromrecords(filtered_ch1_locs, dtype=ch1_locs.dtype)
             filtered_ch1_loc_centers = self.get_localisation_centres(filtered_ch1_locs)
 
             filtered_ch2_locs = []
-            filter_ch2_render_locs = {}
 
             for loc in ch2_locs:
                 coord = [loc.x, loc.y]
-                frame = loc.frame
                 if coord in ch2_coords.tolist():
                     filtered_ch2_locs.append(loc)
-
-                    if frame not in filter_ch2_render_locs.keys():
-                        filter_ch2_render_locs[frame] = []
-
-                    filter_ch2_render_locs[frame].append([loc.y, loc.x])
 
             filtered_ch2_locs = np.rec.fromrecords(filtered_ch2_locs, dtype=ch2_locs.dtype)
             filtered_ch2_loc_centers = self.get_localisation_centres(filtered_ch2_locs)
 
             colo_locs = []
-            colo_render_locs = {}
 
             for loc1, loc2 in zip(filtered_ch1_locs, filtered_ch2_locs):
                 locX = (loc1.x + loc2.x) / 2
                 locY = (loc1.y + loc2.y) / 2
-                coord = [locX, locY]
-                frame = loc1.frame
 
                 colo_loc = loc1.copy()
                 colo_loc.x = locX
@@ -127,17 +100,11 @@ class _utils_colocalize:
 
                 colo_locs.append(colo_loc)
 
-                if frame not in colo_render_locs.keys():
-                    colo_render_locs[frame] = []
-
-                colo_render_locs[frame].append([locY, locX])
-
             colo_locs = np.rec.fromrecords(colo_locs, dtype=filtered_ch1_locs.dtype)
             colo_loc_centers = self.get_localisation_centres(colo_locs)
 
             result_dict = {"localisations": colo_locs,
-                           "localisation_centres": colo_loc_centers,
-                           "render_locs": colo_render_locs}
+                           "localisation_centres": colo_loc_centers,}
 
             self.pixseq_notification(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
 
@@ -164,11 +131,9 @@ class _utils_colocalize:
 
                     self.localisation_dict["localisations"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
                     self.localisation_dict["localisations"][dataset][channel1.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
-                    self.localisation_dict["localisations"][dataset][channel1.lower()]["render_locs"] = colo_locs["render_locs"]
 
                     self.localisation_dict["localisations"][dataset][channel2.lower()]["localisations"] = colo_locs["localisations"]
                     self.localisation_dict["localisations"][dataset][channel2.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
-                    self.localisation_dict["localisations"][dataset][channel2.lower()]["render_locs"] = colo_locs["render_locs"]
 
                     self.draw_localisations(update_vis=True)
 

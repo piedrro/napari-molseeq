@@ -484,23 +484,26 @@ class PixSeqWidget(QWidget, gui,
                     if image_channel.lower() in self.localisation_dict["localisations"][dataset_name].keys():
                         localisation_dict = self.localisation_dict["localisations"][dataset_name][image_channel.lower()].copy()
 
-                        if "render_locs" in localisation_dict.keys():
+                        if "localisations" in localisation_dict.keys():
 
-                            render_locs = localisation_dict["render_locs"]
+                            locs = localisation_dict["localisations"]
 
-                            vis_mode = self.gui.picasso_vis_mode.currentText()
-                            vis_size = float(self.gui.picasso_vis_size.currentText())
-                            vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
-                            vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
+                            if active_frame in locs.frame:
 
-                            if vis_mode.lower() == "square":
-                                symbol = "square"
-                            elif vis_mode.lower() == "disk":
-                                symbol = "disc"
-                            elif vis_mode.lower() == "x":
-                                symbol = "cross"
+                                frame_locs = locs[locs.frame == active_frame].copy()
+                                render_locs = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
 
-                            if active_frame in render_locs.keys():
+                                vis_mode = self.gui.picasso_vis_mode.currentText()
+                                vis_size = float(self.gui.picasso_vis_size.currentText())
+                                vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
+                                vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
+
+                                if vis_mode.lower() == "square":
+                                    symbol = "square"
+                                elif vis_mode.lower() == "disk":
+                                    symbol = "disc"
+                                elif vis_mode.lower() == "x":
+                                    symbol = "cross"
 
                                 remove_localisations = False
 
@@ -510,7 +513,7 @@ class PixSeqWidget(QWidget, gui,
                                         print("Drawing localisations")
 
                                     self.fiducial_layer = self.viewer.add_points(
-                                        render_locs[active_frame],
+                                        render_locs,
                                         ndim=2,
                                         edge_color="red",
                                         face_color=[0,0,0,0],
@@ -530,7 +533,7 @@ class PixSeqWidget(QWidget, gui,
                                     if self.verbose:
                                         print("Updating fiducial data")
 
-                                    self.fiducial_layer.data = render_locs[active_frame]
+                                    self.fiducial_layer.data = render_locs
                                     self.fiducial_layer.selected_data = []
 
                                 if update_vis:

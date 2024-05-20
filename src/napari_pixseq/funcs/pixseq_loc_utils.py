@@ -333,11 +333,6 @@ class _loc_utils():
                 if self.verbose:
                     print("Creating render locs")
 
-                render_locs = {}
-                for frame in np.unique(locs.frame):
-                    frame_locs = locs[locs.frame == frame].copy()
-                    render_locs[frame] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
-
                 loc_centres = self.get_localisation_centres(locs)
 
                 if self.verbose:
@@ -345,7 +340,6 @@ class _loc_utils():
 
                 self.localisation_dict["localisations"][dataset][channel.lower()]["localisations"] = locs.copy()
                 self.localisation_dict["localisations"][dataset][channel.lower()]["localisation_centres"] = loc_centres.copy()
-                self.localisation_dict["localisations"][dataset][channel.lower()]["render_locs"] = render_locs
                 self.localisation_dict["localisations"][dataset][channel.lower()]["fitted"] = True
                 self.localisation_dict["localisations"][dataset][channel.lower()]["box_size"] = box_size
 
@@ -360,7 +354,6 @@ class _loc_utils():
 
                 self.localisation_dict["bounding_boxes"]["localisations"] = locs.copy()
                 self.localisation_dict["bounding_boxes"]["localisation_centres"] = loc_centres.copy()
-                self.localisation_dict["bounding_boxes"]["render_locs"] = {}
                 self.localisation_dict["bounding_boxes"]["fitted"] = True
                 self.localisation_dict["bounding_boxes"]["box_size"] = box_size
 
@@ -726,7 +719,6 @@ class _loc_utils():
 
                 if n_locs > 0:
                     locs = loc_dict["localisations"].copy()
-                    render_locs = loc_dict["render_locs"].copy()
                     loc_centers = loc_dict["localisation_centres"].copy()
                     box_size = int(loc_dict["box_size"])
                     dtype = locs.dtype
@@ -755,16 +747,8 @@ class _loc_utils():
                             loc_centers = np.delete(loc_centers, min_index, axis=0)
                             loc_centers = loc_centers.tolist()
 
-                            render_frame_locs = render_locs[frame].copy()
-                            render_frame_locs = np.unique(render_frame_locs, axis=0).tolist()
-                            distances = np.sqrt(np.sum((np.array(render_frame_locs) - np.array([y,x])) ** 2, axis=1))
-                            min_index = np.argmin(distances)
-                            render_frame_locs.pop(min_index)
-                            render_locs[frame] = render_frame_locs
-
                             loc_dict["localisations"] = locs
                             loc_dict["localisation_centres"] = loc_centers
-                            loc_dict["render_locs"] = render_locs
 
                             self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                             self.draw_localisations(update_vis=True)
@@ -776,14 +760,8 @@ class _loc_utils():
                             loc_centers = np.append(loc_centers, np.array([[frame,y,x]], dtype=int), axis=0)
                             loc_centers = loc_centers.tolist()
 
-                            if len(render_locs[frame]) == 0:
-                                render_locs[frame] = [[round(y),round(x)]]
-                            else:
-                                render_locs[frame].append([round(y),round(x)])
-
                             loc_dict["localisations"] = locs
                             loc_dict["localisation_centres"] = loc_centers
-                            loc_dict["render_locs"] = render_locs
 
                             self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                             self.draw_localisations(update_vis=True)
@@ -795,17 +773,8 @@ class _loc_utils():
                         loc_centers = np.append(loc_centers, np.array([[frame, y, x]], dtype=int), axis=0)
                         loc_centers = loc_centers.tolist()
 
-                        if frame in render_locs.keys():
-                            if len(render_locs[frame]) == 0:
-                                render_locs[frame] = [[round(y), round(x)]]
-                            else:
-                                render_locs[frame].append([round(y), round(x)])
-                        else:
-                            render_locs[frame] = [[round(y), round(x)]]
-
                         loc_dict["localisations"] = locs
                         loc_dict["localisation_centres"] = loc_centers
-                        loc_dict["render_locs"] = render_locs
 
                         self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                         self.draw_localisations(update_vis=True)
@@ -821,11 +790,9 @@ class _loc_utils():
                     locs = loc_utils.create_locs(new_loc=new_loc)
 
                     loc_centers = [[frame, y, x]]
-                    render_locs = {frame: [[y, x]]}
 
                     loc_dict["localisations"] = locs
                     loc_dict["localisation_centres"] = loc_centers
-                    loc_dict["render_locs"] = render_locs
                     loc_dict["fitted"] = False
                     loc_dict["box_size"] = box_size
 

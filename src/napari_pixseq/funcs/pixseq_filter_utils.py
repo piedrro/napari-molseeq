@@ -43,14 +43,7 @@ class _filter_utils:
 
                             n_removed = n_locs - n_filtered
 
-                            render_locs = {}
-
-                            for frame in np.unique(locs["frame"]):
-                                frame_locs = locs[locs["frame"] == frame].copy()
-                                render_locs[frame] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
-
                             loc_dict["localisations"] = locs
-                            loc_dict["render_locs"] = render_locs
 
                             if localisation_type == "Localisations":
                                 self.localisation_dict["localisations"][dataset][channel.lower()] = loc_dict

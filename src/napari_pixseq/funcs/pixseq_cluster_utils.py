@@ -99,7 +99,6 @@ class _cluster_utils:
 
             clustered_locs = []
             clustered_loc_centers = []
-            render_locs = {}
 
             for cluster_index in range(len(cluster_centers)):
                 for frame_index in range(n_frames):
@@ -107,16 +106,12 @@ class _cluster_utils:
                     new_loc = (int(frame_index), float(locX), float(locY))
                     clustered_locs.append(new_loc)
 
-                    if frame_index not in render_locs.keys():
-                        render_locs[frame_index] = []
-
-                    render_locs[frame_index].append([locY, locX])
                     clustered_loc_centers.append([frame_index, locY, locX])
 
             # Convert list to recarray
             clustered_locs = np.array(clustered_locs, dtype=[('frame', '<u4'), ('x', '<f4'), ('y', '<f4')]).view(np.recarray)
 
-            result = (clustered_locs, clustered_loc_centers, render_locs)
+            result = (clustered_locs, clustered_loc_centers)
 
         except:
             print(traceback.format_exc())
@@ -131,7 +126,7 @@ class _cluster_utils:
 
             if result is not None:
 
-                locs, loc_centers, render_locs = result
+                locs, loc_centers = result
 
                 mode = self.gui.cluster_mode.currentText()
                 dataset = self.gui.cluster_dataset.currentText()
@@ -146,7 +141,6 @@ class _cluster_utils:
 
                     fiducial_dict["localisations"] = locs
                     fiducial_dict["localisation_centres"] = loc_centers
-                    fiducial_dict["render_locs"] = render_locs
 
                 else:
 

@@ -114,23 +114,14 @@ class _undrift_utils:
 
                         drift = channel_data["drift"]
 
-                        render_locs = {}
-
                         for loc in locs:
-                            frame = loc.frame
                             loc.x = loc.x - drift[loc.frame][0]
                             loc.y = loc.y - drift[loc.frame][1]
-
-                            if frame not in render_locs.keys():
-                                render_locs[frame] = []
-
-                            render_locs[frame].append([loc.y, loc.x])
 
                         localisation_centres = self.get_localisation_centres(locs)
 
                         self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisations"] = locs
                         self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisation_centres"] = localisation_centres
-                        self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["render_locs"] = render_locs
 
         except:
             print(traceback.format_exc())

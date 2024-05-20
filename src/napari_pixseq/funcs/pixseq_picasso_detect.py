@@ -19,6 +19,14 @@ from picasso.render import render
 from shapely.geometry import Point, Polygon
 from multiprocessing import Manager, Event
 import numba
+from numba import jit, types,typed
+from numba.typed import Dict
+import numpy as np
+import pandas as pd
+
+
+
+
 
 
 def remove_overlapping_locs(locs, box_size):
@@ -327,16 +335,13 @@ def picasso_detect(dat, progress_list):
                 else:
                     locs = []
 
-            render_locs = {frame_index: []}
-
             if len(locs) > 0:
-                render_locs[frame_index] = np.vstack((locs.y, locs.x)).T.tolist()
 
                 locs = [loc for loc in locs if len(loc) == expected_loc_length]
                 locs = np.array(locs).view(np.recarray)
 
-            result = {"dataset": dataset, "channel": channel, "frame_index": frame_index,
-                      "locs": locs,"render_locs": render_locs}
+            result = {"dataset": dataset, "channel": channel,
+                      "frame_index": frame_index,"locs": locs}
 
     except:
         print(traceback.format_exc())
@@ -368,16 +373,13 @@ class _picasso_detect_utils:
                     if image_channel not in self.localisation_dict["localisations"][dataset_name].keys():
                         self.localisation_dict["localisations"][dataset_name][image_channel.lower()] = {}
 
-                    render_locs = render_loc_dict[dataset_name]
 
                     loc_centres = self.get_localisation_centres(locs)
 
-                    fiducial_dict = {"localisations": [], "localisation_centres": [], "render_locs": {}}
+                    fiducial_dict = {"localisations": [], "localisation_centres": []}
 
                     fiducial_dict["localisations"] = locs.copy()
                     fiducial_dict["localisation_centres"] = loc_centres.copy()
-                    fiducial_dict["render_locs"] = render_locs
-
                     fiducial_dict["fitted"] = fitted
                     fiducial_dict["box_size"] = box_size
 
@@ -483,14 +485,14 @@ class _picasso_detect_utils:
                         loc_dict, n_locs, _ = self.get_loc_dict(dataset, channel.lower(),
                             type="bounding_boxes")
 
-                    if n_locs > 0:
+                    locs = loc_dict["localisations"].copy()
+
+                    if frame_index is not None:
+                        locs = locs[locs.frame == frame_index]
+
+                    if len(locs) > 0:
 
                         image_dict = self.dataset_dict[dataset][channel.lower()]
-
-                        locs = loc_dict["localisations"].copy()
-
-                        if frame_index is not None:
-                            locs = locs[locs.frame == frame_index]
 
                         if "dataset" not in locs.dtype.names:
                             locs = pd.DataFrame(locs)
@@ -498,24 +500,15 @@ class _picasso_detect_utils:
                             locs.insert(1, "channel", channel)
                             locs = locs.to_records(index=False)
 
-                        for frame_index in set(locs.frame):
+                        image = image_dict.pop("data")
 
-                            frame_locs = locs[locs.frame == frame_index].copy()
+                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                        spot_data = get_spots(image, locs, box_size, camera_info)
 
-                            if len(frame_locs) == 0:
-                                continue
+                        loc_list.append(locs)
+                        spot_list.append(spot_data)
 
-                            frame_image = image_dict["data"][frame_index].copy()
-                            frame_image = np.expand_dims(frame_image, axis=0)
-                            frame_locs.frame = 0
-
-                            camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
-                            spot_data = get_spots(frame_image, frame_locs, box_size, camera_info)
-
-                            frame_locs.frame = frame_index
-
-                            loc_list.append(frame_locs)
-                            spot_list.append(spot_data)
+                        image_dict["data"] = image
 
         except:
             print(traceback.format_exc())
@@ -746,9 +739,12 @@ class _picasso_detect_utils:
                             locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
                                 n_workers, n_frames, fit, progress_callback)
 
+                            print(f"Detected {len(locs)} spots")
+
                     if detect is False and fit is True:
 
-                        locs, spots = self.get_fit_data(detect_mode, dataset_list, channel_list, box_size, frame_index)
+                        locs, spots = self.get_fit_data(detect_mode, dataset_list,
+                            channel_list, box_size, frame_index)
 
                     if len(locs) > 0 and fit == True:
 
@@ -771,6 +767,16 @@ class _picasso_detect_utils:
 
                     else:
                         fitted = False
+
+            #time to process locs
+
+            import time
+
+            start = time.time()
+            self.process_locs(locs, detect_mode, box_size, fitted=fitted)
+            end = time.time()
+
+            print(f"Processed {len(locs)} locs in {end-start} seconds")
 
             if progress_callback is not None:
                 progress_callback.emit(100)
@@ -801,6 +807,8 @@ class _picasso_detect_utils:
 
                         if channel in locs["channel"]:
 
+                            print(f"Processing {len(locs)} locs for {dataset} {channel}...")
+
                             if detect_mode.lower() == "localisations":
 
                                 if dataset not in self.localisation_dict.keys():
@@ -820,34 +828,22 @@ class _picasso_detect_utils:
 
                                 result_dict["localisations"] = []
                                 result_dict["localisation_centres"] = []
-                                result_dict["render_locs"] = {}
                                 result_dict["fitted"] = False
                                 result_dict["box_size"] = box_size
 
                             else:
 
-                                channel_locs.sort(kind="mergesort", order="frame")
-                                channel_loc_centres = self.get_localisation_centres(channel_locs)
-
                                 result_dict["localisations"] = channel_locs.copy()
-                                result_dict["localisation_centres"] = channel_loc_centres.copy()
                                 result_dict["fitted"] = fitted
                                 result_dict["box_size"] = box_size
 
-                                if detect_mode.lower() == "localisations":
 
-                                    render_locs = {}
-
-                                    for frame_index in set(channel_locs.frame):
-
-                                        frame_locs = channel_locs[channel_locs.frame == frame_index].copy()
-                                        render_locs[frame_index] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
-
-                                    result_dict["render_locs"] = render_locs
 
         except:
             print(traceback.format_exc())
             return None
+
+        print("Finished processing locs")
 
 
     def _picasso_wrapper_result(self, result):
@@ -918,7 +914,7 @@ class _picasso_detect_utils:
 
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
                         progress_bar=self.gui.picasso_progressbar))
-                    self.worker.signals.result.connect(self._picasso_wrapper_result)
+                    # self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)
