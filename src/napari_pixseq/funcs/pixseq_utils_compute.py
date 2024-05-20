@@ -64,8 +64,6 @@ class _utils_compute:
 
                                 chunk = image[start_index:end_index]
 
-                            # print(dataset_name, channel_name, chunk_index, n_chunks, chunk.shape, frame_index)
-
                             shared_mem = shared_memory.SharedMemory(create=True, size=chunk.nbytes)
                             shared_memory_name = shared_mem.name
                             shared_chunk = np.ndarray(chunk.shape, dtype=chunk.dtype, buffer=shared_mem.buf)

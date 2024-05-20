@@ -461,8 +461,6 @@ class _events_utils:
                 fret_mode = list(set(fret_modes))[0]
                 import_mode = list(set(import_modes))[0]
 
-                print(datast_name, import_mode)
-
                 self.gui.pixseq_show_dd.clicked.connect(lambda: None)
                 self.gui.pixseq_show_da.clicked.connect(lambda: None)
                 self.gui.pixseq_show_aa.clicked.connect(lambda: None)

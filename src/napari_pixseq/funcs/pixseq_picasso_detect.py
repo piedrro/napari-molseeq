@@ -99,42 +99,6 @@ def locs_from_fits(locs, theta, box, em=False):
 
     return locs
 
-def loc_from_fit(loc, theta, box, em=False):
-
-    try:
-
-        box_offset = int(box / 2)
-        x = theta[1] + loc.x - box_offset
-        y = theta[2] + loc.y - box_offset
-        lpx = postprocess.localization_precision(theta[0], theta[3], theta[5], em=em)
-        lpy = postprocess.localization_precision(theta[0], theta[4], theta[5], em=em)
-        a = np.maximum(theta[3], theta[4])
-        b = np.minimum(theta[3], theta[4])
-        ellipticity = (a - b) / a
-        net_gradient = loc.net_gradient
-
-        loc = pd.DataFrame(loc)
-
-        loc["x"] = x
-        loc["y"] = y
-        loc["photons"] = theta[0]
-        loc["sx"] = theta[3]
-        loc["sy"] = theta[4]
-        loc["bg"] = theta[5]
-        loc["lpx"] = lpx
-        loc["lpy"] = lpy
-        loc["ellipticity"] = ellipticity
-        loc["net_gradient"] = net_gradient
-
-        loc = loc.to_records(index=False)
-
-    except:
-        pass
-
-    return loc
-
-
-
 
 def fit_spots_lq(spots, locs, box, progress_list):
 
@@ -145,10 +109,12 @@ def fit_spots_lq(spots, locs, box, progress_list):
         theta[i] = gausslq.fit_spot(spot)
         progress_list.append(1)
 
-    locs = locs_from_fits(locs, theta, box)
+    locs = locs_from_fits(locs.copy(), theta, box)
+
+    # theta, CRLBs, likelihoods, iterations = gaussmle(spots, eps=0.001, max_it=1000, method="sigma")
+    # locs = locs_from_fits(locs.copy(), theta, box)
 
     return locs
-
 
 def remove_segmentation_locs(locs, polygons):
 
@@ -581,8 +547,9 @@ class _picasso_detect_utils:
                 except Exception as e:
                     print(f"Error occurred in task {job}: {e}")
 
-        locs = np.hstack(locs).view(np.recarray).copy()
-        spots = np.stack(spots, axis=0)
+        if len(locs) > 0:
+            locs = np.hstack(locs).view(np.recarray).copy()
+            spots = np.stack(spots, axis=0)
 
         return locs, spots
 
@@ -668,61 +635,45 @@ class _picasso_detect_utils:
 
 
     def _picasso_wrapper(self, progress_callback, detect, fit,
-            min_net_gradient, image_channel, gpu_fit=True):
+            min_net_gradient, dataset_list = [], channel_list = [],
+            frame_index = None, gpu_fit=True):
 
-        loc_dict = {}
-        render_loc_dict = {}
-        total_locs = 0
         try:
 
-            dataset_name = self.gui.picasso_dataset.currentText()
             frame_mode = self.gui.picasso_frame_mode.currentText()
             detect_mode = self.gui.picasso_detect_mode.currentText()
             box_size = int(self.gui.picasso_box_size.currentText())
             roi = self.generate_roi()
 
-            if dataset_name == "All Datasets":
-                dataset_list = list(self.dataset_dict.keys())
-            else:
-                dataset_list = [dataset_name]
-
-            channel_list = [image_channel.lower()]
-
             if frame_mode.lower() == "active":
-                frame_index = self.viewer.dims.current_step[0]
+                executor_class = concurrent.futures.ThreadPoolExecutor
+                n_workers = 1
             else:
-                frame_index = None
+                executor_class = concurrent.futures.ProcessPoolExecutor
+                n_workers = int(multiprocessing.cpu_count() * 0.9)
 
-            self.create_shared_image_chunks(
-                dataset_list=dataset_list,
-                channel_list=channel_list,
-                frame_index=frame_index, )
+            with Manager() as manager:
 
-            detect_jobs, n_frames = self.populate_picasso_compute_dict(detect, fit,
-                min_net_gradient, roi)
+                with executor_class(max_workers=n_workers) as executor:
 
-            if len(detect_jobs) > 0:
-                if self.verbose:
-                    print(f"Starting Picasso {len(detect_jobs)} compute jobs...")
+                    self.create_shared_image_chunks(dataset_list=dataset_list,
+                        channel_list=channel_list, frame_index=frame_index, )
 
-                loc_dict = {}
-                render_loc_dict = {}
+                    detect_jobs, n_frames = self.populate_picasso_compute_dict(detect,
+                        fit, min_net_gradient, roi)
 
-                if frame_mode.lower() == "active":
-                    executor_class = concurrent.futures.ThreadPoolExecutor
-                    n_workers = 1
-                else:
-                    executor_class = concurrent.futures.ProcessPoolExecutor
-                    n_workers = int(multiprocessing.cpu_count() * 0.9)
-
-                with Manager() as manager:
-
-                    with executor_class(max_workers=n_workers) as executor:
+                    if len(detect_jobs) > 0:
+                        if self.verbose:
+                            print(f"Starting Picasso {len(detect_jobs)} compute jobs...")
 
                         print(f"Detecting spots in {n_frames} frames...")
 
                         locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
                             n_workers, n_frames, fit, progress_callback)
+
+                        # import matplotlib.pyplot as plt
+                        # plt.imshow(spots[0])
+                        # plt.show()
 
                         if len(locs) > 0 and fit == True:
 
@@ -748,21 +699,13 @@ class _picasso_detect_utils:
                         self.process_locs(locs, detect_mode, box_size, fitted)
 
             self.restore_shared_image_chunks()
-
             self.update_ui()
 
         except:
             print(traceback.format_exc())
 
             self.restore_shared_image_chunks()
-
             self.update_ui()
-
-            loc_dict = {}
-            render_loc_dict = {}
-            total_locs = 0
-
-        return fit, loc_dict, render_loc_dict, total_locs
 
 
     def process_locs(self, locs, detect_mode, box_size, fitted=False):
@@ -837,6 +780,7 @@ class _picasso_detect_utils:
         try:
             if self.dataset_dict != {}:
 
+                dataset_name = self.gui.picasso_dataset.currentText()
                 min_net_gradient = self.gui.picasso_min_net_gradient.text()
                 image_channel = self.gui.picasso_channel.currentText()
                 frame_mode = self.gui.picasso_frame_mode.currentText()
@@ -860,11 +804,25 @@ class _picasso_detect_utils:
                     if minimise_ram == True and frame_mode.lower() != "active":
                         self.clear_live_images()
 
+                    if frame_mode.lower() == "active":
+                        frame_index = self.viewer.dims.current_step[0]
+                    else:
+                        frame_index = None
+
+                    if dataset_name == "All Datasets":
+                        dataset_list = list(self.dataset_dict.keys())
+                    else:
+                        dataset_list = [dataset_name]
+
+                    channel_list = [image_channel.lower()]
+
                     self.worker = Worker(self._picasso_wrapper,
                         detect=detect, fit=fit,
                         min_net_gradient=min_net_gradient,
-                        image_channel=image_channel,
-                        gpu_fit=gpu_fit)
+                        dataset_list=dataset_list,
+                        channel_list=channel_list,
+                        gpu_fit=gpu_fit,
+                        frame_index=frame_index)
 
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
                         progress_bar=self.gui.picasso_progressbar))
