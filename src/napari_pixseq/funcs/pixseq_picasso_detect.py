@@ -10,12 +10,16 @@ from multiprocessing import shared_memory
 from picasso import localize
 from picasso.localize import get_spots, identify_frame
 from picasso.gaussmle import gaussmle
+from picasso import gausslq
+from picasso import postprocess
 from functools import partial
 import concurrent.futures
 import multiprocessing
 from picasso.render import render
 from shapely.geometry import Point, Polygon
-from multiprocessing import Manager
+from multiprocessing import Manager, Event
+import numba
+
 
 def remove_overlapping_locs(locs, box_size):
 
@@ -60,6 +64,176 @@ def cut_spots(movie, ids_frame, ids_x, ids_y, box):
 
     return spots
 
+
+def locs_from_fits(locs, theta, box, em=False):
+
+    try:
+
+        box_offset = int(box / 2)
+        x = theta[:, 1] + locs.x - box_offset
+        y = theta[:, 2] + locs.y - box_offset
+        lpx = postprocess.localization_precision(theta[:, 0], theta[:, 3], theta[:, 5], em=em)
+        lpy = postprocess.localization_precision(theta[:, 0], theta[:, 4], theta[:, 5], em=em)
+        a = np.maximum(theta[:, 3], theta[:, 4])
+        b = np.minimum(theta[:, 3], theta[:, 4])
+        ellipticity = (a - b) / a
+        net_gradient = locs.net_gradient
+
+        locs = pd.DataFrame(locs)
+
+        locs["x"] = x
+        locs["y"] = y
+        locs["photons"] = theta[:, 0]
+        locs["sx"] = theta[:, 3]
+        locs["sy"] = theta[:, 4]
+        locs["bg"] = theta[:, 5]
+        locs["lpx"] = lpx
+        locs["lpy"] = lpy
+        locs["ellipticity"] = ellipticity
+        locs["net_gradient"] = net_gradient
+
+        locs = locs.to_records(index=False)
+
+    except:
+        pass
+
+    return locs
+
+def loc_from_fit(loc, theta, box, em=False):
+
+    try:
+
+        box_offset = int(box / 2)
+        x = theta[1] + loc.x - box_offset
+        y = theta[2] + loc.y - box_offset
+        lpx = postprocess.localization_precision(theta[0], theta[3], theta[5], em=em)
+        lpy = postprocess.localization_precision(theta[0], theta[4], theta[5], em=em)
+        a = np.maximum(theta[3], theta[4])
+        b = np.minimum(theta[3], theta[4])
+        ellipticity = (a - b) / a
+        net_gradient = loc.net_gradient
+
+        loc = pd.DataFrame(loc)
+
+        loc["x"] = x
+        loc["y"] = y
+        loc["photons"] = theta[0]
+        loc["sx"] = theta[3]
+        loc["sy"] = theta[4]
+        loc["bg"] = theta[5]
+        loc["lpx"] = lpx
+        loc["lpy"] = lpy
+        loc["ellipticity"] = ellipticity
+        loc["net_gradient"] = net_gradient
+
+        loc = loc.to_records(index=False)
+
+    except:
+        pass
+
+    return loc
+
+
+
+
+def fit_spots_lq(spots, locs, box, progress_list):
+
+    theta = np.empty((len(spots), 6), dtype=np.float32)
+    theta.fill(np.nan)
+    for i, spot in enumerate(spots):
+
+        theta[i] = gausslq.fit_spot(spot)
+        progress_list.append(1)
+
+    locs = locs_from_fits(locs, theta, box)
+
+    return locs
+
+
+
+
+
+
+
+def detect_picaso_locs(dat, progress_list, fit_list):
+
+    result = None
+
+    try:
+        min_net_gradient = dat["min_net_gradient"]
+        box_size = dat["box_size"]
+        roi = dat["roi"]
+        dataset = dat["dataset"]
+        channel = dat["channel"]
+        start_index = dat["start_index"]
+        end_index = dat["end_index"]
+        detect = dat["detect"]
+        fit = dat["fit"]
+        remove_overlapping = dat["remove_overlapping"]
+        stop_event = dat["stop_event"]
+        polygon_filter = dat["polygon_filter"]
+        polygons = dat["polygons"]
+
+        loc_list = []
+        spot_list = []
+
+        if not stop_event.is_set():
+
+            # Access the shared memory
+            shared_mem = shared_memory.SharedMemory(name=dat["shared_memory_name"])
+            np_array = np.ndarray(dat["shape"], dtype=dat["dtype"], buffer=shared_mem.buf)
+
+            image_chunk = np_array.copy()
+
+            chunk_locs = []
+            chunk_spots = []
+
+            for array_index, frame in enumerate(image_chunk):
+
+                frame_index = start_index + array_index
+
+                locs = identify_frame(frame, min_net_gradient,
+                    box_size, 0, roi=roi)
+
+                if remove_overlapping:
+                    locs = remove_overlapping_locs(locs, box_size)
+
+                if len(locs) > 0:
+
+                    try:
+
+                        image = np.expand_dims(frame, axis=0)
+                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                        spot_data = get_spots(image, locs, box_size, camera_info)
+
+                        locs.frame = frame_index
+
+                        locs = pd.DataFrame(locs)
+
+                        #instert dataset at column 0
+                        locs.insert(0, "dataset", dataset)
+                        locs.insert(1, "channel", channel)
+
+                        locs = locs.to_records(index=False)
+
+                        for loc, spot in zip(locs, spot_data):
+                            loc_list.append(loc)
+                            spot_list.append(spot)
+
+                        progress_list.append(1)
+
+                    except:
+                        pass
+
+            if len(loc_list) > 0:
+                result = loc_list, spot_list
+
+    except:
+        print(traceback.format_exc())
+        result = None
+
+
+    return result
 
 def picasso_detect(dat, progress_list):
 
@@ -273,9 +447,6 @@ class _picasso_detect_utils:
         except:
             print(traceback.format_exc())
 
-
-
-
     def get_frame_locs(self, dataset_name, image_channel, frame_index):
 
         try:
@@ -297,18 +468,222 @@ class _picasso_detect_utils:
             print(traceback.format_exc())
             return None
 
-    def _picasso_wrapper(self, progress_callback, detect, fit, min_net_gradient, image_channel):
+    def get_chunk_locs(self, dataset_name, image_channel,
+            start_index, end_index):
+
+        try:
+
+            loc_dict, n_locs, _ = self.get_loc_dict(dataset_name,
+                image_channel.lower(), type = "localisations")
+
+            if "localisations" not in loc_dict.keys():
+                return None
+            elif len(loc_dict["localisations"]) == 0:
+                return None
+            else:
+                locs = loc_dict["localisations"]
+                locs = locs[(locs.frame >= start_index) & (locs.frame <= end_index)]
+
+                return locs.copy()
+
+        except:
+            print(traceback.format_exc())
+            return None
+
+    def populate_picasso_compute_dict(self, detect, fit,
+            min_net_gradient, roi):
+
+        try:
+
+            compute_jobs = []
+            n_frames = 0
+
+            box_size = int(self.gui.picasso_box_size.currentText())
+            remove_overlapping = self.gui.picasso_remove_overlapping.isChecked()
+            polygon_filter = self.gui.picasso_segmentation_filtering.isChecked()
+
+            segmentation_polygons = self.get_segmentation_polygons()
+
+            compute_jobs = []
+
+            if self.verbose:
+                print("Creating Picasso compute jobs...")
+
+            for image_chunk in self.shared_chunks:
+
+                chunk_locs = self.get_chunk_locs(image_chunk["dataset"], image_chunk["channel"],
+                    image_chunk["start_index"], image_chunk["end_index"])
+
+                compute_job = {"dataset": image_chunk["dataset"],
+                               "channel": image_chunk["channel"],
+                               "start_index": image_chunk["start_index"],
+                               "end_index": image_chunk["end_index"],
+                               "shared_memory_name": image_chunk["shared_memory_name"],
+                               "shape": image_chunk["shape"],
+                               "dtype": image_chunk["dtype"],
+                               "detect": detect,
+                               "fit": fit,
+                               "chunk_locs": chunk_locs,
+                               "min_net_gradient": int(min_net_gradient),
+                               "box_size": int(box_size),
+                               "roi": roi,
+                               "remove_overlapping": remove_overlapping,
+                               "polygon_filter":polygon_filter,
+                               "polygons": segmentation_polygons,
+                               "stop_event": self.stop_event, }
+
+                compute_jobs.append(compute_job)
+                n_frames += image_chunk["end_index"] - image_chunk["start_index"]
+
+            if self.verbose:
+                print(f"Created {len(compute_jobs)} compute jobs...")
+
+        except:
+            print(traceback.format_exc())
+
+        return compute_jobs, n_frames
+
+
+    def detect_spots_parallel(self, detect_jobs, executor, manager,
+            n_workers, n_frames, fit, progress_callback=None,
+            timeout_duration = 10):
+
+        progress_list = manager.list()
+        fit_jobs = manager.list()
+
+        futures = {executor.submit(detect_picaso_locs,
+            job, progress_list, fit_jobs,): job for job in detect_jobs}
+
+        while any(not future.done() for future in futures):
+            progress = (sum(progress_list) / n_frames)
+
+            if fit == True:
+                progress = progress*50
+            else:
+                progress = progress*100
+
+            if progress_callback is not None:
+                progress_callback.emit(progress)
+
+        locs = []
+        spots = []
+
+        for future in concurrent.futures.as_completed(futures):
+            if self.stop_event.is_set():
+                future.cancel()
+            else:
+                job = futures[future]
+                try:
+                    result = future.result(timeout=timeout_duration)  # Process result here
+
+                    if result is not None:
+                        result_locs, result_spots = result
+                        locs.extend(result_locs)
+                        spots.extend(result_spots)
+
+                except concurrent.futures.TimeoutError:
+                    print(f"Task {job} timed out after {timeout_duration} seconds.")
+                except Exception as e:
+                    print(f"Error occurred in task {job}: {e}")
+
+        locs = np.hstack(locs).view(np.recarray).copy()
+        spots = np.stack(spots, axis=0)
+
+        return locs, spots
+
+
+
+    def fit_spots_gpu(self, locs, spots, box_size,
+            tolerance=1e-2, max_number_iterations=20):
+
+        try:
+            from pygpufit import gpufit as gf
+
+            size = spots.shape[1]
+            initial_parameters = gausslq.initial_parameters_gpufit(spots, size)
+            spots.shape = (len(spots), (size * size))
+            model_id = gf.ModelID.GAUSS_2D_ELLIPTIC
+
+            result = gf.fit(
+                spots,
+                None,
+                model_id,
+                initial_parameters, tolerance=tolerance,
+                max_number_iterations=max_number_iterations,
+            )
+
+            parameters, states, chi_squares, number_iterations, exec_time = result
+
+            parameters[:, 0] *= 2.0 * np.pi * parameters[:, 3] * parameters[:, 4]
+
+            locs = locs_from_fits(locs, parameters, box_size)
+
+
+        except:
+            print(traceback.format_exc())
+            pass
+
+        return locs
+
+
+    def fit_spots_parallel(self, locs, spots, box_size, executor, manager, n_workers,
+             detect=False, progress_callback=None):
+
+        try:
+
+            num_spots = len(spots)
+            num_tasks = 100 * n_workers
+
+            progress_list = manager.list()
+
+            # Calculate spots per task using divmod for quotient and remainder
+            quotient, remainder = divmod(num_spots, num_tasks)
+            spots_per_task = [quotient + 1 if i < remainder else quotient for i in range(num_tasks)]
+
+            # Calculate start indices using numpy
+            start_indices = np.cumsum([0] + spots_per_task[:-1])
+
+            futures = [executor.submit(fit_spots_lq,
+                spots[start:start + count],
+                locs[start:start + count], box_size,
+                progress_list) for start, count in zip(start_indices, spots_per_task)]
+
+            while any(not future.done() for future in futures):
+                progress = (sum(progress_list) / num_spots)
+
+                if detect:
+                    progress = 50 + (progress*50)
+                else:
+                    progress = progress*100
+
+                if progress_callback is not None:
+                    progress_callback.emit(progress)
+
+            locs = [f.result() for f in futures]
+            locs = np.hstack(locs).view(np.recarray).copy()
+
+        except:
+            print(traceback.format_exc())
+
+        return locs
+
+
+
+
+
+
+    def _picasso_wrapper(self, progress_callback, detect, fit,
+            min_net_gradient, image_channel, gpu_fit=True):
 
         loc_dict = {}
         render_loc_dict = {}
         total_locs = 0
         try:
 
-            box_size = int(self.gui.picasso_box_size.currentText())
             dataset_name = self.gui.picasso_dataset.currentText()
             frame_mode = self.gui.picasso_frame_mode.currentText()
-            remove_overlapping = self.gui.picasso_remove_overlapping.isChecked()
-            polygon_filter = self.gui.picasso_segmentation_filtering.isChecked()
+            detect_mode = self.gui.picasso_detect_mode.currentText()
+            box_size = int(self.gui.picasso_box_size.currentText())
             roi = self.generate_roi()
 
             if dataset_name == "All Datasets":
@@ -323,159 +698,64 @@ class _picasso_detect_utils:
             else:
                 frame_index = None
 
-            self.shared_frames = self.create_shared_frames(
+            self.create_shared_image_chunks(
                 dataset_list=dataset_list,
                 channel_list=channel_list,
-                frame_index=frame_index,
-            )
+                frame_index=frame_index, )
 
-            segmentation_polygons = self.get_segmentation_polygons()
+            detect_jobs, n_frames = self.populate_picasso_compute_dict(detect, fit,
+                min_net_gradient, roi)
 
-            compute_jobs = []
-
-            if self.verbose:
-                print("Creating Picasso compute jobs...")
-
-            if self.verbose:
-                print(f"Creating compute jobs for {len(self.shared_images)} datasets...")
-
-            for image_dict in self.shared_frames:
-                image_dict = image_dict.copy()
-
-                if frame_mode.lower() == "active":
-                    frame_list = [self.viewer.dims.current_step[0]]
-                else:
-                    n_frames = image_dict["shape"][0]
-                    frame_list = list(range(n_frames))
-
-                for frame_index in frame_list:
-
-                    polygons = []
-                    if type(segmentation_polygons) == dict:
-                        if frame_index in segmentation_polygons.keys():
-                            polygons = segmentation_polygons[frame_index]
-                    if type(segmentation_polygons) == list:
-                        polygons = segmentation_polygons
-
-                    frame_dict = image_dict["frame_dict"][frame_index]
-
-                    time_start = time.time()
-
-                    if self.verbose:
-                        print(f"Creating compute job for frame {frame_index}")
-
-                    frame_locs = self.get_frame_locs(image_dict["dataset"], image_channel, frame_index)
-
-                    if detect == False and frame_locs is None:
-                        continue
-                    # elif polygon_filter is True and len(polygons) == 0:
-                    #     continue
-                    else:
-                        compute_job = {"dataset": frame_dict["dataset"],
-                                       "channel": frame_dict["channel"],
-                                       "frame_index": frame_index,
-                                       "shared_memory_name": frame_dict["shared_memory_name"],
-                                       "shape": frame_dict["shape"],
-                                       "dtype": frame_dict["dtype"],
-                                       "detect": detect,
-                                       "fit": fit,
-                                       "min_net_gradient": int(min_net_gradient),
-                                       "box_size": int(box_size),
-                                       "roi": roi,
-                                       "frame_locs": frame_locs,
-                                       "remove_overlapping": remove_overlapping,
-                                       "polygon_filter":polygon_filter,
-                                       "polygons": polygons,
-                                       "stop_event": self.stop_event, }
-
-                    compute_jobs.append(compute_job)
-
-                    if self.verbose:
-                        time_end = time.time()
-                        time_duration = time_end - time_start
-                        print(f"Compute job created in {time_duration} seconds")
-
-
-            if len(compute_jobs) > 0:
+            if len(detect_jobs) > 0:
                 if self.verbose:
-                    print(f"Starting Picasso {len(compute_jobs)} compute jobs...")
-
-                timeout_duration = 10  # Timeout in seconds
+                    print(f"Starting Picasso {len(detect_jobs)} compute jobs...")
 
                 loc_dict = {}
                 render_loc_dict = {}
 
                 if frame_mode.lower() == "active":
                     executor_class = concurrent.futures.ThreadPoolExecutor
-                    cpu_count = 1
+                    n_workers = 1
                 else:
                     executor_class = concurrent.futures.ProcessPoolExecutor
-                    cpu_count = int(multiprocessing.cpu_count() * 0.9)
+                    n_workers = int(multiprocessing.cpu_count() * 0.9)
 
                 with Manager() as manager:
-                    progress_list = manager.list()
 
-                    with executor_class(max_workers=cpu_count) as executor:
-                        futures = {executor.submit(picasso_detect, job, progress_list): job for job in compute_jobs}
+                    with executor_class(max_workers=n_workers) as executor:
 
-                        # Calculate and emit progress
-                        while any(not future.done() for future in futures):
-                            progress = (len(progress_list)/len(compute_jobs)) * 100
-                            if progress_callback is not None:
-                                progress_callback.emit(progress)
+                        print(f"Detecting spots in {n_frames} frames...")
 
-                        for future in concurrent.futures.as_completed(futures):
+                        locs, spots = self.detect_spots_parallel(detect_jobs, executor, manager,
+                            n_workers, n_frames, fit, progress_callback)
 
-                            if self.stop_event.is_set():
-                                future.cancel()
+                        if len(locs) > 0 and fit == True:
+
+                            print(f"Fitting {len(locs)} spots...")
+
+                            if gpu_fit:
+                                locs = self.fit_spots_gpu(locs, spots, box_size)
+
                             else:
-                                job = futures[future]
-                                try:
-                                    result = future.result(timeout=timeout_duration)  # Process result here
+                                locs = self.fit_spots_parallel(locs, spots, box_size, executor, manager,
+                                    n_workers, detect, progress_callback)
 
-                                    if result is not None:
-                                        dataset_name = result["dataset"]
+                            progress_callback.emit(100)
+                            fitted = True
 
-                                        if dataset_name not in loc_dict:
-                                            loc_dict[dataset_name] = []
-                                            render_loc_dict[dataset_name] = {}
+                        else:
+                            fitted = False
 
-                                        locs = result["locs"]
-                                        render_locs = result["render_locs"]
+                    self.process_locs(locs, detect_mode, box_size, fitted)
 
-                                        if len(locs) > 0:
-                                            loc_dict[dataset_name].extend(locs)
-
-                                        render_loc_dict[dataset_name] = {**render_loc_dict[dataset_name], **render_locs, }
-
-                                except concurrent.futures.TimeoutError:
-                                    # print(f"Task {job} timed out after {timeout_duration} seconds.")
-                                    pass
-                                except Exception as e:
-                                    print(f"Error occurred in task {job}: {e}")  # Handle other exceptions
-
-                if self.verbose:
-                    print("Finished Picasso compute jobs...")
-                    print("Compiling Picasso results...")
-
-                total_locs = 0
-                for dataset, locs in loc_dict.items():
-                    if len(locs) > 0:
-                        locs = np.hstack(locs).view(np.recarray).copy()
-                        locs.sort(kind="mergesort", order="frame")
-                        locs = np.array(locs).view(np.recarray)
-                        loc_dict[dataset] = locs
-                    total_locs += len(locs)
-
-
-            self.restore_shared_frames()
+            self.restore_shared_image_chunks()
 
             self.update_ui()
 
         except:
             print(traceback.format_exc())
 
-            self.restore_shared_frames()
+            self.restore_shared_image_chunks()
 
             self.update_ui()
 
@@ -484,6 +764,74 @@ class _picasso_detect_utils:
             total_locs = 0
 
         return fit, loc_dict, render_loc_dict, total_locs
+
+
+    def process_locs(self, locs, detect_mode, box_size, fitted=False):
+
+        try:
+
+            dataset_list = list(set(locs["dataset"]))
+            channel_list = list(set(locs["channel"]))
+
+            for dataset in dataset_list:
+                for channel in channel_list:
+
+                    if channel in locs["channel"]:
+
+                        if detect_mode.lower() == "localisations":
+
+                            if dataset not in self.localisation_dict.keys():
+                                self.localisation_dict["localisations"][dataset] = {}
+                            if channel not in self.localisation_dict["localisations"][dataset].keys():
+                                self.localisation_dict["localisations"][dataset][channel] = {}
+
+                            result_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
+
+                        else:
+
+                            result_dict = self.localisation_dict["bounding_boxes"]
+
+                        channel_locs = locs[(locs["dataset"] == dataset) & (locs["channel"] == channel)]
+
+                        if len(channel_locs) == 0:
+
+                            result_dict["localisations"] = []
+                            result_dict["localisation_centres"] = []
+                            result_dict["render_locs"] = {}
+                            result_dict["fitted"] = False
+                            result_dict["box_size"] = box_size
+
+                        else:
+
+                            channel_locs.sort(kind="mergesort", order="frame")
+                            channel_loc_centres = self.get_localisation_centres(channel_locs)
+
+                            result_dict["localisations"] = channel_locs.copy()
+                            result_dict["localisation_centres"] = channel_loc_centres.copy()
+                            result_dict["fitted"] = fitted
+                            result_dict["box_size"] = box_size
+
+                            if detect_mode.lower() == "localisations":
+
+                                render_locs = {}
+
+                                for frame_index in set(channel_locs.frame):
+
+                                    frame_locs = channel_locs[channel_locs.frame == frame_index].copy()
+                                    render_locs[frame_index] = np.vstack((frame_locs.y, frame_locs.x)).T.tolist()
+
+                                result_dict["render_locs"] = render_locs
+
+        except:
+            print(traceback.format_exc())
+            return None
+
+
+
+
+
+
+
 
     def pixseq_picasso(self, detect = False, fit = False):
 
@@ -515,7 +863,7 @@ class _picasso_detect_utils:
                     self.worker.signals.progress.connect(partial(self.pixseq_progress,
                         progress_bar=self.gui.picasso_progressbar))
 
-                    self.worker.signals.result.connect(self._picasso_wrapper_result)
+                    # self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)

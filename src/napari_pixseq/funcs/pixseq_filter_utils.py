@@ -108,6 +108,8 @@ class _filter_utils:
 
                     columns = list(locs.dtype.names)
 
+                    columns = [col for col in columns if col not in ["dataset","channel"]]
+
 
             selector.clear()
 
@@ -144,20 +146,22 @@ class _filter_utils:
 
                     values = locs[criterion]
 
-                    if plot:
-                        self.plot_filter_graph(criterion, values)
+                    if values.dtype in [np.float32, np.float64, np.int32, np.int64]:
 
-                    min_value = np.min(values)
-                    max_value = np.max(values)
+                        if plot:
+                            self.plot_filter_graph(criterion, values)
 
-                    self.gui.filter_min.setMinimum(min_value)
-                    self.gui.filter_min.setMaximum(max_value)
+                        min_value = np.min(values)
+                        max_value = np.max(values)
 
-                    self.gui.filter_max.setMinimum(min_value)
-                    self.gui.filter_max.setMaximum(max_value)
+                        self.gui.filter_min.setMinimum(min_value)
+                        self.gui.filter_min.setMaximum(max_value)
 
-                    self.gui.filter_min.setValue(min_value)
-                    self.gui.filter_max.setValue(max_value)
+                        self.gui.filter_max.setMinimum(min_value)
+                        self.gui.filter_max.setMaximum(max_value)
+
+                        self.gui.filter_min.setValue(min_value)
+                        self.gui.filter_max.setValue(max_value)
 
         except:
             print(traceback.format_exc())
