@@ -824,6 +824,18 @@ class _picasso_detect_utils:
 
                             else:
 
+                                loc_cols = list(channel_locs.dtype.names)
+
+                                if "dataset" in loc_cols or "channel" in loc_cols:
+                                    channel_locs = pd.DataFrame(channel_locs)
+
+                                    if "dataset" in loc_cols:
+                                        channel_locs = channel_locs.drop(columns=["dataset"])
+                                    if "channel" in loc_cols:
+                                        channel_locs = channel_locs.drop(columns=["channel"])
+
+                                    channel_locs = channel_locs.to_records(index=False)
+
                                 result_dict["localisations"] = channel_locs.copy()
                                 result_dict["fitted"] = fitted
                                 result_dict["box_size"] = box_size
