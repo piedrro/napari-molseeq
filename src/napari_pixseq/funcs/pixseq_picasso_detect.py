@@ -801,8 +801,6 @@ class _picasso_detect_utils:
 
                         if channel in locs["channel"]:
 
-                            print(f"Processing {len(locs)} locs for {dataset} {channel}...")
-
                             if detect_mode.lower() == "localisations":
 
                                 if dataset not in self.localisation_dict.keys():

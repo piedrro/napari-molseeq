@@ -50,29 +50,18 @@ class picasso_loc_utils():
         else:
             self.loc_type = "bbox"
 
-    def coerce_new_loc_format(self, new_loc):
-
-        if len(new_loc) != len(self.dtype):
-            difference = len(self.dtype) - len(new_loc)
-            if difference > 0:
-                new_loc = list(new_loc)
-                for i in range(difference):
-                    new_loc = new_loc + [0]
-                new_loc = tuple(new_loc)
-
-        return new_loc
 
     def remove_duplicate_locs(self, locs = None):
 
             try:
 
                 if locs is not None:
-                    self.locs = locs
-                    self.get_loc_info()
 
-                unique_records, indices = np.unique(self.locs, return_index=True)
+                    if len(locs) > 0:
 
-                self.locs = self.locs[indices]
+                        locs = pd.DataFrame(locs, columns=locs.dtype.names)
+                        locs = locs.drop_duplicates(subset=["frame", "x", "y"], keep="first")
+                        locs = locs.to_records(index=False)
 
             except:
                 print(traceback.format_exc())
@@ -94,11 +83,16 @@ class picasso_loc_utils():
             if type(new_loc) in [np.ndarray, np.recarray]:
                 new_loc = tuple(new_loc.tolist())
 
-            new_loc = self.coerce_new_loc_format(new_loc)
+            loc_cols = self.locs.dtype.names
+            new_loc_keys = list(new_loc.keys())
 
-            self.locs = np.array(self.locs).tolist()
-            self.locs.append(new_loc)
-            self.locs = np.rec.fromrecords(self.locs, dtype=self.dtype)
+            for key in new_loc_keys:
+                if key not in loc_cols:
+                    new_loc.pop(key)
+
+            locs = pd.DataFrame(self.locs, columns=self.locs.dtype.names)
+            locs.loc[len(locs)] = new_loc
+            self.locs = locs.to_records(index=False)
 
             self.remove_duplicate_locs()
 
@@ -120,10 +114,9 @@ class picasso_loc_utils():
 
                 if loc_index < len(self.locs):
 
-                    self.locs = self.locs.view(np.float32).reshape(len(self.locs), -1)
-                    self.locs = np.delete(self.locs, loc_index, axis=0)
-                    self.locs = self.locs.view(self.dtype)
-                    self.locs = np.squeeze(self.locs, axis=1)
+                    locs = pd.DataFrame(self.locs, columns=self.locs.dtype.names)
+                    locs = locs.drop(loc_index)
+                    self.locs = locs.to_records(index=False)
 
                 self.remove_duplicate_locs()
 
@@ -718,6 +711,9 @@ class _loc_utils():
 
                     frame_locs = locs[locs.frame == frame]
 
+                    new_loc = {"dataset": active_dataset, "channel": active_channel,
+                               "frame": frame, "x": x, "y": y, "net_gradient": net_gradient, }
+
                     if len(frame_locs) > 0:
 
                         loc_coords = np.vstack((frame_locs.y, frame_locs.x)).T
@@ -740,7 +736,7 @@ class _loc_utils():
 
                         else:
 
-                            locs = loc_utils.add_loc(new_loc = [frame, x, y, net_gradient])
+                            locs = loc_utils.add_loc(new_loc = new_loc)
 
                             loc_dict["localisations"] = locs
 
@@ -749,7 +745,7 @@ class _loc_utils():
 
                     else:
 
-                        locs = loc_utils.add_loc(new_loc=[frame, x, y, net_gradient])
+                        locs = loc_utils.add_loc(new_loc=new_loc)
 
                         loc_dict["localisations"] = locs
 
@@ -815,7 +811,7 @@ class _loc_utils():
 
                     else:
 
-                        locs = loc_utils.add_loc(new_loc = [frame, x, y, net_gradient])
+                        locs = loc_utils.add_loc(new_loc = {"frame": frame, "x": x, "y": y, "net_gradient": net_gradient})
 
                         loc_dict["localisations"] = locs
 
