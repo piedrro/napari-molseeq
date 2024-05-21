@@ -402,18 +402,15 @@ class PixSeqWidget(QWidget, gui,
             if show_bboxes:
 
                 layer_names = [layer.name for layer in self.viewer.layers]
+                loc_dict, n_locs, fitted = self.get_loc_dict(type = "bounding_boxes")
 
-                if "localisation_centres" in self.localisation_dict["bounding_boxes"].keys():
+                if n_locs > 0:
 
                     if self.verbose:
                         print("Drawing bounding_boxes")
 
-                    loc_dict, n_locs, fitted = self.get_loc_dict(type = "bounding_boxes")
-
-                    localisations = loc_dict["localisations"].copy()
-                    localisation_centres = self.get_localisation_centres(localisations,mode="bounding_boxes")
-
-                    # print(f"Drawing {len(localisation_centres)} bounding boxes")
+                    locs = loc_dict["localisations"].copy()
+                    bounding_boxes = np.vstack((locs.y, locs.x)).T.tolist()
 
                     vis_mode = self.gui.picasso_vis_mode.currentText()
                     vis_size = float(self.gui.picasso_vis_size.currentText())
@@ -429,7 +426,7 @@ class PixSeqWidget(QWidget, gui,
 
                     if "bounding_boxes" not in layer_names:
                         self.bbox_layer = self.viewer.add_points(
-                            localisation_centres,
+                            bounding_boxes,
                             edge_color="white",
                             ndim=2,
                             face_color=[0,0,0,0],
@@ -444,7 +441,7 @@ class PixSeqWidget(QWidget, gui,
                         self.bbox_layer.events.visible.connect(self.draw_bounding_boxes)
 
                     else:
-                        self.viewer.layers["bounding_boxes"].data = localisation_centres
+                        self.viewer.layers["bounding_boxes"].data = bounding_boxes
 
                     self.bbox_layer.selected_data = list(range(len(self.bbox_layer.data)))
                     self.bbox_layer.opacity = vis_opacity

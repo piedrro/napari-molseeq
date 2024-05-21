@@ -331,15 +331,9 @@ class _loc_utils():
             if type == "Localisations":
 
                 if self.verbose:
-                    print("Creating render locs")
-
-                loc_centres = self.get_localisation_centres(locs)
-
-                if self.verbose:
                     print("Updating localisation dict")
 
                 self.localisation_dict["localisations"][dataset][channel.lower()]["localisations"] = locs.copy()
-                self.localisation_dict["localisations"][dataset][channel.lower()]["localisation_centres"] = loc_centres.copy()
                 self.localisation_dict["localisations"][dataset][channel.lower()]["fitted"] = True
                 self.localisation_dict["localisations"][dataset][channel.lower()]["box_size"] = box_size
 
@@ -347,13 +341,10 @@ class _loc_utils():
                 unique_frames = np.unique(locs.frame)
                 locs = locs[locs.frame == unique_frames[0]]
 
-                loc_centres = self.get_localisation_centres(locs)
-
                 if self.verbose:
                     print("Updating localisation dict")
 
                 self.localisation_dict["bounding_boxes"]["localisations"] = locs.copy()
-                self.localisation_dict["bounding_boxes"]["localisation_centres"] = loc_centres.copy()
                 self.localisation_dict["bounding_boxes"]["fitted"] = True
                 self.localisation_dict["bounding_boxes"]["box_size"] = box_size
 
@@ -719,9 +710,7 @@ class _loc_utils():
 
                 if n_locs > 0:
                     locs = loc_dict["localisations"].copy()
-                    loc_centers = loc_dict["localisation_centres"].copy()
                     box_size = int(loc_dict["box_size"])
-                    dtype = locs.dtype
 
                     loc_utils = picasso_loc_utils(locs)
 
@@ -744,11 +733,7 @@ class _loc_utils():
 
                             locs = loc_utils.remove_loc(loc_index=min_index)
 
-                            loc_centers = np.delete(loc_centers, min_index, axis=0)
-                            loc_centers = loc_centers.tolist()
-
                             loc_dict["localisations"] = locs
-                            loc_dict["localisation_centres"] = loc_centers
 
                             self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                             self.draw_localisations(update_vis=True)
@@ -757,11 +742,7 @@ class _loc_utils():
 
                             locs = loc_utils.add_loc(new_loc = [frame, x, y, net_gradient])
 
-                            loc_centers = np.append(loc_centers, np.array([[frame,y,x]], dtype=int), axis=0)
-                            loc_centers = loc_centers.tolist()
-
                             loc_dict["localisations"] = locs
-                            loc_dict["localisation_centres"] = loc_centers
 
                             self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                             self.draw_localisations(update_vis=True)
@@ -770,11 +751,7 @@ class _loc_utils():
 
                         locs = loc_utils.add_loc(new_loc=[frame, x, y, net_gradient])
 
-                        loc_centers = np.append(loc_centers, np.array([[frame, y, x]], dtype=int), axis=0)
-                        loc_centers = loc_centers.tolist()
-
                         loc_dict["localisations"] = locs
-                        loc_dict["localisation_centres"] = loc_centers
 
                         self.update_loc_dict(active_dataset, active_channel, "localisations", loc_dict)
                         self.draw_localisations(update_vis=True)
@@ -789,10 +766,7 @@ class _loc_utils():
                     loc_utils = picasso_loc_utils()
                     locs = loc_utils.create_locs(new_loc=new_loc)
 
-                    loc_centers = [[frame, y, x]]
-
                     loc_dict["localisations"] = locs
-                    loc_dict["localisation_centres"] = loc_centers
                     loc_dict["fitted"] = False
                     loc_dict["box_size"] = box_size
 
@@ -807,7 +781,7 @@ class _loc_utils():
                 if n_locs > 0:
 
                     locs = loc_dict["localisations"].copy()
-                    loc_centers = loc_dict["localisation_centres"].copy()
+                    loc_centers = self.get_localisation_centres(locs)
                     box_size = int(loc_dict["box_size"])
                     dtype = locs.dtype
 
@@ -835,13 +809,7 @@ class _loc_utils():
 
                         locs = loc_utils.remove_loc(loc_index=min_index)
 
-                        loc_centers = np.delete(loc_centers, min_index, axis=0)
-                        loc_centers = loc_centers.tolist()
-
-                        # print(f"len locs: {len(locs)}, len loc_centers: {len(loc_centers)}")
-
                         loc_dict["localisations"] = locs
-                        loc_dict["localisation_centres"] = loc_centers
                         self.update_loc_dict(active_dataset, active_channel, "bounding_boxes", loc_dict)
                         self.draw_bounding_boxes()
 
@@ -849,15 +817,7 @@ class _loc_utils():
 
                         locs = loc_utils.add_loc(new_loc = [frame, x, y, net_gradient])
 
-                        if loc_centers.shape[-1] == 3:
-                            loc_centers = np.append(loc_centers, np.array([[frame, y,x]], dtype=int), axis=0)
-                        if loc_centers.shape[-1] == 2:
-                            loc_centers = np.append(loc_centers, np.array([[y,x]], dtype=int), axis=0)
-
-                        loc_centers = loc_centers.tolist()
-
                         loc_dict["localisations"] = locs
-                        loc_dict["localisation_centres"] = loc_centers
 
                         self.update_loc_dict(active_dataset, active_channel, "bounding_boxes", loc_dict)
                         self.draw_bounding_boxes()
@@ -873,10 +833,7 @@ class _loc_utils():
                     loc_utils = picasso_loc_utils()
                     locs = loc_utils.create_locs(new_loc=new_loc)
 
-                    loc_centers = [[y, x]]
-
                     loc_dict["localisations"] = locs
-                    loc_dict["localisation_centres"] = loc_centers
                     loc_dict["fitted"] = False
                     loc_dict["box_size"] = box_size
 
@@ -886,8 +843,6 @@ class _loc_utils():
             elif mode == "lsp":
 
                 x, y = position
-
-                print(x,y)
 
         except:
             print(traceback.format_exc())

@@ -24,16 +24,13 @@ class _utils_colocalize:
                     filtered_locs.append(loc)
 
             filtered_locs = np.rec.fromrecords(filtered_locs, dtype=locs.dtype)
-            filtered_loc_centers = self.get_localisation_centres(filtered_locs)
-
 
         except:
             print(traceback.format_exc())
             filtered_locs = None
-            filtered_loc_centers = None
             pass
 
-        return filtered_locs, filtered_loc_centers
+        return filtered_locs
 
 
 
@@ -76,7 +73,6 @@ class _utils_colocalize:
                     filtered_ch1_locs.append(loc)
 
             filtered_ch1_locs = np.rec.fromrecords(filtered_ch1_locs, dtype=ch1_locs.dtype)
-            filtered_ch1_loc_centers = self.get_localisation_centres(filtered_ch1_locs)
 
             filtered_ch2_locs = []
 
@@ -86,7 +82,6 @@ class _utils_colocalize:
                     filtered_ch2_locs.append(loc)
 
             filtered_ch2_locs = np.rec.fromrecords(filtered_ch2_locs, dtype=ch2_locs.dtype)
-            filtered_ch2_loc_centers = self.get_localisation_centres(filtered_ch2_locs)
 
             colo_locs = []
 
@@ -101,10 +96,8 @@ class _utils_colocalize:
                 colo_locs.append(colo_loc)
 
             colo_locs = np.rec.fromrecords(colo_locs, dtype=filtered_ch1_locs.dtype)
-            colo_loc_centers = self.get_localisation_centres(colo_locs)
 
-            result_dict = {"localisations": colo_locs,
-                           "localisation_centres": colo_loc_centers,}
+            result_dict = {"localisations": colo_locs}
 
             self.pixseq_notification(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
 
@@ -130,17 +123,13 @@ class _utils_colocalize:
                 if self.gui.colo_localisations.isChecked():
 
                     self.localisation_dict["localisations"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
-                    self.localisation_dict["localisations"][dataset][channel1.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
-
                     self.localisation_dict["localisations"][dataset][channel2.lower()]["localisations"] = colo_locs["localisations"]
-                    self.localisation_dict["localisations"][dataset][channel2.lower()]["localisation_centres"] = colo_locs["localisation_centres"]
 
                     self.draw_localisations(update_vis=True)
 
                 if self.gui.colo_bboxes.isChecked():
 
                     self.localisation_dict["bounding_boxes"]["localisations"] = colo_locs["localisations"]
-                    self.localisation_dict["bounding_boxes"]["localisation_centres"] = colo_locs["localisation_centres"]
 
                     self.draw_bounding_boxes()
 

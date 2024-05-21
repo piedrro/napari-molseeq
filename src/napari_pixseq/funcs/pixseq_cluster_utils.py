@@ -98,7 +98,6 @@ class _cluster_utils:
                 n_frames = 1
 
             clustered_locs = []
-            clustered_loc_centers = []
 
             for cluster_index in range(len(cluster_centers)):
                 for frame_index in range(n_frames):
@@ -106,12 +105,11 @@ class _cluster_utils:
                     new_loc = (int(frame_index), float(locX), float(locY))
                     clustered_locs.append(new_loc)
 
-                    clustered_loc_centers.append([frame_index, locY, locX])
-
             # Convert list to recarray
-            clustered_locs = np.array(clustered_locs, dtype=[('frame', '<u4'), ('x', '<f4'), ('y', '<f4')]).view(np.recarray)
+            clustered_locs = np.array(clustered_locs,
+                dtype=[('frame', '<u4'), ('x', '<f4'), ('y', '<f4')]).view(np.recarray)
 
-            result = (clustered_locs, clustered_loc_centers)
+            result = clustered_locs
 
         except:
             print(traceback.format_exc())
@@ -120,13 +118,11 @@ class _cluster_utils:
         return result
 
 
-    def _cluster_localisations_result(self, result):
+    def _cluster_localisations_result(self, locs):
 
         try:
 
-            if result is not None:
-
-                locs, loc_centers = result
+            if locs is not None:
 
                 mode = self.gui.cluster_mode.currentText()
                 dataset = self.gui.cluster_dataset.currentText()
@@ -140,7 +136,6 @@ class _cluster_utils:
                     fiducial_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
 
                     fiducial_dict["localisations"] = locs
-                    fiducial_dict["localisation_centres"] = loc_centers
 
                 else:
 
@@ -150,7 +145,6 @@ class _cluster_utils:
                         box_size = int(self.gui.picasso_box_size.currentText())
 
                     bbox_dict["localisations"] = locs
-                    bbox_dict["localisation_centres"] = loc_centers
                     bbox_dict["box_size"] = box_size
 
         except:

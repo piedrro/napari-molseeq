@@ -118,10 +118,7 @@ class _undrift_utils:
                             loc.x = loc.x - drift[loc.frame][0]
                             loc.y = loc.y - drift[loc.frame][1]
 
-                        localisation_centres = self.get_localisation_centres(locs)
-
                         self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisations"] = locs
-                        self.localisation_dict["localisations"][dataset_name][channel_name.lower()]["localisation_centres"] = localisation_centres
 
         except:
             print(traceback.format_exc())

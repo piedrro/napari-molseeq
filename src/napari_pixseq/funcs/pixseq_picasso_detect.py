@@ -374,12 +374,9 @@ class _picasso_detect_utils:
                         self.localisation_dict["localisations"][dataset_name][image_channel.lower()] = {}
 
 
-                    loc_centres = self.get_localisation_centres(locs)
-
-                    fiducial_dict = {"localisations": [], "localisation_centres": []}
+                    fiducial_dict = {"localisations": []}
 
                     fiducial_dict["localisations"] = locs.copy()
-                    fiducial_dict["localisation_centres"] = loc_centres.copy()
                     fiducial_dict["fitted"] = fitted
                     fiducial_dict["box_size"] = box_size
 
@@ -387,10 +384,7 @@ class _picasso_detect_utils:
 
                 else:
 
-                    loc_centres = self.get_localisation_centres(locs)
-
                     self.localisation_dict["bounding_boxes"]["localisations"] = locs.copy()
-                    self.localisation_dict["bounding_boxes"]["localisation_centres"] = loc_centres.copy()
                     self.localisation_dict["bounding_boxes"]["fitted"] = fitted
                     self.localisation_dict["bounding_boxes"]["box_size"] = box_size
 
@@ -827,7 +821,6 @@ class _picasso_detect_utils:
                             if len(channel_locs) == 0:
 
                                 result_dict["localisations"] = []
-                                result_dict["localisation_centres"] = []
                                 result_dict["fitted"] = False
                                 result_dict["box_size"] = box_size
 
