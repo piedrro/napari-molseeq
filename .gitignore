@@ -3,3 +3,11 @@
 /dist/
 /src/napari_pixseq/scripts/
 /src/napari_PixSeq.egg-info/
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/.gitignore
+/.idea/deployment.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/napari-PixSeq.iml
+/.idea/vcs.xml

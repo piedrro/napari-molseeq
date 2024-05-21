@@ -1,5 +1,7 @@
 import traceback
 import numpy as np
+import pandas as pd
+
 from napari_pixseq.funcs.pixseq_utils_compute import Worker
 import scipy.ndimage
 import multiprocessing
@@ -54,6 +56,15 @@ def detect_dataset_drift(dat, progress_dict, index):
         undrift_locs = loc_dict["localisations"].copy()
         picasso_info = dataset_dict["picasso_info"]
         n_frames = picasso_info[0]["Frames"]
+
+        undrift_locs = pd.DataFrame(undrift_locs)
+
+        if "dataset" in undrift_locs.columns:
+            undrift_locs = undrift_locs.drop(columns=["dataset"])
+        if "channel" in undrift_locs.columns:
+            undrift_locs = undrift_locs.drop(columns=["channel"])
+
+        undrift_locs = undrift_locs.to_records(index=False)
 
         len_segments = n_frames // segmentation
         n_pairs = int(len_segments * (len_segments - 1))/2
