@@ -120,7 +120,7 @@ class _utils_colocalize:
                 channel1 = self.gui.colo_channel1.currentText()
                 channel2 = self.gui.colo_channel2.currentText()
 
-                if self.gui.colo_localisations.isChecked():
+                if self.gui.colo_fiducials.isChecked():
 
                     self.localisation_dict["localisations"][dataset][channel1.lower()]["localisations"] = colo_locs["localisations"]
                     self.localisation_dict["localisations"][dataset][channel2.lower()]["localisations"] = colo_locs["localisations"]
