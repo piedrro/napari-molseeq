@@ -803,7 +803,7 @@ class _picasso_detect_utils:
 
                             if detect_mode.lower() == "localisations":
 
-                                if dataset not in self.localisation_dict.keys():
+                                if dataset not in self.localisation_dict["localisations"].keys():
                                     self.localisation_dict["localisations"][dataset] = {}
                                 if channel not in self.localisation_dict["localisations"][dataset].keys():
                                     self.localisation_dict["localisations"][dataset][channel] = {}
@@ -847,23 +847,6 @@ class _picasso_detect_utils:
             return None
 
         print("Finished processing locs")
-
-
-    def _picasso_wrapper_result(self, result):
-
-        try:
-
-            locs, fitted = result
-
-            detect_mode = self.gui.picasso_detect_mode.currentText()
-            box_size = int(self.gui.picasso_box_size.currentText())
-
-            self.process_locs(locs, detect_mode, box_size, fitted)
-
-        except:
-            print(traceback.format_exc())
-            pass
-
 
 
     def pixseq_picasso(self, detect = False, fit = False):
