@@ -107,6 +107,9 @@ class PixSeqWidget(QWidget, gui,
 
         self.widget_notifications = True
 
+        from napari_pixseq._version import __version__ as version
+        print(f"napari-PixSeq version: {version}")
+
     def register_events(self):
 
         self.gui.pixseq_import.clicked.connect(self.pixseq_import_data)
