@@ -7,7 +7,7 @@ Use autoreload to reload modules when they are changed, allowing you to modify t
     %load_ext autoreload
     %autoreload 2
 
-This will launch and instnace of the viewer and the plugin widget.
+This will launch and instance of the viewer and the plugin widget.
 
     from napari import Viewer
     viewer = Viewer()
