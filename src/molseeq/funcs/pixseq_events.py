@@ -476,7 +476,7 @@ class _events_utils:
                     if "dd" in channel_refs:
                         self.gui.pixseq_show_dd.setEnabled(True)
                         self.gui.pixseq_show_dd.setText("Donor [F1]")
-                        self.viewer.bind_key(key="F1", func=self.select_channel_donor, overwrite=True)
+                        self.viewer.bind_key("F1", func=self.select_channel_donor, overwrite=True)
                         self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="donor"))
                     else:
                         self.gui.pixseq_show_dd.setEnabled(False)
@@ -485,7 +485,7 @@ class _events_utils:
                     if "da" in channel_refs:
                         self.gui.pixseq_show_da.setEnabled(True)
                         self.gui.pixseq_show_da.setText("Acceptor [F2]")
-                        self.viewer.bind_key(key="F2", func=self.select_channel_acceptor, overwrite=True)
+                        self.viewer.bind_key("F2", func=self.select_channel_acceptor, overwrite=True)
                         self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="acceptor"))
                     else:
                         self.gui.pixseq_show_da.setEnabled(False)
@@ -508,7 +508,7 @@ class _events_utils:
                     if "dd" in channel_refs:
                         self.gui.pixseq_show_dd.setText("DD [F1]")
                         self.gui.pixseq_show_dd.setEnabled(True)
-                        self.viewer.bind_key(key="F1", func=self.select_channel_dd, overwrite=True)
+                        self.viewer.bind_key("F1", func=self.select_channel_dd, overwrite=True)
                         self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="dd"))
 
                     else:
@@ -518,7 +518,7 @@ class _events_utils:
                     if "da" in channel_refs:
                         self.gui.pixseq_show_da.setText("DA [F2]")
                         self.gui.pixseq_show_da.setEnabled(True)
-                        self.viewer.bind_key(key="F2", func=self.select_channel_da, overwrite=True)
+                        self.viewer.bind_key("F2", func=self.select_channel_da, overwrite=True)
                         self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="da"))
                     else:
                         self.gui.pixseq_show_da.setText("")
@@ -527,7 +527,7 @@ class _events_utils:
                     if "ad" in channel_refs:
                         self.gui.pixseq_show_ad.setText("AD [F3]")
                         self.gui.pixseq_show_ad.setEnabled(True)
-                        self.viewer.bind_key(key="F3", func=self.select_channel_ad, overwrite=True)
+                        self.viewer.bind_key("F3", func=self.select_channel_ad, overwrite=True)
                         self.gui.pixseq_show_ad.clicked.connect(partial(self.update_active_image, channel="ad"))
                     else:
                         self.gui.pixseq_show_ad.setText("")
@@ -536,7 +536,7 @@ class _events_utils:
                     if "aa" in channel_refs:
                         self.gui.pixseq_show_aa.setText("AA [F4]")
                         self.gui.pixseq_show_aa.setEnabled(True)
-                        self.viewer.bind_key(key="F4", func=self.select_channel_aa, overwrite=True)
+                        self.viewer.bind_key("F4", func=self.select_channel_aa, overwrite=True)
                         self.gui.pixseq_show_aa.clicked.connect(partial(self.update_active_image, channel="aa"))
                     else:
                         self.gui.pixseq_show_aa.setText("")

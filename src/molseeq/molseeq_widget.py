@@ -243,17 +243,17 @@ class qwidget(QWidget, gui,
 
         self.gui.dev_verbose.stateChanged.connect(self.toggle_verbose)
 
-        self.viewer.bind_key(key="a", func=lambda event: self.segmentation_modify_mode(mode="add"), overwrite=True)
-        self.viewer.bind_key(key="e", func=lambda event: self.segmentation_modify_mode(mode="extend"), overwrite=True)
-        self.viewer.bind_key(key="j", func=lambda event: self.segmentation_modify_mode(mode="join"), overwrite=True)
-        self.viewer.bind_key(key="s", func=lambda event: self.segmentation_modify_mode(mode="split"), overwrite=True)
-        self.viewer.bind_key(key="d", func=lambda event: self.segmentation_modify_mode(mode="delete"), overwrite=True)
+        self.viewer.bind_key("a", func=lambda event: self.segmentation_modify_mode(mode="add"), overwrite=True)
+        self.viewer.bind_key("e", func=lambda event: self.segmentation_modify_mode(mode="extend"), overwrite=True)
+        self.viewer.bind_key("j", func=lambda event: self.segmentation_modify_mode(mode="join"), overwrite=True)
+        self.viewer.bind_key("s", func=lambda event: self.segmentation_modify_mode(mode="split"), overwrite=True)
+        self.viewer.bind_key("d", func=lambda event: self.segmentation_modify_mode(mode="delete"), overwrite=True)
 
 
-        # self.viewer.bind_key(key="e", func=self.segmentation_modify_mode(mode="extend"), overwrite=True)
-        # self.viewer.bind_key(key="j", func=self.segmentation_modify_mode(mode="join"), overwrite=True)
-        # self.viewer.bind_key(key="s", func=self.segmentation_modify_mode(mode="split"), overwrite=True)
-        # self.viewer.bind_key(key="d", func=self.segmentation_modify_mode(mode="delete"), overwrite=True)
+        # self.viewer.bind_key("e", func=self.segmentation_modify_mode(mode="extend"), overwrite=True)
+        # self.viewer.bind_key("j", func=self.segmentation_modify_mode(mode="join"), overwrite=True)
+        # self.viewer.bind_key("s", func=self.segmentation_modify_mode(mode="split"), overwrite=True)
+        # self.viewer.bind_key("d", func=self.segmentation_modify_mode(mode="delete"), overwrite=True)
 
 
 
