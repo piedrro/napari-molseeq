@@ -104,7 +104,6 @@ class _tracking_utils:
         self.draw_localisations()
         self.update_ui()
 
-
     def initialise_tracking(self):
 
         try:

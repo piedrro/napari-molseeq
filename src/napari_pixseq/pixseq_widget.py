@@ -6,6 +6,7 @@ import traceback
 from multiprocessing import Manager
 from functools import partial
 import matplotlib.colors as mcolors
+from napari.utils.notifications import show_info
 
 from napari_pixseq.GUI.pixseq_ui import Ui_Frame as gui
 from napari_pixseq.funcs.pixseq_utils_compute import _utils_compute
@@ -50,9 +51,14 @@ class PixSeqWidget(QWidget, gui,
 
         self.viewer = viewer
 
+        from napari_pixseq._version import __version__ as version
+        show_info(f"napari-pixseq version: {version}")
+
         #create UI
         self.gui = gui()
         self.gui.setupUi(self)
+
+        self.setWindowTitle(f"napari-PixSeq {version}")
 
         #initialise graph PyQtGraph canvases
         self.gui.graph_container.setLayout(QVBoxLayout())
