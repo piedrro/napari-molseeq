@@ -1,15 +1,15 @@
-# napari-PixSeq
+# napari-molSEEQ
 
-[![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-PixSeq/blob/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-PixSeq/)
+[![License MIT](https://img.shields.io/pypi/l/napari-GapSeq2.svg?color=green)](https://github.com/piedrro/napari-molseeq/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/napari-GapSeq2.svg?color=green)](https://pypi.org/project/napari-molseeq/)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-GapSeq2.svg?color=green)](https://python.org)
-[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-GapSeq2)](https://napari-hub.org/plugins/napari-PixSeq)
+[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-GapSeq2)](https://napari-hub.org/plugins/napari-molseeq)
 
 A **Napari** plugin for extracting time series traces from single molecule FRET data.
 
-napari-PixSeq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
+napari-molseeq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
 
-napari-PixSeq traces can be analysed with TraceAnalyser: https://github.com/piedrro/TraceAnalyser
+napari-molseeq traces can be analysed with TraceAnalyser: https://github.com/piedrro/TraceAnalyser
 
 This is still undergoing development, so some features may not work as expected.
 
@@ -29,18 +29,18 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `napari-PixSeq` via [pip]:
+You can install `napari-molseeq` via [pip]:
 
-    pip install napari-PixSeq
+    pip install napari-molseeq
 
-You can install `napari-PixSeq` via [GitHub]:
+You can install `napari-molseeq` via [GitHub]:
 
-    conda create –-name napari-pixseq python==3.9
-    conda activate napari-pixseq
+    conda create –-name napari-molseeq python==3.9
+    conda activate napari-molseeq
     conda install -c anaconda git
     conda update --all
 
-    pip install git+https://github.com/piedrro/napari-PixSeq.git
+    pip install git+https://github.com/piedrro/napari-molseeq.git
 
 ## Contributing
 
@@ -50,7 +50,7 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [MIT] license,
-"napari-PixSeq" is free and open source software
+"napari-molseeq" is free and open source software
 
 ## Issues
 

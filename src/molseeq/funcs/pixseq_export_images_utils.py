@@ -4,7 +4,7 @@ import tifffile
 import os
 import psutil
 from qtpy.QtWidgets import QFileDialog
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 from functools import partial
 
 class _export_images_utils:

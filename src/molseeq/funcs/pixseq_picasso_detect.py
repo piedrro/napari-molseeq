@@ -3,7 +3,7 @@ import traceback
 
 import pandas as pd
 
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 import time
 import os
 from multiprocessing import shared_memory

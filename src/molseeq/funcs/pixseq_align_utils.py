@@ -2,8 +2,8 @@ import traceback
 import numpy as np
 import cv2
 from functools import partial
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
-from napari_pixseq.funcs.pixseq_transform_utils import transform_image
+from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_transform_utils import transform_image
 from scipy.optimize import least_squares
 
 class _align_utils:

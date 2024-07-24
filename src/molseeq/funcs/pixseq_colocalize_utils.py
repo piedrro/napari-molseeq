@@ -1,7 +1,7 @@
 import traceback
 import numpy as np
 import cv2
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 
 
 class _utils_colocalize:

@@ -8,33 +8,33 @@ from functools import partial
 import matplotlib.colors as mcolors
 from napari.utils.notifications import show_info
 
-from napari_pixseq.GUI.pixseq_ui import Ui_Frame as gui
-from napari_pixseq.funcs.pixseq_utils_compute import _utils_compute
-from napari_pixseq.funcs.pixseq_undrift_utils import _undrift_utils
-from napari_pixseq.funcs.pixseq_picasso_detect import _picasso_detect_utils
-from napari_pixseq.funcs.pixseq_loc_utils import _loc_utils
-from napari_pixseq.funcs.pixseq_import_utils import _import_utils
-from napari_pixseq.funcs.pixseq_events import _events_utils
-from napari_pixseq.funcs.pixseq_export_images_utils import _export_images_utils
-from napari_pixseq.funcs.pixseq_transform_utils import _tranform_utils
-from napari_pixseq.funcs.pixseq_trace_compute_utils import _trace_compute_utils
-from napari_pixseq.funcs.pixseq_plot_utils import _plot_utils, CustomPyQTGraphWidget
-from napari_pixseq.funcs.pixseq_align_utils import _align_utils
-from napari_pixseq.funcs.pixseq_export_traces_utils import _export_traces_utils
-from napari_pixseq.funcs.pixseq_colocalize_utils import _utils_colocalize
-from napari_pixseq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
-from napari_pixseq.funcs.pixseq_cluster_utils import _cluster_utils
-from napari_pixseq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
-from napari_pixseq.funcs.pixseq_filter_utils import _filter_utils
-from napari_pixseq.funcs.pixseq_segmentation_utils import _segmentation_utils
-from napari_pixseq.funcs.pixseq_tracking_utils import _tracking_utils
-from napari_pixseq.funcs.pixseq_segmentation_events import _segmentation_events
+from molseeq.GUI.gui import Ui_Frame as gui
+from molseeq.funcs.pixseq_utils_compute import _utils_compute
+from molseeq.funcs.pixseq_undrift_utils import _undrift_utils
+from molseeq.funcs.pixseq_picasso_detect import _picasso_detect_utils
+from molseeq.funcs.pixseq_loc_utils import _loc_utils
+from molseeq.funcs.pixseq_import_utils import _import_utils
+from molseeq.funcs.pixseq_events import _events_utils
+from molseeq.funcs.pixseq_export_images_utils import _export_images_utils
+from molseeq.funcs.pixseq_transform_utils import _tranform_utils
+from molseeq.funcs.pixseq_trace_compute_utils import _trace_compute_utils
+from molseeq.funcs.pixseq_plot_utils import _plot_utils, CustomPyQTGraphWidget
+from molseeq.funcs.pixseq_align_utils import _align_utils
+from molseeq.funcs.pixseq_export_traces_utils import _export_traces_utils
+from molseeq.funcs.pixseq_colocalize_utils import _utils_colocalize
+from molseeq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
+from molseeq.funcs.pixseq_cluster_utils import _cluster_utils
+from molseeq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
+from molseeq.funcs.pixseq_filter_utils import _filter_utils
+from molseeq.funcs.pixseq_segmentation_utils import _segmentation_utils
+from molseeq.funcs.pixseq_tracking_utils import _tracking_utils
+from molseeq.funcs.pixseq_segmentation_events import _segmentation_events
 
 import napari
 
 
 
-class PixSeqWidget(QWidget, gui,
+class qwidget(QWidget, gui,
     _undrift_utils, _picasso_detect_utils,
     _import_utils, _events_utils, _export_images_utils,
     _tranform_utils, _trace_compute_utils, _plot_utils,
@@ -51,14 +51,9 @@ class PixSeqWidget(QWidget, gui,
 
         self.viewer = viewer
 
-        from napari_pixseq._version import __version__ as version
-        show_info(f"napari-pixseq version: {version}")
-
         #create UI
         self.gui = gui()
         self.gui.setupUi(self)
-
-        self.setWindowTitle(f"napari-PixSeq {version}")
 
         #initialise graph PyQtGraph canvases
         self.gui.graph_container.setLayout(QVBoxLayout())
@@ -113,8 +108,8 @@ class PixSeqWidget(QWidget, gui,
 
         self.widget_notifications = True
 
-        from napari_pixseq._version import __version__ as version
-        print(f"napari-PixSeq version: {version}")
+        from molseeq.__init__ import __version__ as version
+        print(f"napari-molseeq version: {version}")
 
     def register_events(self):
 
@@ -291,7 +286,7 @@ class PixSeqWidget(QWidget, gui,
 
         else:
             print("Pygpufit not available due to missing package")
-            print("Install pygpufit package into napari-PixSeq root directory")
+            print("Install pygpufit package into napari-molseeq root directory")
 
         if self.gpufit_available:
             print("Pygpufit available")

@@ -1,4 +1,4 @@
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 import concurrent

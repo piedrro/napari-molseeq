@@ -2,7 +2,7 @@ import traceback
 import numpy as np
 import pandas as pd
 
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 import scipy.ndimage
 import multiprocessing
 from multiprocessing import shared_memory

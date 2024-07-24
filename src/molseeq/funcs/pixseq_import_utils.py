@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image
 from qtpy.QtWidgets import QFileDialog
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 import time
 import multiprocessing
 from multiprocessing import shared_memory, Manager

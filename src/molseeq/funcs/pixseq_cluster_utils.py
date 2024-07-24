@@ -1,7 +1,7 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 import traceback
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 
 
 class _cluster_utils:

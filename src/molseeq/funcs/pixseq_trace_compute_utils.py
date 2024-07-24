@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import traceback
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 from functools import partial
 import matplotlib.pyplot as plt
 from qtpy.QtWidgets import QComboBox

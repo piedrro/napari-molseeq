@@ -1,6 +1,6 @@
 import traceback
 import warnings
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 from napari.utils.notifications import show_info
 from torch.cuda import empty_cache
 import math

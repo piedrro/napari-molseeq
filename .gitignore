@@ -1,7 +1,7 @@
-/src/napari_pixseq/_tests/
-/src/napari_pixseq/dev/
+/src/molseeq/_tests/
+/src/molseeq/dev/
 /dist/
-/src/napari_pixseq/scripts/
+/src/molseeq/scripts/
 /src/napari_PixSeq.egg-info/
 /.idea/inspectionProfiles/profiles_settings.xml
 /.idea/inspectionProfiles/Project_Default.xml

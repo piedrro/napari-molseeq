@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import os
 from functools import partial
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 from qtpy.QtWidgets import QFileDialog
 import math
 import json

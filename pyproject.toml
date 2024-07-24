@@ -1,17 +1,94 @@
+[project]
+name = "napari-molseeq"
+dynamic = ["version"]
+description = "A Napari plugin for extracting time series traces from Single Molecule Localisation Microsocpy (SMLM) data."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Piers Turner"},
+  {email = "piers.turner@physics.ox.ac.uk"},
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: napari",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "napari[all]==0.5.0",
+    "numpy",
+    "magicgui",
+    "qtpy",
+    "scipy",
+    "pyqtgraph",
+    "picassosr",
+    "pandas",
+    "matplotlib >= 3.7.0",
+    "scipy",
+    "opencv-python",
+    "tqdm",
+    "originpro",
+    "pyqt5-tools",
+    "torch",
+    "cellpose >= 3.0.1",
+    "omnipose",
+    "trackpy",
+    "shapely",
+    "astropy",
+    "mat4py",
+]
+
+[project.optional-dependencies]
+testing = [
+    "tox",
+    "pytest",  # https://docs.pytest.org/en/latest/contents.html
+    "pytest-cov",  # https://pytest-cov.readthedocs.io/en/latest/
+    "pytest-qt",  # https://pytest-qt.readthedocs.io/en/latest/
+    "napari",
+    "pyqt5",
+]
+
+[project.entry-points."napari.manifest"]
+napari-moltrack = "molseeq:napari.yaml"
+
+[project.urls]
+"Bug Tracker" = "https://github.com/piedrro/napari-molseeq/issues"
+"Documentation" = "https://github.com/piedrro/napari-molseeq#README.md"
+"Source Code" = "https://github.com/piedrro/napari-molseeq"
+"User Support" = "https://github.com/piedrro/napari-molseeq/issues"
+
 [build-system]
-requires = ["setuptools>=42.0.0", "wheel", "setuptools_scm"]
+requires = ["setuptools>=42.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools_scm]
-write_to = "src/napari_pixseq/_version.py"
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "molseeq.__init__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml","*.dll"]
 
 [tool.black]
 line-length = 79
-target-version = ['py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
 
 [tool.ruff]
 line-length = 79
-select = [
+lint.select = [
     "E", "F", "W", #flake8
     "UP", # pyupgrade
     "I", # isort
@@ -24,7 +101,7 @@ select = [
     "PIE", # flake8-pie
     "SIM", # flake8-simplify
 ]
-ignore = [
+lint.ignore = [
     "E501", # line too long. let black handle this
     "UP006", "UP007", # type annotation. As using magicgui require runtime type annotation then we disable this.
     "SIM117", # flake8-simplify - some of merged with statements are not looking great with black, reanble after drop python 3.9
@@ -52,5 +129,5 @@ exclude = [
     "*_vendor*",
 ]
 
-target-version = "py38"
-fix = true
+
+

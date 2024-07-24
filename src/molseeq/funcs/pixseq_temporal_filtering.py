@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit
 import traceback
-from napari_pixseq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.pixseq_utils_compute import Worker
 import concurrent.futures
 import multiprocessing
 import time
