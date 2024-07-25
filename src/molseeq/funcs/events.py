@@ -8,7 +8,7 @@ from napari.utils.notifications import show_info
 
 class _events_utils:
 
-    def pixseq_notification(self, message):
+    def molseeq_notification(self, message):
         show_info(message)
 
     def update_ui(self, error=None, init = False):
@@ -18,25 +18,21 @@ class _events_utils:
             if self.verbose:
                 print(f"Updating UI, init = {init}")
 
-            controls = ["pixseq_import",
+            controls = ["molseeq_import",
                         "picasso_detect", "picasso_fit", "picasso_detectfit",
-                        "pixseq_compute_tform", "pixseq_apply_tform",
-                        "picasso_undrift","pixseq_align_datasets",
+                        "molseeq_compute_tform", "molseeq_apply_tform",
+                        "picasso_undrift","molseeq_align_datasets",
                         "filtering_start",
                         "compute_traces",
-                        "pixseq_export_data","pixseq_export_traces",
-                        "pixseq_update_dataset_name",
-                        "pixseq_colocalize",
+                        "molseeq_export_data","molseeq_export_traces",
+                        "molseeq_update_dataset_name",
+                        "molseeq_colocalize",
                         "cluster_localisations",
                         "filter_localisations",
-                        "segment_active",
-                        "segment_all",
-                        "cellpose_load_model",
                         "link_localisations",
-                        "dilate_segmentations",
                         ]
 
-            progressbars = ["pixseq_import_progressbar",
+            progressbars = ["molseeq_import_progressbar",
                             "picasso_progressbar",
                             "tform_apply_progressbar",
                             "undrift_progressbar",
@@ -111,7 +107,7 @@ class _events_utils:
                 elif new_dataset_index > len(dataset_list) - 1:
                     new_dataset_index = 0
 
-                self.gui.pixseq_dataset_selector.setCurrentIndex(new_dataset_index)
+                self.gui.molseeq_dataset_selector.setCurrentIndex(new_dataset_index)
 
         except:
             print(traceback.format_exc())
@@ -133,7 +129,7 @@ class _events_utils:
 
             if self.dataset_dict  != {}:
 
-                dataset_name = self.gui.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.molseeq_dataset_selector.currentText()
                 channel_name = self.active_channel
 
                 if dataset_name in self.dataset_dict.keys():
@@ -263,7 +259,7 @@ class _events_utils:
                 print(f"Updating active image to channel {channel} and dataset {dataset}")
 
             if dataset == None or dataset not in self.dataset_dict.keys():
-                dataset_name = self.gui.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.molseeq_dataset_selector.currentText()
             else:
                 dataset_name = dataset
 
@@ -313,7 +309,7 @@ class _events_utils:
                     dataset_names = self.dataset_dict.keys()
                     active_dataset_index = list(dataset_names).index(dataset_name)
 
-                    dataset_selector = self.gui.pixseq_dataset_selector
+                    dataset_selector = self.gui.molseeq_dataset_selector
 
                     dataset_selector.blockSignals(True)
                     dataset_selector.clear()
@@ -434,7 +430,6 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True)
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
             self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
-            self.update_channel_selector(dataset_selector="cellpose_dataset", channel_selector="cellpose_channel")
             self.update_channel_selector(dataset_selector="tracking_dataset", channel_selector="tracking_channel")
 
         except:
@@ -446,7 +441,7 @@ class _events_utils:
     def update_channel_select_buttons(self):
 
         try:
-            datast_name = self.gui.pixseq_dataset_selector.currentText()
+            datast_name = self.gui.molseeq_dataset_selector.currentText()
 
             if datast_name in self.dataset_dict.keys():
 
@@ -461,86 +456,86 @@ class _events_utils:
                 fret_mode = list(set(fret_modes))[0]
                 import_mode = list(set(import_modes))[0]
 
-                self.gui.pixseq_show_dd.clicked.connect(lambda: None)
-                self.gui.pixseq_show_da.clicked.connect(lambda: None)
-                self.gui.pixseq_show_aa.clicked.connect(lambda: None)
-                self.gui.pixseq_show_ad.clicked.connect(lambda: None)
+                self.gui.molseeq_show_dd.clicked.connect(lambda: None)
+                self.gui.molseeq_show_da.clicked.connect(lambda: None)
+                self.gui.molseeq_show_aa.clicked.connect(lambda: None)
+                self.gui.molseeq_show_ad.clicked.connect(lambda: None)
 
                 if import_mode.lower() == "fret":
 
-                    self.gui.pixseq_show_dd.setVisible(True)
-                    self.gui.pixseq_show_da.setVisible(True)
-                    self.gui.pixseq_show_aa.setVisible(False)
-                    self.gui.pixseq_show_ad.setVisible(False)
+                    self.gui.molseeq_show_dd.setVisible(True)
+                    self.gui.molseeq_show_da.setVisible(True)
+                    self.gui.molseeq_show_aa.setVisible(False)
+                    self.gui.molseeq_show_ad.setVisible(False)
 
                     if "dd" in channel_refs:
-                        self.gui.pixseq_show_dd.setEnabled(True)
-                        self.gui.pixseq_show_dd.setText("Donor [F1]")
+                        self.gui.molseeq_show_dd.setEnabled(True)
+                        self.gui.molseeq_show_dd.setText("Donor [F1]")
                         self.viewer.bind_key("F1", func=self.select_channel_donor, overwrite=True)
-                        self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="donor"))
+                        self.gui.molseeq_show_dd.clicked.connect(partial(self.update_active_image, channel="donor"))
                     else:
-                        self.gui.pixseq_show_dd.setEnabled(False)
-                        self.gui.pixseq_show_dd.setText("")
+                        self.gui.molseeq_show_dd.setEnabled(False)
+                        self.gui.molseeq_show_dd.setText("")
 
                     if "da" in channel_refs:
-                        self.gui.pixseq_show_da.setEnabled(True)
-                        self.gui.pixseq_show_da.setText("Acceptor [F2]")
+                        self.gui.molseeq_show_da.setEnabled(True)
+                        self.gui.molseeq_show_da.setText("Acceptor [F2]")
                         self.viewer.bind_key("F2", func=self.select_channel_acceptor, overwrite=True)
-                        self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="acceptor"))
+                        self.gui.molseeq_show_da.clicked.connect(partial(self.update_active_image, channel="acceptor"))
                     else:
-                        self.gui.pixseq_show_da.setEnabled(False)
-                        self.gui.pixseq_show_da.setText("")
+                        self.gui.molseeq_show_da.setEnabled(False)
+                        self.gui.molseeq_show_da.setText("")
 
                 elif import_mode.lower() == "single channel":
 
-                    self.gui.pixseq_show_dd.setVisible(False)
-                    self.gui.pixseq_show_da.setVisible(False)
-                    self.gui.pixseq_show_aa.setVisible(False)
-                    self.gui.pixseq_show_ad.setVisible(False)
+                    self.gui.molseeq_show_dd.setVisible(False)
+                    self.gui.molseeq_show_da.setVisible(False)
+                    self.gui.molseeq_show_aa.setVisible(False)
+                    self.gui.molseeq_show_ad.setVisible(False)
 
                 else:
 
-                    self.gui.pixseq_show_dd.setVisible(True)
-                    self.gui.pixseq_show_da.setVisible(True)
-                    self.gui.pixseq_show_aa.setVisible(True)
-                    self.gui.pixseq_show_ad.setVisible(True)
+                    self.gui.molseeq_show_dd.setVisible(True)
+                    self.gui.molseeq_show_da.setVisible(True)
+                    self.gui.molseeq_show_aa.setVisible(True)
+                    self.gui.molseeq_show_ad.setVisible(True)
 
                     if "dd" in channel_refs:
-                        self.gui.pixseq_show_dd.setText("DD [F1]")
-                        self.gui.pixseq_show_dd.setEnabled(True)
+                        self.gui.molseeq_show_dd.setText("DD [F1]")
+                        self.gui.molseeq_show_dd.setEnabled(True)
                         self.viewer.bind_key("F1", func=self.select_channel_dd, overwrite=True)
-                        self.gui.pixseq_show_dd.clicked.connect(partial(self.update_active_image, channel="dd"))
+                        self.gui.molseeq_show_dd.clicked.connect(partial(self.update_active_image, channel="dd"))
 
                     else:
-                        self.gui.pixseq_show_dd.setText("")
-                        self.gui.pixseq_show_dd.setEnabled(False)
+                        self.gui.molseeq_show_dd.setText("")
+                        self.gui.molseeq_show_dd.setEnabled(False)
 
                     if "da" in channel_refs:
-                        self.gui.pixseq_show_da.setText("DA [F2]")
-                        self.gui.pixseq_show_da.setEnabled(True)
+                        self.gui.molseeq_show_da.setText("DA [F2]")
+                        self.gui.molseeq_show_da.setEnabled(True)
                         self.viewer.bind_key("F2", func=self.select_channel_da, overwrite=True)
-                        self.gui.pixseq_show_da.clicked.connect(partial(self.update_active_image, channel="da"))
+                        self.gui.molseeq_show_da.clicked.connect(partial(self.update_active_image, channel="da"))
                     else:
-                        self.gui.pixseq_show_da.setText("")
-                        self.gui.pixseq_show_da.setEnabled(False)
+                        self.gui.molseeq_show_da.setText("")
+                        self.gui.molseeq_show_da.setEnabled(False)
 
                     if "ad" in channel_refs:
-                        self.gui.pixseq_show_ad.setText("AD [F3]")
-                        self.gui.pixseq_show_ad.setEnabled(True)
+                        self.gui.molseeq_show_ad.setText("AD [F3]")
+                        self.gui.molseeq_show_ad.setEnabled(True)
                         self.viewer.bind_key("F3", func=self.select_channel_ad, overwrite=True)
-                        self.gui.pixseq_show_ad.clicked.connect(partial(self.update_active_image, channel="ad"))
+                        self.gui.molseeq_show_ad.clicked.connect(partial(self.update_active_image, channel="ad"))
                     else:
-                        self.gui.pixseq_show_ad.setText("")
-                        self.gui.pixseq_show_ad.setEnabled(False)
+                        self.gui.molseeq_show_ad.setText("")
+                        self.gui.molseeq_show_ad.setEnabled(False)
 
                     if "aa" in channel_refs:
-                        self.gui.pixseq_show_aa.setText("AA [F4]")
-                        self.gui.pixseq_show_aa.setEnabled(True)
+                        self.gui.molseeq_show_aa.setText("AA [F4]")
+                        self.gui.molseeq_show_aa.setEnabled(True)
                         self.viewer.bind_key("F4", func=self.select_channel_aa, overwrite=True)
-                        self.gui.pixseq_show_aa.clicked.connect(partial(self.update_active_image, channel="aa"))
+                        self.gui.molseeq_show_aa.clicked.connect(partial(self.update_active_image, channel="aa"))
                     else:
-                        self.gui.pixseq_show_aa.setText("")
-                        self.gui.pixseq_show_aa.setEnabled(False)
+                        self.gui.molseeq_show_aa.setText("")
+                        self.gui.molseeq_show_aa.setEnabled(False)
 
         except:
             print(traceback.format_exc())
@@ -550,16 +545,16 @@ class _events_utils:
 
         try:
 
-            if self.gui.pixseq_append.isChecked():
-                self.gui.pixseq_append_dataset.setEnabled(True)
-                self.gui.pixseq_append_dataset_label.setEnabled(True)
-                self.gui.pixseq_append_dataset.setVisible(True)
-                self.gui.pixseq_append_dataset_label.setVisible(True)
+            if self.gui.molseeq_append.isChecked():
+                self.gui.molseeq_append_dataset.setEnabled(True)
+                self.gui.molseeq_append_dataset_label.setEnabled(True)
+                self.gui.molseeq_append_dataset.setVisible(True)
+                self.gui.molseeq_append_dataset_label.setVisible(True)
             else:
-                self.gui.pixseq_append_dataset.setEnabled(False)
-                self.gui.pixseq_append_dataset_label.setEnabled(False)
-                self.gui.pixseq_append_dataset.setVisible(False)
-                self.gui.pixseq_append_dataset_label.setVisible(False)
+                self.gui.molseeq_append_dataset.setEnabled(False)
+                self.gui.molseeq_append_dataset_label.setEnabled(False)
+                self.gui.molseeq_append_dataset.setVisible(False)
+                self.gui.molseeq_append_dataset_label.setVisible(False)
 
         except:
             print(traceback.format_exc())
@@ -575,31 +570,31 @@ class _events_utils:
 
         def update_channel_layout(self, show = True):
             if show:
-                self.gui.pixseq_channel_layout.setEnabled(True)
-                self.gui.pixseq_channel_layout.clear()
-                self.gui.pixseq_channel_layout.addItems(["Donor-Acceptor", "Acceptor-Donor"])
-                self.gui.pixseq_channel_layout.setHidden(False)
-                self.gui.pixseq_channel_layout_label.setHidden(False)
+                self.gui.molseeq_channel_layout.setEnabled(True)
+                self.gui.molseeq_channel_layout.clear()
+                self.gui.molseeq_channel_layout.addItems(["Donor-Acceptor", "Acceptor-Donor"])
+                self.gui.molseeq_channel_layout.setHidden(False)
+                self.gui.molseeq_channel_layout_label.setHidden(False)
             else:
-                self.gui.pixseq_channel_layout.setEnabled(False)
-                self.gui.pixseq_channel_layout.clear()
-                self.gui.pixseq_channel_layout.setHidden(True)
-                self.gui.pixseq_channel_layout_label.setHidden(True)
+                self.gui.molseeq_channel_layout.setEnabled(False)
+                self.gui.molseeq_channel_layout.clear()
+                self.gui.molseeq_channel_layout.setHidden(True)
+                self.gui.molseeq_channel_layout_label.setHidden(True)
 
         def update_alex_first_frame(self, show = True):
             if show:
-                self.gui.pixseq_alex_first_frame.setEnabled(True)
-                self.gui.pixseq_alex_first_frame.clear()
-                self.gui.pixseq_alex_first_frame.addItems(["Donor", "Acceptor"])
-                self.gui.pixseq_alex_first_frame.setHidden(False)
-                self.gui.pixseq_alex_first_frame_label.setHidden(False)
+                self.gui.molseeq_alex_first_frame.setEnabled(True)
+                self.gui.molseeq_alex_first_frame.clear()
+                self.gui.molseeq_alex_first_frame.addItems(["Donor", "Acceptor"])
+                self.gui.molseeq_alex_first_frame.setHidden(False)
+                self.gui.molseeq_alex_first_frame_label.setHidden(False)
             else:
-                self.gui.pixseq_alex_first_frame.setEnabled(False)
-                self.gui.pixseq_alex_first_frame.clear()
-                self.gui.pixseq_alex_first_frame.setHidden(True)
-                self.gui.pixseq_alex_first_frame_label.setHidden(True)
+                self.gui.molseeq_alex_first_frame.setEnabled(False)
+                self.gui.molseeq_alex_first_frame.clear()
+                self.gui.molseeq_alex_first_frame.setHidden(True)
+                self.gui.molseeq_alex_first_frame_label.setHidden(True)
 
-        import_mode = self.gui.pixseq_import_mode.currentText()
+        import_mode = self.gui.molseeq_import_mode.currentText()
 
         if import_mode in ["Donor", "Acceptor"]:
             update_channel_layout(self, show = False)
@@ -621,7 +616,7 @@ class _events_utils:
             update_channel_layout(self, show = False)
             update_alex_first_frame(self, show = False)
 
-    def pixseq_progress(self, progress, progress_bar):
+    def molseeq_progress(self, progress, progress_bar):
 
         progress_bar.setValue(progress)
 
@@ -733,8 +728,8 @@ class _events_utils:
 
         try:
 
-            old_name = self.gui.pixseq_old_dataset_name.currentText()
-            new_name = self.gui.pixseq_new_dataset_name.text()
+            old_name = self.gui.molseeq_old_dataset_name.currentText()
+            new_name = self.gui.molseeq_new_dataset_name.text()
 
             if old_name != "":
 
@@ -770,8 +765,6 @@ class _events_utils:
         except:
             print(traceback.format_exc())
 
-
-
     def update_slider_label(self, slider_name):
 
         label_name = slider_name + "_label"
@@ -790,15 +783,3 @@ class _events_utils:
         else:
             self.gui.picasso_frame_mode.clear()
             self.gui.picasso_frame_mode.addItem("Active")
-
-    def update_cellpose_sliders(self, slider_name, label_name):
-
-        slider = getattr(self.gui, slider_name)
-        label = getattr(self.gui, label_name)
-
-        slider_value = slider.value()
-
-        if (slider_name == "cellpose_flowthresh" or slider_name == "cellpose_maskthresh"):
-            label.setText(str(slider_value / 100))
-        else:
-            label.setText(str(slider_value))

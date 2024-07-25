@@ -62,7 +62,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QComboBox" name="pixseq_import_mode">
+              <widget class="QComboBox" name="molseeq_import_mode">
                <item>
                 <property name="text">
                  <string>Single Channel</string>
@@ -111,14 +111,14 @@
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="pixseq_channel_layout_label">
+              <widget class="QLabel" name="molseeq_channel_layout_label">
                <property name="text">
                 <string>Channel Layout</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QComboBox" name="pixseq_channel_layout">
+              <widget class="QComboBox" name="molseeq_channel_layout">
                <item>
                 <property name="text">
                  <string>Donor-Acceptor</string>
@@ -132,14 +132,14 @@
               </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QLabel" name="pixseq_alex_first_frame_label">
+              <widget class="QLabel" name="molseeq_alex_first_frame_label">
                <property name="text">
                 <string>ALEX First Frame Excitation</string>
                </property>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QComboBox" name="pixseq_alex_first_frame">
+              <widget class="QComboBox" name="molseeq_alex_first_frame">
                <item>
                 <property name="text">
                  <string>Donor</string>
@@ -160,7 +160,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QComboBox" name="pixseq_import_limt">
+              <widget class="QComboBox" name="molseeq_import_limt">
                <item>
                 <property name="text">
                  <string>None</string>
@@ -204,10 +204,10 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QComboBox" name="pixseq_append_dataset"/>
+              <widget class="QComboBox" name="molseeq_append_dataset"/>
              </item>
              <item row="4" column="0">
-              <widget class="QLabel" name="pixseq_append_dataset_label">
+              <widget class="QLabel" name="molseeq_append_dataset_label">
                <property name="text">
                 <string>Append Channels to Dataset:</string>
                </property>
@@ -216,21 +216,21 @@
             </layout>
            </item>
            <item>
-            <widget class="QCheckBox" name="pixseq_concatenate">
+            <widget class="QCheckBox" name="molseeq_concatenate">
              <property name="text">
               <string>Concatenate Files</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="pixseq_append">
+            <widget class="QCheckBox" name="molseeq_append">
              <property name="text">
               <string>Append Channel(s) To Exisiting Dataset</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_import">
+            <widget class="QPushButton" name="molseeq_import">
              <property name="text">
               <string>Import</string>
              </property>
@@ -313,7 +313,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QProgressBar" name="pixseq_import_progressbar">
+        <widget class="QProgressBar" name="molseeq_import_progressbar">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -375,7 +375,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_import_tform">
+            <widget class="QPushButton" name="molseeq_import_tform">
              <property name="text">
               <string>Import Tranform Matrix</string>
              </property>
@@ -455,7 +455,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_compute_tform">
+            <widget class="QPushButton" name="molseeq_compute_tform">
              <property name="text">
               <string>Compute Transform Matrix</string>
              </property>
@@ -516,7 +516,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_apply_tform">
+            <widget class="QPushButton" name="molseeq_apply_tform">
              <property name="text">
               <string>Apply Transform Matrix</string>
              </property>
@@ -657,7 +657,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_align_datasets">
+            <widget class="QPushButton" name="molseeq_align_datasets">
              <property name="text">
               <string>Align Datasets</string>
              </property>
@@ -1042,600 +1042,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_25">
-      <attribute name="title">
-       <string>Segment</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_27">
-       <item>
-        <widget class="QTabWidget" name="tabWidget_7">
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <widget class="QWidget" name="tab_24">
-          <attribute name="title">
-           <string>Cellpose</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_28">
-           <item>
-            <widget class="QLabel" name="label_97">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Data Selection</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QFormLayout" name="formLayout_28">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_101">
-               <property name="text">
-                <string>Dataset</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QComboBox" name="cellpose_dataset"/>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_105">
-               <property name="text">
-                <string>Reference Channel</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QComboBox" name="cellpose_channel"/>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_24">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Minimum</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>592</width>
-               <height>17</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_102">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Cellpose/Omnipose Settings</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QFormLayout" name="formLayout_27">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_104">
-               <property name="text">
-                <string>Model</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QComboBox" name="cellpose_model">
-               <item>
-                <property name="text">
-                 <string>cyto</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>nuclei</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>tissuenet</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>livecell</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>cyto2</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>general</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>bact_phase_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>bact_fluor_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>worm_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>worm_bact_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>worm_high_res_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>cyto2_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>plant_omni</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>custom</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_123">
-               <property name="text">
-                <string>Batch Size</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QComboBox" name="cellpose_batchsize">
-               <item>
-                <property name="text">
-                 <string>1</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>5</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>10</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>20</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>30</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>40</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>50</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>60</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>70</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>80</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>90</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>100</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>200</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>500</string>
-                </property>
-               </item>
-               <item>
-                <property name="text">
-                 <string>auto</string>
-                </property>
-               </item>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="gridLayout_11">
-             <item row="0" column="2" alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="cellpose_flowthresh_label">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>0.9</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QSlider" name="cellpose_flowthresh">
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="singleStep">
-                <number>10</number>
-               </property>
-               <property name="pageStep">
-                <number>10</number>
-               </property>
-               <property name="sliderPosition">
-                <number>90</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_106">
-               <property name="text">
-                <string>Flow Threshold</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2" alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="cellpose_maskthresh_label">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>0.0</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2" alignment="Qt::AlignLeft">
-              <widget class="QLabel" name="cellpose_minsize_label">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>24</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>15</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="label_107">
-               <property name="text">
-                <string>Mask Threshold</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_108">
-               <property name="text">
-                <string>Min Size</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QSlider" name="cellpose_minsize">
-               <property name="maximum">
-                <number>200</number>
-               </property>
-               <property name="singleStep">
-                <number>10</number>
-               </property>
-               <property name="value">
-                <number>15</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="tickPosition">
-                <enum>QSlider::NoTicks</enum>
-               </property>
-               <property name="tickInterval">
-                <number>10</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QSlider" name="cellpose_maskthresh">
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="singleStep">
-                <number>10</number>
-               </property>
-               <property name="pageStep">
-                <number>10</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QSlider" name="cellpose_diameter">
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="singleStep">
-                <number>10</number>
-               </property>
-               <property name="value">
-                <number>15</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_109">
-               <property name="text">
-                <string>Diameter</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QLabel" name="cellpose_diameter_label">
-               <property name="text">
-                <string>15</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cellpose_invert_images">
-             <property name="text">
-              <string>Invert Images</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_23">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Minimum</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>592</width>
-               <height>17</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_110">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Cellpose/Omnipose Functions</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="cellpose_load_model">
-             <property name="text">
-              <string>Load Custom Model</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QGridLayout" name="gridLayout_12">
-             <item row="0" column="1">
-              <widget class="QPushButton" name="segment_all">
-               <property name="text">
-                <string>Segment All Images</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="0">
-              <widget class="QPushButton" name="segment_active">
-               <property name="text">
-                <string>Segment Active Image</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QProgressBar" name="cellpose_progress">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>10</height>
-              </size>
-             </property>
-             <property name="value">
-              <number>0</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_22">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="tab_26">
-          <attribute name="title">
-           <string>Curate</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_30">
-           <item>
-            <widget class="QLabel" name="label_103">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Dilate Segmentations</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QFormLayout" name="formLayout_26">
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_111">
-               <property name="text">
-                <string>Pixels</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="dilatation_size">
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="minimum">
-                <double>0.100000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>10.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>1.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QPushButton" name="dilate_segmentations">
-             <property name="text">
-              <string>Dilate Segmentations</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_27">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_25">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
        <string>SMLM</string>
@@ -1821,13 +1227,6 @@
             <widget class="QCheckBox" name="picasso_window_cropping">
              <property name="text">
               <string>Remove Localisations Outside Field Of View (FOV)</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="picasso_segmentation_filtering">
-             <property name="text">
-              <string>Remove Localisations Outside Segmentations</string>
              </property>
             </widget>
            </item>
@@ -3046,7 +2445,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_export_data">
+            <widget class="QPushButton" name="molseeq_export_data">
              <property name="text">
               <string>Export Data</string>
              </property>
@@ -3234,7 +2633,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_export_traces">
+            <widget class="QPushButton" name="molseeq_export_traces">
              <property name="text">
               <string>Export Traces</string>
              </property>
@@ -3331,7 +2730,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_export_locs">
+            <widget class="QPushButton" name="molseeq_export_locs">
              <property name="text">
               <string>Export Localisations</string>
              </property>
@@ -3420,7 +2819,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QComboBox" name="pixseq_old_dataset_name"/>
+              <widget class="QComboBox" name="molseeq_old_dataset_name"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_29">
@@ -3430,7 +2829,7 @@
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QLineEdit" name="pixseq_new_dataset_name">
+              <widget class="QLineEdit" name="molseeq_new_dataset_name">
                <property name="text">
                 <string>Dataset1</string>
                </property>
@@ -3439,7 +2838,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_update_dataset_name">
+            <widget class="QPushButton" name="molseeq_update_dataset_name">
              <property name="text">
               <string>Update Dataset Name</string>
              </property>
@@ -3486,7 +2885,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_delete_dataset">
+            <widget class="QPushButton" name="molseeq_delete_dataset">
              <property name="text">
               <string>Delete Dataset</string>
              </property>
@@ -3615,7 +3014,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_update_labels">
+            <widget class="QPushButton" name="molseeq_update_labels">
              <property name="text">
               <string>Update Labels</string>
              </property>
@@ -3758,7 +3157,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QPushButton" name="pixseq_colocalize">
+            <widget class="QPushButton" name="molseeq_colocalize">
              <property name="text">
               <string>Co-Localize Fiducials</string>
              </property>
@@ -3935,35 +3334,35 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="pixseq_dataset_selector"/>
+      <widget class="QComboBox" name="molseeq_dataset_selector"/>
      </item>
     </layout>
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
-      <widget class="QPushButton" name="pixseq_show_dd">
+      <widget class="QPushButton" name="molseeq_show_dd">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QPushButton" name="pixseq_show_da">
+      <widget class="QPushButton" name="molseeq_show_da">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
-      <widget class="QPushButton" name="pixseq_show_ad">
+      <widget class="QPushButton" name="molseeq_show_ad">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QPushButton" name="pixseq_show_aa">
+      <widget class="QPushButton" name="molseeq_show_aa">
        <property name="text">
         <string/>
        </property>

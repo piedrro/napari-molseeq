@@ -2,8 +2,8 @@ import traceback
 import numpy as np
 import cv2
 from functools import partial
-from molseeq.funcs.pixseq_utils_compute import Worker
-from molseeq.funcs.pixseq_transform_utils import transform_image
+from molseeq.funcs.utils_compute import Worker
+from molseeq.funcs.transform_utils import transform_image
 from scipy.optimize import least_squares
 
 class _align_utils:
@@ -150,7 +150,7 @@ class _align_utils:
 
                         for channel_name, channel_dict in self.dataset_dict[dataset].items():
 
-                            self.pixseq_notification(f"Aligning {dataset} {channel_name}...")
+                            self.molseeq_notification(f"Aligning {dataset} {channel_name}...")
 
                             img = channel_dict["data"].copy()
 
@@ -214,13 +214,13 @@ class _align_utils:
 
                 if len(missing_fiducial_list) > 0:
                     missing_fiducial_list = ", ".join(missing_fiducial_list)
-                    self.pixseq_notification(f"Missing fitted {channel_mode} localisations for {missing_fiducial_list}")
+                    self.molseeq_notification(f"Missing fitted {channel_mode} localisations for {missing_fiducial_list}")
                 else:
 
                     self.update_ui(init=True)
 
                     self.worker = Worker(self._align_datasets, align_dict=align_dict)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.align_progressbar))
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.align_progressbar))
                     self.worker.signals.finished.connect(self._align_datasets_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)

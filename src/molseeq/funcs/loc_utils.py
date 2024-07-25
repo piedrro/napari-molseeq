@@ -1,4 +1,4 @@
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 import concurrent
@@ -566,7 +566,7 @@ class _loc_utils():
             self.update_ui(init = True)
 
             self.worker = Worker(self.export_locs, export_dataset = export_dataset, export_channel = export_channel)
-            self.worker.signals.progress.connect(partial(self.pixseq_progress,progress_bar=self.gui.export_progressbar))
+            self.worker.signals.progress.connect(partial(self.molseeq_progress,progress_bar=self.gui.export_progressbar))
             self.worker.signals.finished.connect(self.export_locs_finished)
             self.threadpool.start(self.worker)
 
@@ -640,7 +640,7 @@ class _loc_utils():
 
         try:
 
-            dataset = self.gui.pixseq_dataset_selector.currentText()
+            dataset = self.gui.molseeq_dataset_selector.currentText()
             channel = self.active_channel
             frame = self.viewer.dims.current_step[0]
 
@@ -689,7 +689,7 @@ class _loc_utils():
 
         try:
 
-            active_dataset = self.gui.pixseq_dataset_selector.currentText()
+            active_dataset = self.gui.molseeq_dataset_selector.currentText()
             active_channel = self.active_channel
             box_size = int(self.gui.picasso_box_size.currentText())
             frame = self.viewer.dims.current_step[0]

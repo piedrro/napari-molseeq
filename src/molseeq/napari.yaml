@@ -7,8 +7,8 @@ categories: ["Annotation", "Segmentation", "Acquisition"]
 contributions:
   commands:
     - id: napari-molseeq.make_qwidget
-      python_name: molseeq:qwidget
+      python_name: molseeq:QWidget
       title: Make a QWidget
   widgets:
     - command: napari-molseeq.make_qwidget
-      display_name: molSEEQ
+      display_name: napari-molseeq

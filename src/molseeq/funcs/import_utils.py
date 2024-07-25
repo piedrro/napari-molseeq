@@ -3,7 +3,7 @@ import numpy as np
 import os
 from PIL import Image
 from qtpy.QtWidgets import QFileDialog
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 import time
 import multiprocessing
 from multiprocessing import shared_memory, Manager
@@ -189,18 +189,18 @@ class _import_utils:
             if self.verbose:
                 print("Populating import lists/metadata...")
 
-            import_mode = self.gui.pixseq_import_mode.currentText()
-            import_limit_combo = self.gui.pixseq_import_limt.currentText()
-            channel_layout = self.gui.pixseq_channel_layout.currentText()
-            alex_first_frame = self.gui.pixseq_alex_first_frame.currentText()
+            import_mode = self.gui.molseeq_import_mode.currentText()
+            import_limit_combo = self.gui.molseeq_import_limt.currentText()
+            channel_layout = self.gui.molseeq_channel_layout.currentText()
+            alex_first_frame = self.gui.molseeq_alex_first_frame.currentText()
 
             for path_index, path in enumerate(paths):
 
                 path = self.format_import_path(path)
                 file_name = os.path.basename(path)
 
-                if self.gui.pixseq_append.isChecked():
-                    dataset_name = self.gui.pixseq_append_dataset.currentText()
+                if self.gui.molseeq_append.isChecked():
+                    dataset_name = self.gui.molseeq_append_dataset.currentText()
                 else:
                     dataset_name = file_name
 
@@ -212,7 +212,7 @@ class _import_utils:
                 if import_mode.lower() in ["donor", "acceptor", "dd", "da", "ad", "aa"]:
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.gui.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.molseeq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -255,7 +255,7 @@ class _import_utils:
                 elif import_mode.lower() == "single channel":
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.gui.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.molseeq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -297,7 +297,7 @@ class _import_utils:
                 elif import_mode.lower() == "fret":
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.gui.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.molseeq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -344,7 +344,7 @@ class _import_utils:
                 elif import_mode.lower() == "alex":
 
                     if import_limit_combo != "None":
-                        import_limit = int(self.gui.pixseq_import_limt.currentText())
+                        import_limit = int(self.gui.molseeq_import_limt.currentText())
                     else:
                         import_limit = n_frames
 
@@ -409,8 +409,8 @@ class _import_utils:
 
                     image_list.append(image_dict)
 
-                channel_layout = self.gui.pixseq_channel_layout.currentText()
-                alex_first_frame = self.gui.pixseq_alex_first_frame.currentText()
+                channel_layout = self.gui.molseeq_channel_layout.currentText()
+                alex_first_frame = self.gui.molseeq_alex_first_frame.currentText()
 
                 if dataset_name not in import_dict.keys():
                     import_dict[dataset_name] = {"path":path,
@@ -484,7 +484,7 @@ class _import_utils:
 
         try:
 
-            concat_images = self.gui.pixseq_concatenate.isChecked()
+            concat_images = self.gui.molseeq_concatenate.isChecked()
 
             if self.verbose:
                 print("Populating dataset dict")
@@ -592,7 +592,7 @@ class _import_utils:
                     shared_mem.close()
                     shared_mem.unlink()
 
-    def _pixseq_import_data(self, progress_callback=None, paths=[]):
+    def _molseeq_import_data(self, progress_callback=None, paths=[]):
 
         try:
 
@@ -619,10 +619,10 @@ class _import_utils:
 
             dataset_names = list(self.dataset_dict.keys())
 
-            self.gui.pixseq_dataset_selector.blockSignals(True)
-            self.gui.pixseq_dataset_selector.clear()
-            self.gui.pixseq_dataset_selector.addItems(dataset_names)
-            self.gui.pixseq_dataset_selector.blockSignals(False)
+            self.gui.molseeq_dataset_selector.blockSignals(True)
+            self.gui.molseeq_dataset_selector.clear()
+            self.gui.molseeq_dataset_selector.addItems(dataset_names)
+            self.gui.molseeq_dataset_selector.blockSignals(False)
 
             self.gui.cluster_dataset.blockSignals(True)
             self.gui.cluster_dataset.clear()
@@ -634,10 +634,10 @@ class _import_utils:
             self.gui.tform_compute_dataset.addItems(dataset_names)
             self.gui.tform_compute_dataset.blockSignals(False)
 
-            self.gui.pixseq_old_dataset_name.blockSignals(True)
-            self.gui.pixseq_old_dataset_name.clear()
-            self.gui.pixseq_old_dataset_name.addItems(dataset_names)
-            self.gui.pixseq_old_dataset_name.blockSignals(False)
+            self.gui.molseeq_old_dataset_name.blockSignals(True)
+            self.gui.molseeq_old_dataset_name.clear()
+            self.gui.molseeq_old_dataset_name.addItems(dataset_names)
+            self.gui.molseeq_old_dataset_name.blockSignals(False)
 
             self.gui.align_reference_dataset.blockSignals(True)
             self.gui.align_reference_dataset.clear()
@@ -649,10 +649,10 @@ class _import_utils:
             self.gui.colo_dataset.addItems(dataset_names)
             self.gui.colo_dataset.blockSignals(False)
 
-            self.gui.pixseq_append_dataset.blockSignals(True)
-            self.gui.pixseq_append_dataset.clear()
-            self.gui.pixseq_append_dataset.addItems(dataset_names)
-            self.gui.pixseq_append_dataset.blockSignals(False)
+            self.gui.molseeq_append_dataset.blockSignals(True)
+            self.gui.molseeq_append_dataset.clear()
+            self.gui.molseeq_append_dataset.addItems(dataset_names)
+            self.gui.molseeq_append_dataset.blockSignals(False)
 
             self.gui.delete_dataset_name.blockSignals(True)
             self.gui.delete_dataset_name.clear()
@@ -678,11 +678,6 @@ class _import_utils:
             self.gui.tracking_dataset.clear()
             self.gui.tracking_dataset.addItems(dataset_names)
             self.gui.tracking_dataset.blockSignals(False)
-
-            self.gui.cellpose_dataset.blockSignals(True)
-            self.gui.cellpose_dataset.clear()
-            self.gui.cellpose_dataset.addItems(dataset_names)
-            self.gui.cellpose_dataset.blockSignals(False)
 
             if len(dataset_names) > 1:
                 dataset_names.insert(0, "All Datasets")
@@ -753,7 +748,7 @@ class _import_utils:
 
                 self.localisation_dict["localisations"][dataset_name] = fiducial_dict
 
-    def _pixseq_import_data_finished(self):
+    def _molseeq_import_data_finished(self):
 
         if self.verbose:
             print("Finished importing data, executing post import functions")
@@ -773,13 +768,13 @@ class _import_utils:
 
         self.update_ui()
 
-    def pixseq_import_data(self):
+    def molseeq_import_data(self):
 
         try:
 
-            append_dataset = self.gui.pixseq_append_dataset.currentText()
+            append_dataset = self.gui.molseeq_append_dataset.currentText()
 
-            if self.gui.pixseq_append.isChecked() and append_dataset not in self.dataset_dict.keys():
+            if self.gui.molseeq_append.isChecked() and append_dataset not in self.dataset_dict.keys():
                 print("Please select a dataset to append to")
             else:
 
@@ -792,10 +787,10 @@ class _import_utils:
 
                     self.update_ui(init=True)
 
-                    self.worker = Worker(self._pixseq_import_data, paths=paths)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
-                        progress_bar=self.gui.pixseq_import_progressbar))
-                    self.worker.signals.finished.connect(self._pixseq_import_data_finished)
+                    self.worker = Worker(self._molseeq_import_data, paths=paths)
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
+                        progress_bar=self.gui.molseeq_import_progressbar))
+                    self.worker.signals.finished.connect(self._molseeq_import_data_finished)
                     self.worker.signals.error.connect(self.update_ui)
                     self.threadpool.start(self.worker)
 

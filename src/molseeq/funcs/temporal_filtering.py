@@ -1,7 +1,7 @@
 import numpy as np
 from numba import jit
 import traceback
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 import concurrent.futures
 import multiprocessing
 import time
@@ -150,7 +150,7 @@ class _utils_temporal_filtering:
 
         return compute_jobs
 
-    def _pixseq_temporal_filtering(self, progress_callback = True):
+    def _molseeq_temporal_filtering(self, progress_callback = True):
 
         try:
 
@@ -171,7 +171,7 @@ class _utils_temporal_filtering:
 
             compute_jobs = self._populate_temport_compute_jobs()
 
-            self.pixseq_notification("Starting temporal filtering on {} images".format(len(self.shared_images)))
+            self.molseeq_notification("Starting temporal filtering on {} images".format(len(self.shared_images)))
 
             start_time = time.time()
 
@@ -216,18 +216,18 @@ class _utils_temporal_filtering:
             print(traceback.format_exc())
             pass
 
-    def pixseq_temporal_filtering(self, viewer=None):
+    def molseeq_temporal_filtering(self, viewer=None):
 
         try:
-            self.pixseq_notification("Starting temporal filtering...")
+            self.molseeq_notification("Starting temporal filtering...")
 
             self.gui.filtering_start.setEnabled(False)
 
             self.update_ui(init=True)
 
-            self.worker = Worker(self._pixseq_temporal_filtering)
-            self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.filtering_progressbar))
-            self.worker.signals.finished.connect(self._pixseq_temporal_filtering_finished)
+            self.worker = Worker(self._molseeq_temporal_filtering)
+            self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.filtering_progressbar))
+            self.worker.signals.finished.connect(self._molseeq_temporal_filtering_finished)
             self.worker.signals.error.connect(self.update_ui)
             self.threadpool.start(self.worker)
 
@@ -236,7 +236,7 @@ class _utils_temporal_filtering:
             print(traceback.format_exc())
             pass
 
-    def _pixseq_temporal_filtering_finished(self):
+    def _molseeq_temporal_filtering_finished(self):
 
         try:
             self.image_layer.data = self.dataset_dict[self.active_dataset][self.active_channel]["data"]
@@ -252,7 +252,7 @@ class _utils_temporal_filtering:
 
 
     # @jit(nopython=True)
-    # def pixseq_temporal_filtering(self, viewer=None):
+    # def molseeq_temporal_filtering(self, viewer=None):
     #
     #     dataset = self.active_dataset
     #     channel = self.active_channel

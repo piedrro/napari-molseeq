@@ -1,7 +1,7 @@
 from sklearn.cluster import DBSCAN
 import numpy as np
 import traceback
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 
 
 class _cluster_utils:
@@ -164,7 +164,7 @@ class _cluster_utils:
 
         return number
 
-    def pixseq_cluster_localisations(self):
+    def molseeq_cluster_localisations(self):
 
         try:
 
@@ -180,7 +180,7 @@ class _cluster_utils:
             loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower())
 
             if n_locs == 0 or fitted == False:
-                self.pixseq_notification("Localisation clustering requires fitted localisations.")
+                self.molseeq_notification("Localisation clustering requires fitted localisations.")
 
             if n_locs > 0 and fitted and eps is not None and min_samples is not None:
 

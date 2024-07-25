@@ -4,7 +4,7 @@ import numpy as np
 class _filter_utils:
 
 
-    def pixseq_filter_localisations(self, viewer=None):
+    def molseeq_filter_localisations(self, viewer=None):
 
         try:
 

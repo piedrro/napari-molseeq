@@ -3,7 +3,7 @@ import traceback
 
 import pandas as pd
 
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 import time
 import os
 from multiprocessing import shared_memory
@@ -139,34 +139,6 @@ def fit_spots_lq(spots, locs, box, progress_list):
 
     return locs
 
-def remove_segmentation_locs(locs, polygons):
-
-    if len(polygons) > 0 and len(locs) > 0:
-
-        loclist = pd.DataFrame(locs).to_dict(orient="records")
-
-        filtered_locs = []
-
-        for loc in loclist:
-            point = Point(loc["x"], loc["y"])
-
-            for polygon_index, polygon in enumerate(polygons):
-                if polygon.contains(point):
-                    loc["segmentation"] = polygon_index
-                    filtered_locs.append(loc)
-
-        if len(filtered_locs):
-            locs = pd.DataFrame(filtered_locs).to_records(index=False)
-        else:
-            locs = []
-
-    else:
-        locs = []
-
-    return locs
-
-
-
 def detect_picaso_locs(dat, progress_list, fit_list):
 
     result = None
@@ -183,8 +155,6 @@ def detect_picaso_locs(dat, progress_list, fit_list):
         fit = dat["fit"]
         remove_overlapping = dat["remove_overlapping"]
         stop_event = dat["stop_event"]
-        polygon_filter = dat["polygon_filter"]
-        polygons = dat["polygons"]
 
         loc_list = []
         spot_list = []
@@ -206,9 +176,6 @@ def detect_picaso_locs(dat, progress_list, fit_list):
 
                 if remove_overlapping:
                     locs = remove_overlapping_locs(locs, box_size)
-
-                if polygon_filter:
-                    locs = remove_segmentation_locs(locs, polygons)
 
                 if len(locs) > 0:
 
@@ -263,8 +230,6 @@ def picasso_detect(dat, progress_list):
         fit = dat["fit"]
         remove_overlapping = dat["remove_overlapping"]
         stop_event = dat["stop_event"]
-        polygon_filter = dat["polygon_filter"]
-        polygons = dat["polygons"]
 
         if not stop_event.is_set():
 
@@ -308,32 +273,6 @@ def picasso_detect(dat, progress_list):
 
             for loc in locs:
                 loc.frame = frame_index
-
-            if polygon_filter:
-
-                if len(polygons) > 0 and len(locs) > 0:
-
-                    expected_loc_length += 1
-
-                    loclist = pd.DataFrame(locs).to_dict(orient="records")
-
-                    filtered_locs = []
-
-                    for loc in loclist:
-                        point = Point(loc["x"], loc["y"])
-
-                        for polygon_index, polygon in enumerate(polygons):
-                            if polygon.contains(point):
-                                loc["segmentation"] = polygon_index
-                                filtered_locs.append(loc)
-
-                    if len(filtered_locs):
-                        locs = pd.DataFrame(filtered_locs).to_records(index=False)
-                    else:
-                        locs = []
-
-                else:
-                    locs = []
 
             if len(locs) > 0:
 
@@ -526,9 +465,6 @@ class _picasso_detect_utils:
 
             box_size = int(self.gui.picasso_box_size.currentText())
             remove_overlapping = self.gui.picasso_remove_overlapping.isChecked()
-            polygon_filter = self.gui.picasso_segmentation_filtering.isChecked()
-
-            segmentation_polygons = self.get_segmentation_polygons()
 
             compute_jobs = []
 
@@ -554,8 +490,6 @@ class _picasso_detect_utils:
                                "box_size": int(box_size),
                                "roi": roi,
                                "remove_overlapping": remove_overlapping,
-                               "polygon_filter":polygon_filter,
-                               "polygons": segmentation_polygons,
                                "stop_event": self.stop_event, }
 
                 compute_jobs.append(compute_job)
@@ -849,7 +783,7 @@ class _picasso_detect_utils:
         print("Finished processing locs")
 
 
-    def pixseq_picasso(self, detect = False, fit = False):
+    def molseeq_picasso(self, detect = False, fit = False):
 
         try:
             if self.dataset_dict != {}:
@@ -898,7 +832,7 @@ class _picasso_detect_utils:
                         gpu_fit=gpu_fit,
                         frame_index=frame_index)
 
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.picasso_progressbar))
                     # self.worker.signals.result.connect(self._picasso_wrapper_result)
                     self.worker.signals.finished.connect(self._picasso_wrapper_finished)

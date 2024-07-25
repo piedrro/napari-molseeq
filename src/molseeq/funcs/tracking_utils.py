@@ -2,12 +2,9 @@ import traceback
 import pandas as pd
 import trackpy as tp
 import numpy as np
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 
 class _tracking_utils:
-
-
-
 
     def run_tracking(self, locs, progress_callback=None):
 

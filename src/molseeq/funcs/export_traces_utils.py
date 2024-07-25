@@ -1,7 +1,7 @@
 import traceback
 import os
 from qtpy.QtWidgets import QFileDialog
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 from functools import partial
 import numpy as np
 import json
@@ -58,7 +58,7 @@ class _export_traces_utils:
             elif export_mode == "OriginLab":
                 file_extension = ".opju"
             else:
-                self.pixseq_notification(f"Export mode {export_mode} not recognized.")
+                self.molseeq_notification(f"Export mode {export_mode} not recognized.")
 
             export_path = os.path.join(import_directory, file_name + file_extension)
             export_path = os.path.normpath(export_path)
@@ -517,7 +517,7 @@ class _export_traces_utils:
 
         try:
 
-            self.gui.pixseq_export_traces.setEnabled(False)
+            self.gui.molseeq_export_traces.setEnabled(False)
 
             export_path, export_directory = self.get_export_traces_path(dialog=True)
 
@@ -530,7 +530,7 @@ class _export_traces_utils:
                 if export_mode == "JSON Dataset":
 
                     self.worker = Worker(self.export_traces_json, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -540,7 +540,7 @@ class _export_traces_utils:
                 elif export_mode == "Dat (.dat)":
 
                     self.worker = Worker(self.export_traces_dat, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -550,7 +550,7 @@ class _export_traces_utils:
                 elif export_mode == "Text (.txt)":
 
                     self.worker = Worker(self.export_traces_txt, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -560,7 +560,7 @@ class _export_traces_utils:
                 elif export_mode == "CSV (.csv)":
 
                     self.worker = Worker(self.export_traces_csv, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -570,7 +570,7 @@ class _export_traces_utils:
                 elif export_mode == "Excel":
 
                     self.worker = Worker(self.export_traces_excel, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -581,7 +581,7 @@ class _export_traces_utils:
                 elif export_mode == "OriginLab":
 
                     self.worker = Worker(self.export_traces_originlab, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -591,7 +591,7 @@ class _export_traces_utils:
                 elif export_mode == "Nero (.dat)":
 
                     self.worker = Worker(self.export_traces_nero, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))
@@ -601,7 +601,7 @@ class _export_traces_utils:
                 elif export_mode == "ebFRET SMD (.mat)":
 
                     self.worker = Worker(self.export_traces_ebfret_smd, export_path=export_path)
-                    self.worker.signals.progress.connect(partial(self.pixseq_progress,
+                    self.worker.signals.progress.connect(partial(self.molseeq_progress,
                         progress_bar=self.gui.export_progressbar))
                     self.worker.signals.finished.connect(partial(self.export_traces_finished,
                         export_path=export_path))

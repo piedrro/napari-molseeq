@@ -1,9 +1,9 @@
 from molseeq.molseeq_widget import (
-    qwidget,
+    QWidget,
 )
 
 __all__ = (
-    "qwidget",
+    "QWidget",
 )
 
 __version__ = "1.0.4"

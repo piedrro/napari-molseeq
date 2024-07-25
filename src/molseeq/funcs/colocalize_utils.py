@@ -1,7 +1,7 @@
 import traceback
 import numpy as np
 import cv2
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 
 
 class _utils_colocalize:
@@ -36,7 +36,7 @@ class _utils_colocalize:
 
 
 
-    def _pixseq_colocalize_localisations(self, progress_callback=None):
+    def _molseeq_colocalize_localisations(self, progress_callback=None):
 
         try:
 
@@ -99,7 +99,7 @@ class _utils_colocalize:
 
             result_dict = {"localisations": colo_locs}
 
-            self.pixseq_notification(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
+            self.molseeq_notification(f"Found {len(colo_locs)} colocalisations between {channel1} and {channel2}")
 
         except:
             print(traceback.format_exc())
@@ -110,7 +110,7 @@ class _utils_colocalize:
 
         return result_dict
 
-    def _pixseq_colocalize_localisations_result(self, colo_locs):
+    def _molseeq_colocalize_localisations_result(self, colo_locs):
 
         try:
 
@@ -137,12 +137,12 @@ class _utils_colocalize:
             print(traceback.format_exc())
             pass
 
-    def _pixseq_colocalize_localisations_finished(self):
+    def _molseeq_colocalize_localisations_finished(self):
 
         self.update_ui()
 
 
-    def pixseq_colocalize_localisations(self):
+    def molseeq_colocalize_localisations(self):
 
         try:
 
@@ -154,17 +154,17 @@ class _utils_colocalize:
             ch2_loc_dict, ch2_n_locs, _ = self.get_loc_dict(dataset, channel2.lower())
 
             if channel1 == channel2:
-                self.pixseq_notification("Channels must be different for colocalisation")
+                self.molseeq_notification("Channels must be different for colocalisation")
 
             elif ch1_n_locs == 0 or ch2_n_locs == 0:
-                self.pixseq_notification("No localisations found in one or both channels.")
+                self.molseeq_notification("No localisations found in one or both channels.")
 
             else:
                 self.update_ui(init=True)
 
-                self.worker = Worker(self._pixseq_colocalize_localisations)
-                self.worker.signals.result.connect(self._pixseq_colocalize_localisations_result)
-                self.worker.signals.finished.connect(self._pixseq_colocalize_localisations_finished)
+                self.worker = Worker(self._molseeq_colocalize_localisations)
+                self.worker.signals.result.connect(self._molseeq_colocalize_localisations_result)
+                self.worker.signals.finished.connect(self._molseeq_colocalize_localisations_finished)
                 self.worker.signals.error.connect(self.update_ui)
                 self.threadpool.start(self.worker)
 

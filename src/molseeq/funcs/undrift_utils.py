@@ -2,7 +2,7 @@ import traceback
 import numpy as np
 import pandas as pd
 
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 import scipy.ndimage
 import multiprocessing
 from multiprocessing import shared_memory
@@ -311,14 +311,14 @@ class _undrift_utils:
                                              "picasso_info": picasso_info,
                                              "channel": channel.lower(), "dataset": dataset}
                 else:
-                    self.pixseq_notification("No fitted localizations found for dataset: " + dataset)
+                    self.molseeq_notification("No fitted localizations found for dataset: " + dataset)
 
             if undrift_dict != {}:
 
                 self.update_ui(init=True)
 
                 self.worker = Worker(self._undrift_images, undrift_dict=undrift_dict, segmentation=20)
-                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.undrift_progressbar))
+                self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.undrift_progressbar))
                 self.worker.signals.finished.connect(self._undrift_images_finished)
                 self.threadpool.start(self.worker)
 

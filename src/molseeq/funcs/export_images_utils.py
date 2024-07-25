@@ -4,7 +4,7 @@ import tifffile
 import os
 import psutil
 from qtpy.QtWidgets import QFileDialog
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 from functools import partial
 
 class _export_images_utils:
@@ -90,7 +90,7 @@ class _export_images_utils:
                 file_name = os.path.basename(export_path)
                 file_name = os.path.splitext(file_name)[0]
                 file_name, file_extension = os.path.splitext(file_name)
-                file_name = file_name.replace("_pixseq_processed","")
+                file_name = file_name.replace("_molseeq_processed","")
 
             else:
 
@@ -98,16 +98,16 @@ class _export_images_utils:
                 file_name = os.path.basename(paths[0])
                 export_dir = os.path.dirname(paths[0])
                 file_name, file_extension = os.path.splitext(file_name)
-                file_name = file_name.replace("_pixseq_processed", "")
+                file_name = file_name.replace("_molseeq_processed", "")
 
             if export_channel.lower() not in ["alex", "fret"]:
-                name_modifier = f"_{export_channel}_pixseq_processed.tif"
+                name_modifier = f"_{export_channel}_molseeq_processed.tif"
                 if name_modifier not in file_name:
                     export_path = os.path.join(export_dir,file_name + name_modifier)
                 else:
                     export_path = os.path.join(export_dir,file_name,".tif")
             else:
-                name_modifier = "_pixseq_processed.tif"
+                name_modifier = "_molseeq_processed.tif"
                 if name_modifier not in file_name:
                     export_path = os.path.join(export_dir,file_name + name_modifier)
                 else:
@@ -203,16 +203,16 @@ class _export_images_utils:
             file_name = os.path.basename(export_path)
             file_name = os.path.splitext(file_name)[0]
             file_name, file_extension = os.path.splitext(file_name)
-            file_name = file_name.replace("_pixseq_processed", "")
+            file_name = file_name.replace("_molseeq_processed", "")
 
             if export_channel.lower() not in ["alex", "fret", "single channel"]:
-                name_modifier = f"_{export_channel}_pixseq_processed.tif"
+                name_modifier = f"_{export_channel}_molseeq_processed.tif"
                 if name_modifier not in file_name:
                     export_path = os.path.join(export_dir, file_name + name_modifier)
                 else:
                     export_path = os.path.join(export_dir, file_name, ".tif")
             else:
-                name_modifier = "_pixseq_processed.tif"
+                name_modifier = "_molseeq_processed.tif"
                 if name_modifier not in file_name:
                     export_path = os.path.join(export_dir, file_name + name_modifier)
                 else:
@@ -241,7 +241,7 @@ class _export_images_utils:
 
                 progress_dict = {}
 
-                self.pixseq_notification(f"Exporting image data...")
+                self.molseeq_notification(f"Exporting image data...")
 
                 for job_index, export_jobs in enumerate(export_jobs):
 
@@ -257,7 +257,7 @@ class _export_images_utils:
                     def export_progress(progress, job_index=None):
                         progress_dict[job_index] = progress
                         total_progress = int(np.sum(list(progress_dict.values()))/len(progress_dict))
-                        self.pixseq_progress(total_progress, self.gui.export_progressbar)
+                        self.molseeq_progress(total_progress, self.gui.export_progressbar)
 
                     if export_channel.lower() == "alex":
                         self.worker = Worker(self.export_alex_data,
@@ -311,7 +311,7 @@ class _export_images_utils:
 
             tifffile.imwrite(export_path, image)
 
-            self.pixseq_notification(f"Exported {export_channel} data to {export_path}")
+            self.molseeq_notification(f"Exported {export_channel} data to {export_path}")
 
         except:
             print(traceback.format_exc())

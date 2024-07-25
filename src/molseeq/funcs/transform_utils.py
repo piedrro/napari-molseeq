@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import os
 from functools import partial
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 from qtpy.QtWidgets import QFileDialog
 import math
 import json
@@ -119,7 +119,7 @@ class _tranform_utils:
 
                 # get save file name and path
                 date = datetime.now().strftime("%y%m%d")
-                file_name = f'pixseq_transform_matrix-{date}.txt'
+                file_name = f'molseeq_transform_matrix-{date}.txt'
 
                 dataset_name = self.gui.tform_compute_dataset.currentText()
                 channel_name = self.gui.tform_compute_target_channel.currentText()
@@ -132,7 +132,7 @@ class _tranform_utils:
                 tform_path = QFileDialog.getSaveFileName(self, 'Save transform matrix', tform_path, 'Text files (*.txt)')[0]
 
                 if tform_path != "":
-                    self.pixseq_notification(f"Saving transform matrix to {tform_path}")
+                    self.molseeq_notification(f"Saving transform matrix to {tform_path}")
 
                     with open(tform_path, 'w') as filehandle:
                         json.dump(self.transform_matrix.tolist(), filehandle)
@@ -156,7 +156,7 @@ class _tranform_utils:
 
     def _apply_transform_matrix(self, progress_callback=None):
 
-        self.pixseq_notification("Applying transform matrix...")
+        self.molseeq_notification("Applying transform matrix...")
 
         try:
 
@@ -211,20 +211,20 @@ class _tranform_utils:
 
                 if hasattr(self, "transform_matrix") == False:
 
-                    self.pixseq_notification("No transform matrix loaded.")
+                    self.molseeq_notification("No transform matrix loaded.")
 
                 else:
 
                     if self.transform_matrix is None:
 
-                        self.pixseq_notification("No transform matrix loaded.")
+                        self.molseeq_notification("No transform matrix loaded.")
 
                     else:
 
                         self.update_ui(init=True)
 
                         self.worker = Worker(self._apply_transform_matrix)
-                        self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.tform_apply_progressbar))
+                        self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.tform_apply_progressbar))
                         self.worker.signals.finished.connect(self._apply_transform_matrix_finished)
                         self.worker.signals.error.connect(self.update_ui)
                         self.threadpool.start(self.worker)

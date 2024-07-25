@@ -1,7 +1,7 @@
 import copy
 import numpy as np
 import traceback
-from molseeq.funcs.pixseq_utils_compute import Worker
+from molseeq.funcs.utils_compute import Worker
 from functools import partial
 import matplotlib.pyplot as plt
 from qtpy.QtWidgets import QComboBox
@@ -492,7 +492,7 @@ class _trace_compute_utils:
 
         return spot_bounds
 
-    def _pixseq_compute_traces_finished(self):
+    def _molseeq_compute_traces_finished(self):
 
         self.gui.compute_traces.setEnabled(True)
 
@@ -1019,7 +1019,7 @@ class _trace_compute_utils:
             pass
 
 
-    def _pixseq_compute_traces(self, progress_callback=None, picasso=False):
+    def _molseeq_compute_traces(self, progress_callback=None, picasso=False):
 
         try:
 
@@ -1044,7 +1044,7 @@ class _trace_compute_utils:
             print(traceback.format_exc())
             pass
 
-    def pixseq_compute_traces(self):
+    def molseeq_compute_traces(self):
 
         try:
 
@@ -1060,18 +1060,18 @@ class _trace_compute_utils:
 
             if compute_traces == True:
 
-                self.pixseq_notification(f"Computing traces for {n_bboxes} bounding boxes.")
+                self.molseeq_notification(f"Computing traces for {n_bboxes} bounding boxes.")
 
                 self.update_ui(init=True)
 
-                self.worker = Worker(self._pixseq_compute_traces)
-                self.worker.signals.progress.connect(partial(self.pixseq_progress, progress_bar=self.gui.compute_traces_progressbar))
-                self.worker.signals.finished.connect(self._pixseq_compute_traces_finished)
-                self.worker.signals.error.connect(self._pixseq_compute_traces_finished)
+                self.worker = Worker(self._molseeq_compute_traces)
+                self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.compute_traces_progressbar))
+                self.worker.signals.finished.connect(self._molseeq_compute_traces_finished)
+                self.worker.signals.error.connect(self._molseeq_compute_traces_finished)
                 self.threadpool.start(self.worker)
 
             else:
-                self.pixseq_notification("Bounding Boxes required for trace computation.")
+                self.molseeq_notification("Bounding Boxes required for trace computation.")
 
 
         except:

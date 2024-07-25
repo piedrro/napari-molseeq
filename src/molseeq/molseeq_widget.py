@@ -9,40 +9,36 @@ import matplotlib.colors as mcolors
 from napari.utils.notifications import show_info
 
 from molseeq.GUI.gui import Ui_Frame as gui
-from molseeq.funcs.pixseq_utils_compute import _utils_compute
-from molseeq.funcs.pixseq_undrift_utils import _undrift_utils
-from molseeq.funcs.pixseq_picasso_detect import _picasso_detect_utils
-from molseeq.funcs.pixseq_loc_utils import _loc_utils
-from molseeq.funcs.pixseq_import_utils import _import_utils
-from molseeq.funcs.pixseq_events import _events_utils
-from molseeq.funcs.pixseq_export_images_utils import _export_images_utils
-from molseeq.funcs.pixseq_transform_utils import _tranform_utils
-from molseeq.funcs.pixseq_trace_compute_utils import _trace_compute_utils
-from molseeq.funcs.pixseq_plot_utils import _plot_utils, CustomPyQTGraphWidget
-from molseeq.funcs.pixseq_align_utils import _align_utils
-from molseeq.funcs.pixseq_export_traces_utils import _export_traces_utils
-from molseeq.funcs.pixseq_colocalize_utils import _utils_colocalize
-from molseeq.funcs.pixseq_temporal_filtering import _utils_temporal_filtering
-from molseeq.funcs.pixseq_cluster_utils import _cluster_utils
-from molseeq.funcs.pixseq_simple_analysis_utils import _simple_analysis_utils
-from molseeq.funcs.pixseq_filter_utils import _filter_utils
-from molseeq.funcs.pixseq_segmentation_utils import _segmentation_utils
-from molseeq.funcs.pixseq_tracking_utils import _tracking_utils
-from molseeq.funcs.pixseq_segmentation_events import _segmentation_events
+from molseeq.funcs.utils_compute import _utils_compute
+from molseeq.funcs.undrift_utils import _undrift_utils
+from molseeq.funcs.picasso_detect import _picasso_detect_utils
+from molseeq.funcs.loc_utils import _loc_utils
+from molseeq.funcs.import_utils import _import_utils
+from molseeq.funcs.events import _events_utils
+from molseeq.funcs.export_images_utils import _export_images_utils
+from molseeq.funcs.transform_utils import _tranform_utils
+from molseeq.funcs.trace_compute_utils import _trace_compute_utils
+from molseeq.funcs.plot_utils import _plot_utils, CustomPyQTGraphWidget
+from molseeq.funcs.align_utils import _align_utils
+from molseeq.funcs.export_traces_utils import _export_traces_utils
+from molseeq.funcs.colocalize_utils import _utils_colocalize
+from molseeq.funcs.temporal_filtering import _utils_temporal_filtering
+from molseeq.funcs.cluster_utils import _cluster_utils
+from molseeq.funcs.simple_analysis_utils import _simple_analysis_utils
+from molseeq.funcs.filter_utils import _filter_utils
+from molseeq.funcs.tracking_utils import _tracking_utils
 
 import napari
 
 
-
-class qwidget(QWidget, gui,
+class QWidget(QWidget, gui,
     _undrift_utils, _picasso_detect_utils,
     _import_utils, _events_utils, _export_images_utils,
     _tranform_utils, _trace_compute_utils, _plot_utils,
     _align_utils, _loc_utils, _export_traces_utils,
     _utils_colocalize, _utils_temporal_filtering, _utils_compute,
     _cluster_utils, _simple_analysis_utils,
-    _filter_utils, _segmentation_utils, _tracking_utils,
-    _segmentation_events):
+    _filter_utils, _tracking_utils,):
 
     # your QWidget.__init__ can optionally request the napari viewer instance
     # use a type annotation of 'napari.viewer.Viewer' for any parameter
@@ -113,50 +109,50 @@ class qwidget(QWidget, gui,
 
     def register_events(self):
 
-        self.gui.pixseq_import.clicked.connect(self.pixseq_import_data)
-        self.gui.pixseq_import_mode.currentIndexChanged.connect(self.update_import_options)
-        self.gui.pixseq_update_dataset_name.clicked.connect(self.update_dataset_name)
-        self.gui.pixseq_delete_dataset.clicked.connect(self.delete_dataset)
-        self.gui.pixseq_update_labels.clicked.connect(self.update_nucleotide)
+        self.gui.molseeq_import.clicked.connect(self.molseeq_import_data)
+        self.gui.molseeq_import_mode.currentIndexChanged.connect(self.update_import_options)
+        self.gui.molseeq_update_dataset_name.clicked.connect(self.update_dataset_name)
+        self.gui.molseeq_delete_dataset.clicked.connect(self.delete_dataset)
+        self.gui.molseeq_update_labels.clicked.connect(self.update_nucleotide)
 
         self.gui.import_picasso.clicked.connect(self.import_picaaso_localisations)
 
-        self.gui.picasso_detect.clicked.connect(partial(self.pixseq_picasso, detect = True, fit=False))
-        self.gui.picasso_fit.clicked.connect(partial(self.pixseq_picasso, detect = False, fit=True))
-        self.gui.picasso_detectfit.clicked.connect(partial(self.pixseq_picasso, detect=True, fit=True))
-        self.gui.cluster_localisations.clicked.connect(self.pixseq_cluster_localisations)
+        self.gui.picasso_detect.clicked.connect(partial(self.molseeq_picasso, detect = True, fit=False))
+        self.gui.picasso_fit.clicked.connect(partial(self.molseeq_picasso, detect = False, fit=True))
+        self.gui.picasso_detectfit.clicked.connect(partial(self.molseeq_picasso, detect=True, fit=True))
+        self.gui.cluster_localisations.clicked.connect(self.molseeq_cluster_localisations)
         self.gui.dbscan_remove_overlapping = self.gui.dbscan_remove_overlapping
 
         self.gui.picasso_render.clicked.connect(self.initialise_picasso_render)
 
-        self.gui.pixseq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
-        self.gui.pixseq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
-            dataset = self.gui.pixseq_dataset_selector.currentText()))
+        self.gui.molseeq_dataset_selector.currentIndexChanged.connect(self.update_channel_select_buttons)
+        self.gui.molseeq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
+            dataset = self.gui.molseeq_dataset_selector.currentText()))
 
         self.gui.picasso_undrift.clicked.connect(self.undrift_images)
 
-        self.gui.pixseq_align_datasets.clicked.connect(self.align_datasets)
+        self.gui.molseeq_align_datasets.clicked.connect(self.align_datasets)
         self.gui.align_reference_dataset.currentIndexChanged.connect(self.update_align_reference_channel)
 
-        self.gui.pixseq_import_tform.clicked.connect(self.import_transform_matrix)
-        self.gui.pixseq_compute_tform.clicked.connect(self.compute_transform_matrix)
-        self.gui.pixseq_apply_tform.clicked.connect(self.apply_transform_matrix)
+        self.gui.molseeq_import_tform.clicked.connect(self.import_transform_matrix)
+        self.gui.molseeq_compute_tform.clicked.connect(self.compute_transform_matrix)
+        self.gui.molseeq_apply_tform.clicked.connect(self.apply_transform_matrix)
 
         self.gui.picasso_detect_mode.currentIndexChanged.connect(self.update_picasso_options)
 
-        self.gui.pixseq_export_data.clicked.connect(self.export_data)
+        self.gui.molseeq_export_data.clicked.connect(self.export_data)
         self.gui.export_dataset.currentIndexChanged.connect(self.update_export_options)
 
-        self.gui.pixseq_export_locs.clicked.connect(self.initialise_export_locs)
+        self.gui.molseeq_export_locs.clicked.connect(self.initialise_export_locs)
         self.gui.locs_export_type.currentIndexChanged.connect(self.update_loc_export_options)
         self.gui.locs_export_dataset.currentIndexChanged.connect(self.update_loc_export_options)
 
-        self.gui.pixseq_export_traces.clicked.connect(self.export_traces)
+        self.gui.molseeq_export_traces.clicked.connect(self.export_traces)
         self.gui.traces_export_dataset.currentIndexChanged.connect(self.populate_export_combos)
 
         self.viewer.dims.events.current_step.connect(partial(self.draw_localisations, update_vis = False))
 
-        self.gui.compute_traces.clicked.connect(self.pixseq_compute_traces)
+        self.gui.compute_traces.clicked.connect(self.molseeq_compute_traces)
         self.gui.traces_visualise_masks.clicked.connect(self.visualise_spot_masks)
         self.gui.traces_visualise_masks.clicked.connect(self.visualise_background_masks)
 
@@ -171,15 +167,15 @@ class qwidget(QWidget, gui,
         self.gui.plot_background_mode.currentIndexChanged.connect(self.initialize_plot)
         self.gui.focus_on_bbox.stateChanged.connect(self.initialize_plot)
 
-        self.gui.pixseq_colocalize.clicked.connect(self.pixseq_colocalize_localisations)
+        self.gui.molseeq_colocalize.clicked.connect(self.molseeq_colocalize_localisations)
 
         self.gui.plot_localisation_number.valueChanged.connect(lambda: self.update_slider_label("plot_localisation_number"))
         self.gui.plot_localisation_number.valueChanged.connect(partial(self.plot_traces))
 
-        self.gui.filtering_start.clicked.connect(self.pixseq_temporal_filtering)
+        self.gui.filtering_start.clicked.connect(self.molseeq_temporal_filtering)
         self.gui.filtering_datasets.currentIndexChanged.connect(self.update_filtering_channels)
 
-        self.gui.pixseq_append.stateChanged.connect(self.update_import_append_options)
+        self.gui.molseeq_append.stateChanged.connect(self.update_import_append_options)
 
         self.gui.picasso_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_dataset", channel_selector="picasso_channel"))
         self.gui.undrift_dataset_selector.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector"))
@@ -191,7 +187,6 @@ class qwidget(QWidget, gui,
         self.gui.picasso_filter_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel"))
         self.gui.simple_plot_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="simple_plot_dataset", channel_selector="simple_plot_channel", efficiency=True))
         self.gui.picasso_render_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel"))
-        self.gui.cellpose_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="cellpose_dataset", channel_selector="cellpose_channel"))
         self.gui.tracking_dataset.currentIndexChanged.connect(partial(self.update_channel_selector, dataset_selector="tracking_dataset", channel_selector="tracking_channel"))
 
         self.gui.traces_export_mode.currentIndexChanged.connect(self.populate_export_combos)
@@ -199,7 +194,7 @@ class qwidget(QWidget, gui,
         self.gui.picasso_filter_dataset.currentIndexChanged.connect(self.update_filter_criterion)
         self.gui.picasso_filter_channel.currentIndexChanged.connect(self.update_filter_criterion)
         self.gui.filter_criterion.currentIndexChanged.connect(self.update_criterion_ranges)
-        self.gui.filter_localisations.clicked.connect(self.pixseq_filter_localisations)
+        self.gui.filter_localisations.clicked.connect(self.molseeq_filter_localisations)
         self.gui.picasso_filter_type.currentIndexChanged.connect(self.update_filter_dataset)
 
         self.viewer.bind_key('Control-D', self.dev_function)
@@ -228,16 +223,6 @@ class qwidget(QWidget, gui,
         self.gui.picasso_vis_opacity.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_localisations, update_vis=True))
         self.gui.picasso_vis_edge_width.currentIndexChanged.connect(partial(self.draw_bounding_boxes, update_vis=True))
-
-        self.gui.segment_active.clicked.connect(partial(self.initialise_cellpose, mode = "active"))
-        self.gui.segment_all.clicked.connect(partial(self.initialise_cellpose, mode = "all"))
-        self.gui.cellpose_load_model.clicked.connect(self.load_cellpose_model)
-        self.gui.dilate_segmentations.clicked.connect(self.dilate_segmentations)
-
-        self.gui.cellpose_flowthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_flowthresh", "cellpose_flowthresh_label"))
-        self.gui.cellpose_maskthresh.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_maskthresh", "cellpose_maskthresh_label"))
-        self.gui.cellpose_minsize.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_minsize", "cellpose_minsize_label"))
-        self.gui.cellpose_diameter.valueChanged.connect(lambda: self.update_cellpose_sliders("cellpose_diameter", "cellpose_diameter_label"))
 
         self.gui.link_localisations.clicked.connect(self.initialise_tracking)
 
@@ -477,7 +462,7 @@ class qwidget(QWidget, gui,
 
                 active_frame = self.viewer.dims.current_step[0]
 
-                dataset_name = self.gui.pixseq_dataset_selector.currentText()
+                dataset_name = self.gui.molseeq_dataset_selector.currentText()
                 image_channel = self.active_channel
 
                 if image_channel != "" and dataset_name != "":
@@ -580,4 +565,4 @@ class qwidget(QWidget, gui,
         return loc_centres
 
     def closeEvent(self):
-        print("Closing PixSeq")
+        print("Closing molSEEQ")
