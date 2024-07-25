@@ -1,7 +1,7 @@
 [project]
 name = "napari-molseeq"
 dynamic = ["version"]
-description = "A Napari plugin for extracting time series traces from Single Molecule Localisation Microsocpy (SMLM) data."
+description = "A Napari plugin for extracting single molecule sequences from single/multi-channel SMLM microscopy data."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
