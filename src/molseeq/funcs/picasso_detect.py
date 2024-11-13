@@ -182,7 +182,7 @@ def detect_picaso_locs(dat, progress_list, fit_list):
                     try:
 
                         image = np.expand_dims(frame, axis=0)
-                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                        camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
                         spot_data = get_spots(image, locs, box_size, camera_info)
 
                         locs.frame = frame_index
@@ -255,7 +255,7 @@ def picasso_detect(dat, progress_list):
                 expected_loc_length = 12
                 try:
                     image = np.expand_dims(frame, axis=0)
-                    camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                    camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
                     spot_data = get_spots(image, locs, box_size, camera_info)
 
                     theta, CRLBs, likelihoods, iterations = gaussmle(spot_data, eps=0.001, max_it=1000, method="sigma")
@@ -435,7 +435,7 @@ class _picasso_detect_utils:
 
                         image = image_dict.pop("data")
 
-                        camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+                        camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
                         spot_data = get_spots(image, locs, box_size, camera_info)
 
                         loc_list.append(locs)

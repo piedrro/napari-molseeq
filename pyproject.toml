@@ -30,7 +30,7 @@ dependencies = [
     "qtpy",
     "scipy",
     "pyqtgraph",
-    "picassosr",
+    "picassosr==0.7.3",
     "pandas",
     "matplotlib >= 3.7.0",
     "scipy",

@@ -134,7 +134,7 @@ def extract_picasso_spot_metrics(dat):
 
             frame = image[frame_index].copy()
 
-            camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+            camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
 
             frame = np.expand_dims(frame, axis=0).copy()
 
@@ -1183,7 +1183,7 @@ class _trace_compute_utils:
 
 
 
-camera_info = {"baseline": 100.0, "gain": 1, "sensitivity": 1.0, "qe": 0.9, }
+camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
 
 # method = "lq"
 # gain = 1
