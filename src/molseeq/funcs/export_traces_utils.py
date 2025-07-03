@@ -256,13 +256,15 @@ class _export_traces_utils:
         dataset_name = self.gui.traces_export_dataset.currentText()
         channel_name = self.gui.traces_export_channel.currentText()
         metric_name = self.gui.traces_export_metric.currentText()
+        background_metric = self.gui.traces_export_background_metric.currentText()
         background_mode = self.gui.traces_export_background.currentText()
 
         metric_key = self.get_dict_key(self.metric_dict, metric_name)
+        background_metric_key = self.get_dict_key(self.metric_dict, background_metric)
 
         if background_mode not in ["None", None,""] and type(metric_key) == str:
             key_modifier = self.get_dict_key(self.background_dict, background_mode)
-            background_metric_key = metric_key + key_modifier
+            background_metric_key = background_metric_key + key_modifier
         else:
             background_metric_key = None
 

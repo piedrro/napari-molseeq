@@ -728,7 +728,6 @@ class _trace_compute_utils:
                                            "shared_mem": image_dict["shared_mem"],
                                            "shape": image_dict["shape"],
                                            "dtype": image_dict["dtype"],
-                                           "global_spot_mask": global_spot_mask,
                                            "stop_event": self.stop_event,
                                            }
                         background_metrics_jobs.append(background_task)

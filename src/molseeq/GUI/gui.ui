@@ -2040,6 +2040,13 @@
                  </item>
                 </widget>
                </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_39">
+                 <property name="text">
+                  <string>Mask Shape</string>
+                 </property>
+                </widget>
+               </item>
                <item row="1" column="1">
                 <widget class="QComboBox" name="traces_spot_shape">
                  <item>
@@ -2052,13 +2059,6 @@
                    <string>Circle</string>
                   </property>
                  </item>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_39">
-                 <property name="text">
-                  <string>Mask Shape</string>
-                 </property>
                 </widget>
                </item>
                <item row="2" column="0">
@@ -2268,14 +2268,14 @@
              <item row="2" column="1">
               <widget class="QComboBox" name="plot_metric"/>
              </item>
-             <item row="3" column="0">
+             <item row="4" column="0">
               <widget class="QLabel" name="label_58">
                <property name="text">
                 <string>Background Subtraction</string>
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
+             <item row="4" column="1">
               <widget class="QComboBox" name="plot_background_mode">
                <item>
                 <property name="text">
@@ -2293,6 +2293,16 @@
                 </property>
                </item>
               </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_97">
+               <property name="text">
+                <string>Background Metric</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QComboBox" name="background_metric"/>
              </item>
             </layout>
            </item>
@@ -2604,14 +2614,14 @@
                </item>
               </widget>
              </item>
-             <item row="4" column="0">
+             <item row="5" column="0">
               <widget class="QLabel" name="label_59">
                <property name="text">
                 <string>Background Subtraction</string>
                </property>
               </widget>
              </item>
-             <item row="4" column="1">
+             <item row="5" column="1">
               <widget class="QComboBox" name="traces_export_background">
                <item>
                 <property name="text">
@@ -2629,6 +2639,16 @@
                 </property>
                </item>
               </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="label_101">
+               <property name="text">
+                <string>Background Metric</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QComboBox" name="traces_export_background_metric"/>
              </item>
             </layout>
            </item>

@@ -9,6 +9,7 @@ import copy
 from qtpy.QtWidgets import QCheckBox
 import re
 from scipy.ndimage import gaussian_filter1d
+from streamlit import metric
 
 
 class _plot_utils:
@@ -153,8 +154,10 @@ class _plot_utils:
 
                             self.updating_plot_combos = True
                             self.update_qcombo_items(self.gui.plot_metric, plot_metric_items)
+                            self.update_qcombo_items(self.gui.background_metric, plot_metric_items)
                             self.update_qcombo_items(self.gui.plot_background_mode, background_metric_items)
                             self.update_qcombo_items(self.gui.traces_export_metric, plot_metric_items)
+                            self.update_qcombo_items(self.gui.traces_export_background_metric, plot_metric_items)
                             self.update_qcombo_items(self.gui.traces_export_background, background_metric_items)
                             self.updating_plot_combos = False
 
@@ -322,16 +325,18 @@ class _plot_utils:
             dataset_name = self.gui.plot_data.currentText()
             channel_name = self.gui.plot_channel.currentText()
             metric_name = self.gui.plot_metric.currentText()
+            background_metric = self.gui.background_metric.currentText()
             background_mode = self.gui.plot_background_mode.currentText()
 
             if hasattr(self, "plot_show_dict") == False:
                 self.plot_show_dict = {}
 
             metric_key = self.get_dict_key(self.metric_dict, metric_name)
+            background_metric_key = self.get_dict_key(self.metric_dict, background_metric)
 
             if background_mode != "None":
                 key_modifier = self.get_dict_key(self.background_dict, background_mode)
-                background_metric_key = metric_key + key_modifier
+                background_metric_key = background_metric_key + key_modifier
             else:
                 background_metric_key = None
 
@@ -483,6 +488,7 @@ class _plot_utils:
                             self.gui.plot_data.setEnabled(False)
                             self.gui.plot_channel.setEnabled(False)
                             self.gui.plot_metric.setEnabled(False)
+                            self.gui.background_metric.setEnabled(False)
                             self.gui.split_plots.setEnabled(False)
                             self.gui.normalise_plots.setEnabled(False)
 
@@ -495,6 +501,7 @@ class _plot_utils:
                             self.gui.plot_data.setEnabled(True)
                             self.gui.plot_channel.setEnabled(True)
                             self.gui.plot_metric.setEnabled(True)
+                            self.gui.background_metric.setEnabled(True)
                             self.gui.split_plots.setEnabled(True)
                             self.gui.normalise_plots.setEnabled(True)
 

@@ -162,6 +162,7 @@ class QWidget(QWidget, gui,
         self.gui.plot_data.currentIndexChanged.connect(self.initialize_plot)
         self.gui.plot_channel.currentIndexChanged.connect(self.initialize_plot)
         self.gui.plot_metric.currentIndexChanged.connect(self.initialize_plot)
+        self.gui.background_metric.currentIndexChanged.connect(self.initialize_plot)
         self.gui.split_plots.stateChanged.connect(self.initialize_plot)
         self.gui.normalise_plots.stateChanged.connect(self.initialize_plot)
         self.gui.plot_background_mode.currentIndexChanged.connect(self.initialize_plot)
