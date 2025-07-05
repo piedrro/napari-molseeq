@@ -129,7 +129,8 @@ class QWidget(QWidget, gui,
         self.gui.molseeq_dataset_selector.currentIndexChanged.connect(partial(self.update_active_image,
             dataset = self.gui.molseeq_dataset_selector.currentText()))
 
-        self.gui.picasso_undrift.clicked.connect(self.undrift_images)
+        self.gui.picasso_undrift.clicked.connect(self.rcc_undrift)
+        self.gui.aim_undrift.clicked.connect(self.aim_undrift)
 
         self.gui.molseeq_align_datasets.clicked.connect(self.align_datasets)
         self.gui.align_reference_dataset.currentIndexChanged.connect(self.update_align_reference_channel)

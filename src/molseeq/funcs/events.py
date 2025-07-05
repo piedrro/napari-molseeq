@@ -421,7 +421,7 @@ class _events_utils:
 
             self.update_channel_selector(dataset_selector="picasso_dataset", channel_selector="picasso_channel")
             self.update_channel_selector(dataset_selector="import_picasso_dataset", channel_selector="import_picasso_channel", efficiency=False)
-            self.update_channel_selector(dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector")
+            self.update_channel_selector(dataset_selector="aim_dataset_selector", channel_selector="aim_channel_selector")
             self.update_channel_selector(dataset_selector="cluster_dataset", channel_selector="cluster_channel")
             self.update_channel_selector(dataset_selector="tform_compute_dataset", channel_selector="tform_compute_ref_channel", channel_type="donor")
             self.update_channel_selector(dataset_selector="tform_compute_dataset", channel_selector="tform_compute_target_channel", channel_type="acceptor")

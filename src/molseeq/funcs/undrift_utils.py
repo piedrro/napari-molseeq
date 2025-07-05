@@ -9,6 +9,7 @@ from multiprocessing import shared_memory
 from functools import partial
 import concurrent.futures
 from picasso.postprocess import undrift as picasso_undrift
+from picasso.aim import aim
 from multiprocessing import Manager
 import time
 
@@ -44,11 +45,57 @@ def undrift_image(dat):
     return frame_index
 
 
+def detect_aim_dataset_drift(dat, progress_dict, index):
 
-def detect_dataset_drift(dat, progress_dict, index):
+    dataset_dict = dat.get("dataset_dict", {})
+    segmentation = dat.get("segmentation")
+    intersect_d = dat.get("intersect_d")
+    roi_r = dat.get("roi_r")
 
-    dataset_dict = dat["dataset_dict"]
-    segmentation = dat["segmentation"]
+    try:
+        loc_dict = dataset_dict["loc_dict"]
+        undrift_locs = loc_dict["localisations"].copy()
+        picasso_info = dataset_dict["picasso_info"]
+        n_frames = picasso_info[0]["Frames"]
+
+        undrift_locs = pd.DataFrame(undrift_locs)
+
+        if "dataset" in undrift_locs.columns:
+            undrift_locs = undrift_locs.drop(columns=["dataset"])
+        if "channel" in undrift_locs.columns:
+            undrift_locs = undrift_locs.drop(columns=["channel"])
+
+        undrift_locs = undrift_locs.to_records(index=False)
+
+        def aim_callback(progress):
+            progress_dict[index] = progress
+
+        if type(segmentation) == int:
+            if n_frames > segmentation:
+                undrifted_locs, new_info, drift = aim(undrift_locs,
+                    picasso_info,
+                    segmentation=segmentation,
+                    intersect_d=intersect_d,
+                    roi_r=roi_r,
+                    progress=aim_callback,
+                    )
+                dataset_dict["drift"] = drift
+                dataset_dict["undrifted_locs"] = undrifted_locs
+            else:
+                progress_dict[index] = 100
+        else:
+            progress_dict[index] = 100
+    except:
+        print(traceback.format_exc())
+        pass
+
+    return dataset_dict
+
+def detect_rcc_dataset_drift(dat, progress_dict, index):
+
+    dataset_dict = dat.get("dataset_dict", {})
+    segmentation = dat.get("segmentation")
+
 
     try:
 
@@ -86,7 +133,6 @@ def detect_dataset_drift(dat, progress_dict, index):
 
         if type(segmentation) == int:
             if n_frames > segmentation:
-
                 drift, undrifted_locs = picasso_undrift(undrift_locs,
                     picasso_info,
                     segmentation=segmentation,
@@ -94,10 +140,8 @@ def detect_dataset_drift(dat, progress_dict, index):
                     segmentation_callback=segmentation_callback,
                     rcc_callback=undrift_callback,
                     )
-
                 dataset_dict["drift"] = drift
                 dataset_dict["undrifted_locs"] = undrifted_locs
-
             else:
                 progress_dict[index] = 100
         else:
@@ -225,9 +269,17 @@ class _undrift_utils:
             print(traceback.format_exc())
             pass
 
-    def _detect_undrift(self, progress_callback, undrift_dict, segmentation=20):
+
+    def _detect_undrift(self, mode, progress_callback, undrift_dict, **kwargs):
 
         try:
+
+            mode = kwargs.get('mode', 'RCC')
+
+            if mode == 'RCC':
+                detect_func = detect_rcc_dataset_drift
+            else:
+                detect_func = detect_aim_dataset_drift
 
             if undrift_dict != {}:
                 compute_jobs = []
@@ -235,7 +287,9 @@ class _undrift_utils:
 
                 for dataset, dataset_dict in undrift_dict.items():
 
-                    compute_jobs.append({"dataset": dataset, "dataset_dict": dataset_dict, "segmentation": segmentation})
+                    job = {**{"mode": mode, "dataset": dataset, "dataset_dict": dataset_dict}, **kwargs}
+
+                    compute_jobs.append(job)
                     progress_dict[dataset] = 0
 
                 cpu_count = int(multiprocessing.cpu_count() * 0.9)
@@ -245,7 +299,7 @@ class _undrift_utils:
 
                     with concurrent.futures.ProcessPoolExecutor(max_workers=cpu_count) as executor:
                         # Submit all jobs
-                        futures = [executor.submit(detect_dataset_drift, job, progress_dict, i) for i, job in enumerate(compute_jobs)]
+                        futures = [executor.submit(detect_func, job, progress_dict, i) for i, job in enumerate(compute_jobs)]
 
                         while any(not future.done() for future in futures):
                             # Calculate and emit progress
@@ -274,11 +328,11 @@ class _undrift_utils:
         return undrift_dict
 
 
-    def _undrift_images(self, progress_callback=None, undrift_dict={}, segmentation=20):
+    def _undrift(self, progress_callback=None, undrift_dict={}, **kwargs):
 
         try:
 
-           undrift_dict = self._detect_undrift(progress_callback, undrift_dict, segmentation=segmentation)
+           undrift_dict = self._detect_undrift(progress_callback, undrift_dict, **kwargs)
            self._apply_undrift(progress_callback, undrift_dict)
 
         except:
@@ -286,12 +340,64 @@ class _undrift_utils:
             pass
 
 
-    def undrift_images(self, segmentation=20):
+    def aim_undrift(self):
 
         try:
 
             dataset = self.gui.undrift_dataset_selector.currentText()
             channel = self.gui.undrift_channel_selector.currentText()
+            segmentation = self.gui.aim_segmentation.value()
+            intersect_d = self.gui.aim_intersect_d.value()
+            roi_r = self.gui.aim_roi_r.value()
+
+            if dataset == "All Datasets":
+                dataset_list = list(self.dataset_dict.keys())
+            else:
+                dataset_list = [dataset]
+
+            undrift_dict = {}
+
+            for dataset in dataset_list:
+                loc_dict, n_locs, _ = self.get_loc_dict(dataset, channel.lower())
+                if n_locs > 0 and loc_dict["fitted"] == True:
+
+                    n_frames, height, width = self.dataset_dict[dataset][channel.lower()]["data"].shape
+                    picasso_info = [{'Frames': n_frames, 'Height': height, 'Width': width}, {}]
+
+                    undrift_dict[dataset] = {"loc_dict": loc_dict, "n_locs": n_locs,
+                                             "picasso_info": picasso_info,
+                                             "channel": channel.lower(), "dataset": dataset}
+                else:
+                    self.molseeq_notification("No fitted localizations found for dataset: " + dataset)
+
+            if undrift_dict != {}:
+                self.update_ui(init=True)
+
+                self.worker = Worker(self._undrift,
+                                     mode = 'AIM',
+                                     undrift_dict=undrift_dict,
+                                     segmentation=segmentation,
+                                     intersect_d = intersect_d,
+                                     roi_r = roi_r)
+                self.worker.signals.progress.connect(
+                    partial(self.molseeq_progress, progress_bar=self.gui.undrift_progressbar))
+                self.worker.signals.finished.connect(self._undrift_images_finished)
+                self.threadpool.start(self.worker)
+
+        except:
+            self.update_ui()
+            print(traceback.format_exc())
+            pass
+
+
+
+    def rcc_undrift(self):
+
+        try:
+
+            dataset = self.gui.undrift_dataset_selector.currentText()
+            channel = self.gui.undrift_channel_selector.currentText()
+            segmentation = self.gui.undrift_segmentation.value()
 
             if dataset == "All Datasets":
                 dataset_list = list(self.dataset_dict.keys())
@@ -317,7 +423,10 @@ class _undrift_utils:
 
                 self.update_ui(init=True)
 
-                self.worker = Worker(self._undrift_images, undrift_dict=undrift_dict, segmentation=20)
+                self.worker = Worker(self._undrift,
+                                     mode = 'RCC',
+                                     undrift_dict=undrift_dict,
+                                     segmentation=segmentation)
                 self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.undrift_progressbar))
                 self.worker.signals.finished.connect(self._undrift_images_finished)
                 self.threadpool.start(self.worker)
