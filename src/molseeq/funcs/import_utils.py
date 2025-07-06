@@ -193,6 +193,7 @@ class _import_utils:
             import_limit_combo = self.gui.molseeq_import_limt.currentText()
             channel_layout = self.gui.molseeq_channel_layout.currentText()
             alex_first_frame = self.gui.molseeq_alex_first_frame.currentText()
+            pixel_size = self.gui.molseeq_pixel_size.value()
 
             for path_index, path in enumerate(paths):
 
@@ -248,7 +249,8 @@ class _import_utils:
                                   "channel_layout": channel_layout,
                                   "alex_first_frame": alex_first_frame,
                                   "dtype": dtype,
-                                  "import_mode": import_mode.lower()}
+                                  "import_mode": import_mode.lower(),
+                                  "pixel_size":pixel_size}
 
                     image_list.append(image_dict)
 
@@ -290,7 +292,8 @@ class _import_utils:
                                   "channel_layout": channel_layout,
                                   "alex_first_frame": alex_first_frame,
                                   "dtype": dtype,
-                                  "import_mode": import_mode.lower()}
+                                  "import_mode": import_mode.lower(),
+                                  "pixel_size": pixel_size}
 
                     image_list.append(image_dict)
 
@@ -337,7 +340,8 @@ class _import_utils:
                                   "channel_layout": channel_layout,
                                   "alex_first_frame": alex_first_frame,
                                   "dtype": dtype,
-                                  "import_mode": import_mode.lower()}
+                                  "import_mode": import_mode.lower(),
+                                  "pixel_size": pixel_size}
 
                     image_list.append(image_dict)
 
@@ -405,7 +409,8 @@ class _import_utils:
                                   "channel_layout": channel_layout,
                                   "alex_first_frame": alex_first_frame,
                                   "dtype": dtype,
-                                  "import_mode": import_mode.lower()}
+                                  "import_mode": import_mode.lower(),
+                                  "pixel_size": pixel_size}
 
                     image_list.append(image_dict)
 
@@ -419,7 +424,8 @@ class _import_utils:
                                                  "channel_layout": channel_layout,
                                                  "alex_first_frame": alex_first_frame,
                                                  "image_shape": image_shape,
-                                                 "dtype": dtype,}
+                                                 "dtype": dtype,
+                                                 "pixel_size": pixel_size}
 
         except:
             print(traceback.format_exc())
@@ -499,6 +505,7 @@ class _import_utils:
                 import_mode = dataset_dict["import_mode"]
                 channel_layout = dataset_dict["channel_layout"]
                 alex_first_frame = dataset_dict["alex_first_frame"]
+                pixel_size = dataset_dict['pixel_size']
 
                 dataset_images = self.shared_images[dataset_name]
 
@@ -548,6 +555,7 @@ class _import_utils:
                     image_dict[channel_name]["import_mode"] = import_mode
                     image_dict[channel_name]["gap_label"] = None
                     image_dict[channel_name]["sequence_label"] = None
+                    image_dict[channel_name]["pixel_size"] = pixel_size
 
                 if concat_images == False:
 

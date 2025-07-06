@@ -21,7 +21,8 @@ class _events_utils:
             controls = ["molseeq_import",
                         "picasso_detect", "picasso_fit", "picasso_detectfit",
                         "molseeq_compute_tform", "molseeq_apply_tform",
-                        "picasso_undrift","molseeq_align_datasets",
+                        "picasso_undrift","aim_undrift",
+                        "molseeq_align_datasets",
                         "filtering_start",
                         "compute_traces",
                         "molseeq_export_data","molseeq_export_traces",
@@ -41,6 +42,7 @@ class _events_utils:
                             "compute_traces_progressbar",
                             "plot_compute_progress",
                             "export_progressbar",
+                            "aim_progressbar",
                             ]
 
             for progressbar in progressbars:
@@ -431,6 +433,7 @@ class _events_utils:
             self.update_channel_selector(dataset_selector="picasso_render_dataset", channel_selector="picasso_render_channel")
             self.update_channel_selector(dataset_selector="picasso_filter_dataset", channel_selector="picasso_filter_channel")
             self.update_channel_selector(dataset_selector="tracking_dataset", channel_selector="tracking_channel")
+            self.update_channel_selector(dataset_selector="undrift_dataset_selector", channel_selector="undrift_channel_selector")
 
         except:
             print(traceback.format_exc())

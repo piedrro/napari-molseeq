@@ -67,17 +67,31 @@ def detect_aim_dataset_drift(dat, progress_dict, index):
 
         undrift_locs = undrift_locs.to_records(index=False)
 
-        def aim_callback(progress):
-            progress_dict[index] = progress
+        max_iter = (n_frames + segmentation - 1) // segmentation * 2 - 1
+
+        class AIMProgress:
+            def __init__(self):
+                self.iter = 0
+            def set_value(self, value):
+                self.iter += 1
+                progress = int(self.iter/max_iter * 50)
+                progress_dict[index] = progress
+            def zero_progress(self, description=None):
+                pass
+            def close(self):
+                pass
+
+        aim_progress = AIMProgress()
 
         if type(segmentation) == int:
             if n_frames > segmentation:
-                undrifted_locs, new_info, drift = aim(undrift_locs,
-                    picasso_info,
+                undrifted_locs, new_info, drift = aim(
+                    locs = undrift_locs,
+                    info=picasso_info,
                     segmentation=segmentation,
                     intersect_d=intersect_d,
                     roi_r=roi_r,
-                    progress=aim_callback,
+                    progress=aim_progress,
                     )
                 dataset_dict["drift"] = drift
                 dataset_dict["undrifted_locs"] = undrifted_locs
@@ -270,7 +284,7 @@ class _undrift_utils:
             pass
 
 
-    def _detect_undrift(self, mode, progress_callback, undrift_dict, **kwargs):
+    def _detect_undrift(self, progress_callback, undrift_dict, **kwargs):
 
         try:
 
@@ -287,7 +301,7 @@ class _undrift_utils:
 
                 for dataset, dataset_dict in undrift_dict.items():
 
-                    job = {**{"mode": mode, "dataset": dataset, "dataset_dict": dataset_dict}, **kwargs}
+                    job = {**{"dataset": dataset, "dataset_dict": dataset_dict}, **kwargs}
 
                     compute_jobs.append(job)
                     progress_dict[dataset] = 0
@@ -362,8 +376,9 @@ class _undrift_utils:
                 if n_locs > 0 and loc_dict["fitted"] == True:
 
                     n_frames, height, width = self.dataset_dict[dataset][channel.lower()]["data"].shape
-                    picasso_info = [{'Frames': n_frames, 'Height': height, 'Width': width}, {}]
-
+                    pixel_size = self.dataset_dict[dataset][channel.lower()]["pixel_size"]
+                    picasso_info = [{'Frames': n_frames, 'Height': height,
+                                     'Width': width, 'Pixelsize': pixel_size}, {}]
                     undrift_dict[dataset] = {"loc_dict": loc_dict, "n_locs": n_locs,
                                              "picasso_info": picasso_info,
                                              "channel": channel.lower(), "dataset": dataset}
@@ -380,7 +395,7 @@ class _undrift_utils:
                                      intersect_d = intersect_d,
                                      roi_r = roi_r)
                 self.worker.signals.progress.connect(
-                    partial(self.molseeq_progress, progress_bar=self.gui.undrift_progressbar))
+                    partial(self.molseeq_progress, progress_bar=self.gui.aim_progressbar))
                 self.worker.signals.finished.connect(self._undrift_images_finished)
                 self.threadpool.start(self.worker)
 
