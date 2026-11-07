@@ -4,6 +4,7 @@ import traceback
 import pandas as pd
 
 from molseeq.funcs.utils_compute import Worker
+from dataclasses import asdict
 from molseeq.model_processing import LocalisationJob, SUPPORTS_WORKING_LOCALISATION, localise_channels
 from molcore import ArraySource, LocalisationSettings
 from numpy.lib.recfunctions import stack_arrays
@@ -917,7 +918,7 @@ class _picasso_detect_utils:
         self.worker.signals.result.connect(partial(
             self._publish_core_localisations, revision=self.session.revision,
             channel=channel, mode=mode, frame=frame, fitted=fit, box_size=box_size,
-            previous=previous, sites=self.bounding_box_token(),
+            previous=previous, sites=self.bounding_box_token(), creation_settings=asdict(settings),
         ))
         self.worker.signals.error.connect(lambda error: self.molseeq_notification(str(error[1])))
         self.worker.signals.finished.connect(self._picasso_wrapper_finished)
@@ -925,7 +926,7 @@ class _picasso_detect_utils:
         return True
 
     def _publish_core_localisations(
-        self, results, revision, channel, mode, frame, fitted, box_size, previous, sites
+        self, results, revision, channel, mode, frame, fitted, box_size, previous, sites, creation_settings
     ):
         if self.stop_event.is_set() or self.session.revision != revision:
             return
@@ -937,6 +938,9 @@ class _picasso_detect_utils:
                 if len(rows):
                     self.localisation_dict["bounding_boxes"] = {
                         "localisations": rows, "fitted": fitted, "box_size": box_size,
+                        "origin": "picasso_fit" if fitted else "picasso_detect",
+                        "source": {"dataset": name, "channel": channel, "frame": frame,
+                                   "settings": creation_settings},
                     }
                 continue
             old = previous[name]

@@ -2,6 +2,10 @@
 
 from collections.abc import Mapping, MutableMapping
 from copy import copy
+from copy import deepcopy
+from datetime import datetime, timezone
+from uuid import uuid4
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,6 +23,12 @@ from molcore.types.images import Source
 
 from molseeq.model_views import LocalisationViews
 from molseeq.trace_views import discard_trace_runs
+from molseeq.box_views import (
+    BoundingBoxView,
+    LocalisationState,
+    box_state,
+    sync_box_definitions,
+)
 
 
 @dataclass(frozen=True)
@@ -136,6 +146,37 @@ class ProjectSession:
     def dataset(self, name: str) -> Dataset:
         return self.experiment.datasets[self._names[name]]
 
+    @property
+    def bounding_boxes(self):
+        return BoundingBoxView(self)
+
+    @property
+    def localisation_state(self):
+        return LocalisationState(self)
+
+    def bounding_box_ids(self):
+        return tuple(
+            box["id"] for box in box_state(self).get("definitions", [])
+        )
+
+    def bounding_box_token(self):
+        return (
+            box_state(self).get("revision", 0),
+            tuple(
+                (identifier, model.bounding_boxes.revision)
+                for identifier, model in self.experiment.datasets.items()
+            ),
+        )
+
+    def trace_token(self):
+        return (
+            self.trace_revision,
+            tuple(
+                (identifier, model.photon_sequences.revision)
+                for identifier, model in self.experiment.datasets.items()
+            ),
+        )
+
     def binding(self, name, channel):
         return self._bindings[self.dataset(name).id, channel]
 
@@ -224,7 +265,27 @@ class ProjectSession:
         self._localisation_state = staged._localisation_state
         self.revision = staged.revision
 
-    def replace_working_images(self, images):
+    def working_image_provenance(self, name, channel):
+        dataset = self.dataset(name)
+        state = dataset.processing.settings.get(
+            "molseeq_working_images", {}
+        ).get(channel, {})
+        return {
+            "history_namespace": "processing.settings.molseeq_working_images",
+            "channel": channel,
+            "history_id": state.get("active"),
+            "acquisitions": [
+                view.acquisition.id
+                for view, _ in self.channel_parts(name, channel)
+            ],
+        }
+
+    def replace_working_images(self, images, *, operation=None):
+        operation = deepcopy(
+            operation
+            or {"method": "external_update", "parameters_available": False}
+        )
+        json.dumps(operation, allow_nan=False)
         replacements = {}
         for (name, channel), value in images.items():
             pixels = np.array(value, copy=True)
@@ -234,6 +295,18 @@ class ProjectSession:
                 )
             pixels.flags.writeable = False
             replacements[self.dataset(name).id, channel] = ArraySource(pixels)
+        for dataset_id, channel in replacements:
+            dataset = self.experiment.datasets[dataset_id]
+            history = dataset.processing.settings.setdefault(
+                "molseeq_working_images", {}
+            ).setdefault(channel, {"active": None, "records": {}})
+            identifier = str(uuid4())
+            history["records"][identifier] = {
+                "parent": history["active"],
+                "operation": operation,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            history["active"] = identifier
         self._working.update(replacements)
         for key in replacements:
             self._display_pixels.pop(key, None)
@@ -343,12 +416,33 @@ class ProjectSession:
                         pixels.flags.writeable = False
                         working[key] = ArraySource(pixels)
                     bindings[key] = (sequence.id, True)
+                    history = dataset.processing.settings.get(
+                        "molseeq_working_images", {}
+                    ).get(channel)
+                    if history is not None and key in working:
+                        identifier = str(uuid4())
+                        history["records"][identifier] = {
+                            "parent": history["active"],
+                            "operation": {
+                                "method": "concatenate",
+                                "acquisitions": [a.id for a in incoming],
+                            },
+                            "created_at": datetime.now(
+                                timezone.utc
+                            ).isoformat(),
+                        }
+                        history["active"] = identifier
             else:
                 acquisition = dataset.add_acquisition(incoming[0])
                 for channel in acquisition.channels:
                     key = dataset.id, channel
                     bindings[key] = (acquisition.id, False)
                     working.pop(key, None)
+                    history = dataset.processing.settings.get(
+                        "molseeq_working_images", {}
+                    ).get(channel)
+                    if history is not None:
+                        history["active"] = None
         affected = {
             key[0]
             for key, binding in bindings.items()
@@ -364,6 +458,7 @@ class ProjectSession:
             for key in tuple(self._localisation_state):
                 if bindings.get(key) != self._bindings.get(key):
                     del self._localisation_state[key]
+        sync_box_definitions(experiment, refresh=True)
         self.experiment, self._names, self._bindings = (
             experiment,
             names,

@@ -209,7 +209,7 @@ class _utils_compute:
 
         return self.shared_images
 
-    def restore_shared_images(self, *, publish=True):
+    def restore_shared_images(self, *, publish=True, operation=None):
 
         if self.verbose:
             print("Restoring shared images")
@@ -226,7 +226,14 @@ class _utils_compute:
                             np_array = np.ndarray(
                                 dat["shape"], dtype=dat["dtype"], buffer=shared_mem.buf
                             )
-                            self.dataset_dict[dat["dataset"]][dat["channel"]]["data"] = np_array
+                            details = dict(operation or {})
+                            if details.get("method") == "drift_correction":
+                                drift = self.dataset_dict[dat["dataset"]][dat["channel"]].get("drift")
+                                if drift is not None:
+                                    details["displacements"] = np.asarray(drift).tolist()
+                            self.session.replace_working_images(
+                                {(dat["dataset"], dat["channel"]): np_array}, operation=details,
+                            )
                     finally:
                         shared_mem.close()
                         shared_mem.unlink()

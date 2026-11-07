@@ -36,6 +36,26 @@ def test_widget_publishes_an_alex_import_to_the_napari_layer(
         np.testing.assert_array_equal(
             widget.image_layer.data, movie[::2, :, :3]
         )
+        widget.localisation_dict["bounding_boxes"] = {
+            "localisations": np.rec.fromarrays(
+                ([0], [1.0], [1.0]), names="frame,x,y"
+            ),
+            "box_size": 3,
+            "fitted": False,
+        }
+        widget.draw_bounding_boxes()
+        (identifier,) = widget.session.bounding_box_ids()
+        widget.bbox_layer.data = np.array([[2.0, 1.0]])
+        assert widget.session.bounding_box_ids() == (identifier,)
+        assert (
+            widget.session.dataset(path.name).bounding_boxes[identifier].y == 2
+        )
+        widget.bbox_layer.add([1.0, 2.0])
+        first, added = widget.session.bounding_box_ids()
+        assert first == identifier and added != identifier
+        widget.bbox_layer.selected_data = {0}
+        widget.bbox_layer.remove_selected()
+        assert widget.session.bounding_box_ids() == (added,)
     finally:
         widget.close()
         viewer.layers.clear()

@@ -273,7 +273,10 @@ class _undrift_utils:
                             progress = 50 + int((iter / len(compute_jobs)) * 50)
                             progress_callback.emit(progress)  # Emit the signal
 
-                self.restore_shared_images()
+                self.restore_shared_images(operation={
+                    "method": "drift_correction", "interpolation": "scipy_cubic",
+                    "border_value": 0,
+                })
 
         except:
             self.restore_shared_images()

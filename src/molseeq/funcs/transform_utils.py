@@ -196,7 +196,11 @@ class _tranform_utils:
                         progress_callback.emit(progress)
 
                     img = transform_image(img, self.transform_matrix,progress_callback=transform_progress)
-                    self.dataset_dict[dataset_name][channel_name.lower()]["data"] = img.copy()
+                    self.session.replace_working_images(
+                        {(dataset_name, channel_name.lower()): img},
+                        operation={"method": "channel_transform", "matrix": self.transform_matrix.tolist(),
+                                   "interpolation": "opencv_linear", "border_value": 0},
+                    )
 
         except:
             print(traceback.format_exc())

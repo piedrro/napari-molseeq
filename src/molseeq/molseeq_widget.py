@@ -74,9 +74,7 @@ class QWidget(QWidget, gui,
         self.dataset_dict = self.session.images
         self.plot_dict = {}
         self.contrast_dict = {}
-        self.localisation_dict = {
-            "bounding_boxes": {}, "localisations": self.session.localisations
-        }
+        self.localisation_dict = self.session.localisation_state
         self.traces_dict = {}
         self.metric_dict = {"spot_mean": "Mean", "spot_median": "Median", "spot_sum": "Sum", "spot_max": "Maximum",
                             "spot_std": "std", "spot_photons": "Picasso Photons", }
@@ -113,22 +111,16 @@ class QWidget(QWidget, gui,
         print(f"napari-molseeq version: {version}")
 
     def bounding_box_token(self):
-        boxes = self.localisation_dict["bounding_boxes"]
-        rows = boxes.get("localisations")
-        return (
-            None if rows is None else np.asarray(rows).tobytes(),
-            boxes.get("box_size"), boxes.get("fitted"),
-        )
+        return self.session.bounding_box_token()
 
     @property
     def traces_dict(self):
         sites = self.bounding_box_token()
         if self._trace_sites != sites:
-            self.session.invalidate_traces()
             self._trace_sites = sites
-        if self._trace_revision != self.session.trace_revision:
+        if self._trace_revision != self.session.trace_token():
             self._traces = trace_view(self.session)
-            self._trace_revision = self.session.trace_revision
+            self._trace_revision = self.session.trace_token()
             self.compute_photo_bleaching()
         return self._traces
 
@@ -136,7 +128,7 @@ class QWidget(QWidget, gui,
     def traces_dict(self, traces):
         self._traces = traces
         self._trace_sites = self.bounding_box_token()
-        self._trace_revision = self.session.trace_revision
+        self._trace_revision = self.session.trace_token()
 
     def register_events(self):
 
@@ -413,70 +405,69 @@ class QWidget(QWidget, gui,
             pass
 
     def draw_bounding_boxes(self, update_vis=False):
+        if not hasattr(self, "localisation_dict"):
+            return
+        entry = self.localisation_dict["bounding_boxes"]
+        rows = entry.get("localisations")
+        points = np.empty((0, 2)) if rows is None else np.column_stack((rows.y, rows.x))
+        if "bounding_boxes" not in self.viewer.layers:
+            if not len(points):
+                return
+            self.bbox_layer = self.viewer.add_points(
+                points, name="bounding_boxes", ndim=2, border_color="white",
+                face_color=[0, 0, 0, 0],
+            )
+            self.bbox_layer.mouse_drag_callbacks.append(self._mouse_event)
+            self.bbox_layer.events.visible.connect(self.draw_bounding_boxes)
+            self.bbox_layer.events.data.connect(self._bounding_box_layer_changed)
+        else:
+            self.bbox_layer = self.viewer.layers["bounding_boxes"]
+        with self.bbox_layer.events.data.blocker():
+            self.bbox_layer.data = points
+            self.bbox_layer.features = {"bounding_box_id": list(self.session.bounding_box_ids())}
+        mode = self.gui.picasso_vis_mode.currentText().lower()
+        self.bbox_layer.symbol = {"square": "square", "disk": "disc", "x": "cross"}[mode]
+        self.bbox_layer.size = float(self.gui.picasso_vis_size.currentText())
+        self.bbox_layer.opacity = float(self.gui.picasso_vis_opacity.currentText())
+        self.bbox_layer.border_width = float(self.gui.picasso_vis_edge_width.currentText())
+        self.bbox_layer.border_color = "white"
+        self.bbox_layer.selected_data = []
+        self.bbox_layer.refresh()
 
-        if hasattr(self, "localisation_dict") and hasattr(self, "active_channel"):
-
-            if hasattr(self, "bbox_layer"):
-                show_bboxes = self.bbox_layer.visible
+    def _bounding_box_layer_changed(self, event):
+        if getattr(event, "action", "changed") not in ("changed", "added", "removed"):
+            return
+        points = np.asarray(self.bbox_layer.data)
+        entry = self.localisation_dict["bounding_boxes"].copy()
+        previous = entry.get("localisations")
+        dtype = previous.dtype if previous is not None else [("frame", "u4"), ("x", "f4"), ("y", "f4")]
+        rows = np.zeros(len(points), dtype=dtype).view(np.recarray)
+        old_ids = self.session.bounding_box_ids()
+        indexes = {identifier: index for index, identifier in enumerate(old_ids)}
+        features = self.bbox_layer.features
+        incoming = features["bounding_box_id"].tolist() if "bounding_box_id" in features else [None] * len(points)
+        identifiers = []
+        seen = set()
+        for identifier in incoming:
+            if isinstance(identifier, str) and identifier in indexes and identifier not in seen:
+                identifiers.append(identifier)
+                seen.add(identifier)
             else:
-                show_bboxes = True
-
-            if show_bboxes:
-
-                layer_names = [layer.name for layer in self.viewer.layers]
-                loc_dict, n_locs, fitted = self.get_loc_dict(type = "bounding_boxes")
-
-                if n_locs > 0:
-
-                    if self.verbose:
-                        print("Drawing bounding_boxes")
-
-                    locs = loc_dict["localisations"].copy()
-                    bounding_boxes = np.vstack((locs.y, locs.x)).T.tolist()
-
-                    vis_mode = self.gui.picasso_vis_mode.currentText()
-                    vis_size = float(self.gui.picasso_vis_size.currentText())
-                    vis_opacity = float(self.gui.picasso_vis_opacity.currentText())
-                    vis_edge_width = float(self.gui.picasso_vis_edge_width.currentText())
-
-                    if vis_mode.lower() == "square":
-                        symbol = "square"
-                    elif vis_mode.lower() == "disk":
-                        symbol = "disc"
-                    elif vis_mode.lower() == "x":
-                        symbol = "cross"
-
-                    if "bounding_boxes" not in layer_names:
-                        self.bbox_layer = self.viewer.add_points(
-                            bounding_boxes,
-                            edge_color="white",
-                            ndim=2,
-                            face_color=[0,0,0,0],
-                            opacity=vis_opacity,
-                            name="bounding_boxes",
-                            symbol=symbol,
-                            size=vis_size,
-                            visible=True,
-                            edge_width=vis_edge_width,)
-
-                        self.bbox_layer.mouse_drag_callbacks.append(self._mouse_event)
-                        self.bbox_layer.events.visible.connect(self.draw_bounding_boxes)
-
-                    else:
-                        self.viewer.layers["bounding_boxes"].data = bounding_boxes
-
-                    self.bbox_layer.selected_data = list(range(len(self.bbox_layer.data)))
-                    self.bbox_layer.opacity = vis_opacity
-                    self.bbox_layer.symbol = symbol
-                    self.bbox_layer.size = vis_size
-                    self.bbox_layer.edge_width = vis_edge_width
-                    self.bbox_layer.edge_color = "white"
-                    self.bbox_layer.selected_data = []
-                    self.bbox_layer.refresh()
-
-                for layer in layer_names:
-                    self.viewer.layers[layer].refresh()
-
+                identifiers.append(None)
+        for index, identifier in enumerate(identifiers):
+            if identifier is not None:
+                rows[index] = previous[indexes[identifier]]
+            elif "frame" in rows.dtype.names:
+                rows.frame[index] = self.viewer.dims.current_step[0]
+        if len(points):
+            rows.x, rows.y = points[:, 1], points[:, 0]
+        entry.update({
+            "localisations": rows, "_box_ids": identifiers,
+            "origin": "napari_edit", "source": {"dataset": self.active_dataset, "channel": self.active_channel},
+        })
+        self.localisation_dict["bounding_boxes"] = entry
+        with self.bbox_layer.events.data.blocker():
+            self.bbox_layer.features = {"bounding_box_id": list(self.session.bounding_box_ids())}
 
     def draw_localisations(self, update_vis=False):
 

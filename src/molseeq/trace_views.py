@@ -1,11 +1,14 @@
 """Bind trace results to MolCore camera frames and project legacy metric names."""
 
 from uuid import uuid4
+from dataclasses import asdict, replace
 
 import numpy as np
 from molcore import ApertureShape, ArraySource, PhotonSequence, PhotonUnit
 from molcore import photometry
-from molcore.staging import clone_experiment
+from molcore.staging import clone_experiment, experiment_state_token
+from molcore import StaleResultError
+from molseeq import __version__
 
 _METHOD = "molseeq_aperture"
 
@@ -15,11 +18,76 @@ def discard_trace_runs(experiment, dataset_ids=None):
     for identifier, model in experiment.datasets.items():
         if dataset_ids is not None and identifier not in dataset_ids:
             continue
-        for sequence in model.photon_sequences.query(include_stale=True):
-            if sequence.method == _METHOD:
-                model.photon_sequences.remove(sequence.id)
-                changed = True
+        ids = [
+            sequence.id
+            for sequence in model.photon_sequences.query()
+            if sequence.method == _METHOD
+        ]
+        if ids:
+            model.photon_sequences.mark_stale(ids)
+            changed = True
     return changed
+
+
+class TraceResults(dict):
+    """Legacy plotting columns accompanied by the original MolCore trace records."""
+
+    def __init__(self, session, settings):
+        super().__init__()
+        self.records = []
+        self.run_id = str(uuid4())
+        self.settings = asdict(settings)
+        self.session_revision = session.revision
+        self.expected = experiment_state_token(session.experiment)
+
+
+def _legacy_aperture_columns(sequence):
+    settings = sequence.metadata.get("extraction", {}).get(
+        "settings", sequence.metadata["settings"]
+    )
+    site = sequence.metadata["legacy_spot"]
+    size = settings["spot_size"]
+    count = len(sequence.frames)
+    columns = {
+        "spot_x": np.full(count, site["x"]),
+        "spot_y": np.full(count, site["y"]),
+        "spot_cx": np.full(count, site["y"]),
+        "spot_cy": np.full(count, site["x"]),
+        "spot_size": np.full(count, size),
+    }
+    prefixes = {
+        "signal": "",
+        "local_window": "_local_bg",
+        "masked_local_ring": "_masked_local_bg",
+    }
+    if settings["global_background"]:
+        prefixes.update(
+            global_background="_global_bg",
+            masked_global_background="_masked_global_bg",
+        )
+    for prefix, suffix in prefixes.items():
+        for metric in ("mean", "median", "sum", "max", "std"):
+            samples = sequence.measurements[f"{prefix}_{metric}"]
+            if suffix and metric == "sum":
+                samples = sequence.measurements[f"{prefix}_mean"] * size**2
+            columns[f"spot_{metric}{suffix}"] = samples
+    if settings["psf_box_size"] is not None:
+        for target, metric in {
+            "spot_photons": "amplitude",
+            "spot_photons_local_bg": "background",
+            "spot_photons_masked_local_bg": "background",
+            "spot_sx": "sx",
+            "spot_sy": "sy",
+            "spot_lpx": "lpx",
+            "spot_lpy": "lpy",
+            "spot_likelihood": "likelihood",
+        }.items():
+            columns[target] = sequence.measurements[f"psf_{metric}"]
+        columns["spot_net_gradient"] = np.full(
+            count,
+            np.nan if site["net_gradient"] is None else site["net_gradient"],
+        )
+    return columns
 
 
 def compute_fixed_traces(
@@ -35,9 +103,28 @@ def compute_fixed_traces(
         global_background=global_background,
         psf_box_size=box_size if fit_psf else None,
     )
+    identifiers = session.bounding_box_ids()
+    anchored = bool(identifiers)
+    if anchored:
+        if len(identifiers) != len(locs):
+            raise ValueError(
+                "Bounding box selection changed before extraction"
+            )
+        current = session.bounding_boxes["localisations"]
+        if not np.array_equal(current.x, locs.x) or not np.array_equal(
+            current.y, locs.y
+        ):
+            raise ValueError(
+                "Bounding box positions changed before extraction"
+            )
+    else:
+        identifiers = tuple(str(index) for index in range(len(locs)))
     sites = {
-        str(index): (float(loc.x), float(loc.y))
-        for index, loc in enumerate(locs)
+        identifier: (float(loc.x), float(loc.y))
+        for identifier, loc in zip(identifiers, locs, strict=True)
+    }
+    spot_indices = {
+        identifier: index for index, identifier in enumerate(identifiers)
     }
     jobs = [
         (
@@ -53,22 +140,38 @@ def compute_fixed_traces(
         for view, offset in session.channel_parts(name, channel)
         if len(view)
     ]
-    output = {}
+    output = TraceResults(session, settings)
     for job, (name, channel, dataset, view, offset, source) in enumerate(jobs):
         working = (
             ArraySource(source.array[offset : offset + len(view)])
             if isinstance(source, ArraySource)
+            else view
+            if anchored
             else None
         )
-        result = photometry.stationary_site_traces(
+        measure = (
+            photometry.bounding_box_traces
+            if anchored
+            else photometry.stationary_site_traces
+        )
+        result = measure(
             dataset,
             view.acquisition.id,
             channel,
-            sites,
+            tuple(sites) if anchored else sites,
             settings=settings,
             source=working,
             apply=False,
             cancel_event=cancel_event,
+            **(
+                {
+                    "source_metadata": session.working_image_provenance(
+                        name, channel
+                    )
+                }
+                if anchored
+                else {}
+            ),
             progress=(
                 None
                 if progress is None
@@ -78,53 +181,62 @@ def compute_fixed_traces(
             ),
         )
         channel_spots = output.setdefault(name, {}).setdefault(channel, {})
-        prefixes = {
-            "signal": "",
-            "local_window": "_local_bg",
-            "masked_local_ring": "_masked_local_bg",
-        }
-        if global_background:
-            prefixes.update(
-                global_background="_global_bg",
-                masked_global_background="_masked_global_bg",
-            )
         for sequence in result.sequences:
-            index = int(sequence.molecule_id)
+            index = spot_indices[sequence.molecule_id]
             x, y = sites[sequence.molecule_id]
-            count = len(sequence.frames)
-            columns = {
-                "spot_x": np.full(count, x),
-                "spot_y": np.full(count, y),
-                "spot_cx": np.full(count, y),
-                "spot_cy": np.full(count, x),
-                "spot_size": np.full(count, size),
-            }
-            for prefix, suffix in prefixes.items():
-                for metric in ("mean", "median", "sum", "max", "std"):
-                    samples = sequence.measurements[f"{prefix}_{metric}"]
-                    if suffix and metric == "sum":
-                        samples = (
-                            sequence.measurements[f"{prefix}_mean"] * size**2
-                        )
-                    columns[f"spot_{metric}{suffix}"] = samples
-            if fit_psf:
-                for target, metric in {
-                    "spot_photons": "amplitude",
-                    "spot_photons_local_bg": "background",
-                    "spot_photons_masked_local_bg": "background",
-                    "spot_sx": "sx",
-                    "spot_sy": "sy",
-                    "spot_lpx": "lpx",
-                    "spot_lpy": "lpy",
-                    "spot_likelihood": "likelihood",
-                }.items():
-                    columns[target] = sequence.measurements[f"psf_{metric}"]
-                gradient = (
-                    locs[index].net_gradient
-                    if "net_gradient" in locs.dtype.names
-                    else 0
+            if sequence.bounding_box_id is not None:
+                x, y = (
+                    sequence.metadata["bounding_box"]["x"],
+                    sequence.metadata["bounding_box"]["y"],
                 )
-                columns["spot_net_gradient"] = np.full(count, gradient)
+            gradient = (
+                float(locs[index].net_gradient)
+                if "net_gradient" in locs.dtype.names
+                else 0.0
+            )
+            if not np.isfinite(gradient):
+                gradient = None
+            export_offset = sum(
+                (len(previous.acquisition.source) + 1) // 2
+                if previous.acquisition.mode == "alex"
+                else len(previous.acquisition.source)
+                for previous, part_offset in session.channel_parts(
+                    name, channel
+                )
+                if part_offset < offset
+            )
+            export_frames = (
+                sequence.frames // 2
+                if view.acquisition.mode == "alex"
+                else sequence.frames
+            )
+            output.records.append(
+                (
+                    dataset.id,
+                    replace(
+                        sequence,
+                        method=_METHOD,
+                        run_id=output.run_id,
+                        metadata={
+                            **sequence.metadata,
+                            "spot_index": index,
+                            "display_offset": offset,
+                            "application": "molseeq",
+                            "application_version": __version__,
+                            "legacy_spot": {
+                                "x": x,
+                                "y": y,
+                                "net_gradient": gradient,
+                            },
+                        },
+                        measurements={
+                            **sequence.measurements,
+                            "_export_frames": export_frames + export_offset,
+                        },
+                    ),
+                )
+            )
+            columns = _legacy_aperture_columns(output.records[-1][1])
             parts = channel_spots.setdefault(index, {})
             for key, values in columns.items():
                 parts.setdefault(key, []).append(values)
@@ -140,6 +252,42 @@ def compute_fixed_traces(
 
 def publish_traces(session, traces):
     """Publish a complete trace run atomically across the selected rounds."""
+    if isinstance(traces, TraceResults):
+        if (
+            session.revision != traces.session_revision
+            or experiment_state_token(session.experiment) != traces.expected
+        ):
+            raise StaleResultError("Trace inputs changed before publication")
+        staged = clone_experiment(session.experiment)
+        discard_trace_runs(staged)
+        for dataset_id, sequence in traces.records:
+            staged.datasets[dataset_id].photon_sequences.add(sequence)
+        for model in staged.datasets.values():
+            records = [
+                sequence
+                for dataset_id, sequence in traces.records
+                if dataset_id == model.id
+            ]
+            if records:
+                model.processing.settings.setdefault("photon_sequences", {})[
+                    traces.run_id
+                ] = {
+                    "version": 2,
+                    "application": "molseeq",
+                    "settings": traces.settings,
+                    "sequence_ids": [sequence.id for sequence in records],
+                    "bounding_box_ids": sorted(
+                        {
+                            sequence.bounding_box_id
+                            for sequence in records
+                            if sequence.bounding_box_id
+                        }
+                    ),
+                }
+        session.experiment = staged
+        session.revision += 1
+        session.trace_revision += 1
+        return
     staged = clone_experiment(session.experiment)
     discard_trace_runs(staged)
     run_id = str(uuid4())
@@ -210,13 +358,19 @@ def publish_traces(session, traces):
 def trace_view(session):
     """Return detached, ordered trace arrays for the current plot and exporters."""
     result = {}
+    box_indices = {
+        identifier: index
+        for index, identifier in enumerate(session.bounding_box_ids())
+    }
     for name in session.images:
         model = session.dataset(name)
         channels = {}
         for sequence in model.photon_sequences.query():
             if sequence.method != _METHOD:
                 continue
-            spot = sequence.metadata["spot_index"]
+            spot = box_indices.get(
+                sequence.bounding_box_id, sequence.metadata["spot_index"]
+            )
             channels.setdefault(sequence.channel, {}).setdefault(
                 spot, []
             ).append(sequence)
@@ -235,6 +389,19 @@ def trace_view(session):
                     )
                     for key in segments[0].measurements
                 }
+                if "legacy_spot" in segments[0].metadata:
+                    projections = [
+                        _legacy_aperture_columns(segment)
+                        for segment in segments
+                    ]
+                    metrics.update(
+                        {
+                            key: np.concatenate(
+                                [projection[key] for projection in projections]
+                            )
+                            for key in projections[0]
+                        }
+                    )
                 metrics["_camera_frames"] = np.concatenate(
                     [segment.frames for segment in segments]
                 )
@@ -253,7 +420,9 @@ def align_trace_samples(values, source, reference):
     """Align one channel's measurements to matching camera samples."""
     if "_camera_frames" not in source or "_camera_frames" not in reference:
         return np.asarray(values)
-    source_keys = zip(source["_acquisition_ids"], source["_camera_frames"], strict=True)
+    source_keys = zip(
+        source["_acquisition_ids"], source["_camera_frames"], strict=True
+    )
     reference_keys = zip(
         reference["_acquisition_ids"], reference["_camera_frames"], strict=True
     )

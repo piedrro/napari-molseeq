@@ -26,7 +26,7 @@ dependencies = [
     "numpy",
     "magicgui",
     "qtpy",
-    "molcore[localisation,tracking,clustering] @ git+https://github.com/piedrro/molcore.git@3775a06898da5c09fc4e1c54f4f38bbec7688d22",
+    "molcore[localisation,tracking,clustering] @ git+https://github.com/piedrro/molcore.git@b7bed312a6462a4c7891fd4c2da48ee151ea3fb8",
     "scipy",
     "pyqtgraph",
     "picassosr>=0.7.3",

@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import traceback
 from molseeq.funcs.utils_compute import Worker
-from molcore import photometry
+from molcore import StaleResultError, photometry
 from molseeq.trace_views import compute_fixed_traces, publish_traces, trace_view
 from functools import partial
 import matplotlib.pyplot as plt
@@ -982,7 +982,7 @@ class _trace_compute_utils:
             publish_traces(self.session, traces)
             self.traces_dict = trace_view(self.session)
             self.compute_photo_bleaching()
-        except (ValueError, KeyError) as error:
+        except (ValueError, KeyError, StaleResultError) as error:
             self.molseeq_notification(str(error))
 
     def molseeq_compute_traces(self):

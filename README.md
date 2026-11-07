@@ -12,6 +12,8 @@ Multiple datasets can be loaded and processed in parallel.
 
 napari-molseeq uses **MolCore** to manage recordings, localisations and photon sequences. It includes channel and dataset alignment, drift correction, **Picasso** localisation and trace extraction for **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
 
+Bounding boxes have persistent IDs and metadata in MolCore. Photon sequences retain the defining box revision, extraction settings, software versions and input-image processing history. Box edits invalidate dependent results while preserving their provenance.
+
 napari-molseeq traces can be analysed with TraceAnalyser: https://github.com/piedrro/TraceAnalyser
 
 This is still undergoing development, so some features may not work as expected.

@@ -337,9 +337,10 @@ class _loc_utils():
                 if self.verbose:
                     print("Updating localisation dict")
 
-                self.localisation_dict["bounding_boxes"]["localisations"] = locs.copy()
-                self.localisation_dict["bounding_boxes"]["fitted"] = True
-                self.localisation_dict["bounding_boxes"]["box_size"] = box_size
+                self.localisation_dict["bounding_boxes"] = {
+                    "localisations": locs.copy(), "fitted": True, "box_size": box_size,
+                    "origin": "picasso_import", "source": {"path": path, "dataset": dataset, "channel": channel},
+                }
 
         except:
             print(traceback.format_exc())
@@ -773,6 +774,8 @@ class _loc_utils():
 
                 loc_dict, n_locs,_ = self.get_loc_dict(active_dataset, active_channel,
                     type = "bounding_box")
+                loc_dict["origin"] = "manual"
+                loc_dict["source"] = {"dataset": active_dataset, "channel": active_channel, "frame": int(frame)}
 
                 if n_locs > 0:
 

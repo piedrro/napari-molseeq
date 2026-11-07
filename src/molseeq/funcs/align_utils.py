@@ -164,7 +164,12 @@ class _align_utils:
                                 transform_mode = transform_mode,
                                 progress_callback=transform_progress)
 
-                            self.dataset_dict[dataset][channel_name.lower()]["data"] = img.copy()
+                            self.session.replace_working_images(
+                                {(dataset, channel_name.lower()): img},
+                                operation={"method": "dataset_alignment", "matrix": transform_matrix.tolist(),
+                                           "model": transform_mode, "reference_dataset": reference_dataset,
+                                           "interpolation": "opencv_linear", "border_value": 0},
+                            )
 
         except:
             print(traceback.format_exc())
