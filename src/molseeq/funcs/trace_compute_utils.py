@@ -2,6 +2,8 @@ import copy
 import numpy as np
 import traceback
 from molseeq.funcs.utils_compute import Worker
+from molcore import photometry
+from molseeq.trace_views import compute_fixed_traces, publish_traces, trace_view
 from functools import partial
 import matplotlib.pyplot as plt
 from qtpy.QtWidgets import QComboBox
@@ -657,7 +659,7 @@ class _trace_compute_utils:
         return background_values
 
 
-    def populate_spot_metric_compute_jobs(self):
+    def populate_spot_metric_compute_jobs(self, settings, locs, box_size):
 
         compute_jobs = {"spot_metrics": [],
                         "background_metrics": [],
@@ -666,18 +668,7 @@ class _trace_compute_utils:
 
         try:
 
-            self.gui.traces_spot_size = self.gui.traces_spot_size
-
-            spot_size = int(self.gui.traces_spot_size.currentText())
-            spot_shape = self.gui.traces_spot_shape.currentText()
-            buffer_size = int(self.gui.traces_background_buffer.currentText())
-            bg_width = int(self.gui.traces_background_width.currentText())
-            compute_global_background = self.gui.compute_global_background.isChecked()
-            compute_picasso = self.gui.compute_with_picasso.isChecked()
-
-            localisation_dict = copy.deepcopy(self.localisation_dict["bounding_boxes"])
-            locs = localisation_dict["localisations"].copy()
-            box_size = localisation_dict["box_size"]
+            spot_size, spot_shape, buffer_size, bg_width, compute_global_background, compute_picasso = settings
 
             spot_mask, buffer_mask, spot_background_mask = self.generate_localisation_mask(spot_size,
                 spot_shape, buffer_size, bg_width, plot=False)
@@ -696,7 +687,7 @@ class _trace_compute_utils:
                 n_locs = len(locs)
                 channel = image_dict["channel"]
                 dataset = image_dict["dataset"]
-                n_pixels = int(self.gui.traces_spot_size.currentText()) ** 2
+                n_pixels = spot_size ** 2
 
                 background_overlap_mask, global_spot_mask = self.generate_background_overlap_mask(locs,
                     buffer_mask, spot_background_mask, mask_shape)
@@ -764,14 +755,12 @@ class _trace_compute_utils:
 
 
 
-    def extract_spot_metrics_wrapper(self, progress_callback):
+    def extract_spot_metrics_wrapper(self, progress_callback, settings, locs, box_size):
 
         try:
 
-            compute_global_background = self.gui.compute_global_background.isChecked()
-            compute_picasso = self.gui.compute_with_picasso.isChecked()
-
-            compute_jobs = self.populate_spot_metric_compute_jobs()
+            compute_global_background, compute_picasso = settings[-2:]
+            compute_jobs = self.populate_spot_metric_compute_jobs(settings, locs, box_size)
 
             spot_metrics_jobs = compute_jobs["spot_metrics"]
             background_metrics_jobs = compute_jobs["background_metrics"]
@@ -826,85 +815,35 @@ class _trace_compute_utils:
                         progress = int((iter / total_jobs) * 100)
                         progress_callback.emit(progress)  # Emit the signal
 
-        except:
-            self.restore_shared_images()
-            self.update_ui()
-            print(traceback.format_exc())
-
-        self.spot_metrics = spot_metrics
-        self.background_metrics = background_metrics
-        self.picasso_spot_metrics = picasso_metrics
+        except Exception:
+            raise
 
         return spot_metrics, background_metrics, picasso_metrics
 
-    def populatate_traces_dict(self):
-
-        spot_metrics = self.spot_metrics
-        background_metrics = self.background_metrics
-        picasso_spot_metrics = self.picasso_spot_metrics
-
-        try:
-
-            self.traces_dict = {}
-
-            # format spot metrics into dataframe
-            if spot_metrics is not None:
-
-                spot_metrics = pd.concat(spot_metrics)
-                spot_metrics.sort_values(by=["dataset", "channel", "spot_index", "frame_index"], inplace=True)
-
-
-            if background_metrics is not None and len(background_metrics) > 0:
-
-                background_metrics = pd.DataFrame(background_metrics)
-
-                merge_keys = ["dataset", "channel", "frame_index"]
-                spot_metrics = pd.merge(spot_metrics, background_metrics, on=merge_keys, how='left')
-
-
-            # format picasso spot metrics into dataframe and merge with spot metrics
-            if picasso_spot_metrics is not None and len(picasso_spot_metrics) > 0:
-
-                picasso_spot_metrics = pd.concat(picasso_spot_metrics)
-                picasso_spot_metrics.sort_values(by=["dataset", "channel", "spot_index", "frame_index"], inplace=True)
-
-                merge_keys = ["dataset", "channel", "spot_index","frame_index", "spot_cx","spot_cy"]
-                spot_metrics = pd.merge(spot_metrics, picasso_spot_metrics, on=merge_keys, how='left')
-
-            # populate traces dict
-            if spot_metrics is not None:
-
-                for names, data in spot_metrics.groupby(["dataset", "channel", "spot_index"]):
-
-                    dataset, channel, spot_index = names
-
-                    channel_dict = self.dataset_dict[dataset][channel]
-
-                    if "gap_label" in channel_dict.keys():
-                        gap_label = self.dataset_dict[dataset][channel]["gap_label"]
-                        sequence_label = self.dataset_dict[dataset][channel]["sequence_label"]
-                    else:
-                        gap_label = None
-                        sequence_label = None
-
-                    if dataset not in self.traces_dict.keys():
-                        self.traces_dict[dataset] = {}
-                    if channel not in self.traces_dict[dataset].keys():
-                        self.traces_dict[dataset][channel] = {}
-                    if spot_index not in self.traces_dict[dataset][channel].keys():
-                        self.traces_dict[dataset][channel][spot_index] = {}
-
-                    for column in data.columns:
-                        if column not in ["dataset", "channel", "spot_index", "frame_index"]:
-                            self.traces_dict[dataset][channel][spot_index][column] = data[column].values
-
-                        # add gap label and sequence label
-                        self.traces_dict[dataset][channel][spot_index]["gap_label"] = gap_label
-                        self.traces_dict[dataset][channel][spot_index]["sequence_label"] = sequence_label
-
-        except:
-            print(traceback.format_exc())
-            pass
+    def collect_trace_metrics(self, spot_metrics, background_metrics, picasso_spot_metrics):
+        if not spot_metrics:
+            return {}
+        data = pd.concat(spot_metrics)
+        if background_metrics:
+            data = data.merge(
+                pd.DataFrame(background_metrics), on=["dataset", "channel", "frame_index"],
+                how="left", validate="many_to_one",
+            )
+        if picasso_spot_metrics:
+            data = data.merge(
+                pd.concat(picasso_spot_metrics),
+                on=["dataset", "channel", "spot_index", "frame_index", "spot_cx", "spot_cy"],
+                how="left", validate="one_to_one",
+            )
+        traces = {}
+        data = data.sort_values(["dataset", "channel", "spot_index", "frame_index"])
+        keys = ["dataset", "channel", "spot_index"]
+        for (dataset, channel, index), rows in data.groupby(keys, sort=False):
+            traces.setdefault(dataset, {}).setdefault(channel, {})[int(index)] = {
+                column: rows[column].to_numpy()
+                for column in rows.columns if column not in (*keys, "frame_index")
+            }
+        return traces
 
     def find_bleach_indices(self, data, background_data, mode="last", smooth=True, smooth_window=10, n_frames=10):
         def moving_average(data, window_size):
@@ -1018,65 +957,63 @@ class _trace_compute_utils:
             pass
 
 
-    def _molseeq_compute_traces(self, progress_callback=None, picasso=False):
-
+    def _molseeq_compute_traces(self, settings, locs, box_size, progress_callback):
+        if hasattr(photometry, "stationary_site_traces"):
+            return compute_fixed_traces(
+                self.session, locs, settings, box_size=box_size,
+                progress=progress_callback.emit, cancel_event=self.stop_event,
+            )
         try:
+            self.create_shared_images()
+            metrics = self.extract_spot_metrics_wrapper(progress_callback, settings, locs, box_size)
+            if self.stop_event.is_set():
+                return {}
+            return self.collect_trace_metrics(*metrics)
+        finally:
+            self.restore_shared_images(publish=False)
 
-            self.spot_metrics = None
-            self.background_metrics = None
-            self.picasso_spot_metrics = None
-
-            self.shared_images = self.create_shared_images()
-
-            self.extract_spot_metrics_wrapper(progress_callback)
-
-            self.restore_shared_images()
-
-            self.populatate_traces_dict()
-
+    def _publish_trace_metrics(self, traces, revision, site_snapshot):
+        if (
+            not traces or self.stop_event.is_set() or self.session.revision != revision
+            or self.bounding_box_token() != site_snapshot
+        ):
+            return
+        try:
+            publish_traces(self.session, traces)
+            self.traces_dict = trace_view(self.session)
             self.compute_photo_bleaching()
-            self.gui.compute_traces.setEnabled(True)
-
-        except:
-            self.update_ui()
-            self.restore_shared_images()
-            print(traceback.format_exc())
-            pass
+        except (ValueError, KeyError) as error:
+            self.molseeq_notification(str(error))
 
     def molseeq_compute_traces(self):
+        boxes = self.localisation_dict["bounding_boxes"]
+        locs = boxes.get("localisations")
+        if locs is None or not len(locs):
+            self.molseeq_notification("Bounding Boxes required for trace computation.")
+            return
 
-        try:
-
-            compute_traces = False
-
-            if self.localisation_dict != {}:
-                if "bounding_boxes" in self.localisation_dict.keys():
-                    if "localisations" in self.localisation_dict["bounding_boxes"].keys():
-                        n_bboxes = len(self.localisation_dict["bounding_boxes"]["localisations"])
-
-                        if n_bboxes > 0:
-                            compute_traces = True
-
-            if compute_traces == True:
-
-                self.molseeq_notification(f"Computing traces for {n_bboxes} bounding boxes.")
-
-                self.update_ui(init=True)
-
-                self.worker = Worker(self._molseeq_compute_traces)
-                self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.compute_traces_progressbar))
-                self.worker.signals.finished.connect(self._molseeq_compute_traces_finished)
-                self.worker.signals.error.connect(self._molseeq_compute_traces_finished)
-                self.threadpool.start(self.worker)
-
-            else:
-                self.molseeq_notification("Bounding Boxes required for trace computation.")
-
-
-        except:
-            self.update_ui()
-            self.restore_shared_images()
-            print(traceback.format_exc())
+        settings = (
+            int(self.gui.traces_spot_size.currentText()),
+            self.gui.traces_spot_shape.currentText(),
+            int(self.gui.traces_background_buffer.currentText()),
+            int(self.gui.traces_background_width.currentText()),
+            self.gui.compute_global_background.isChecked(),
+            self.gui.compute_with_picasso.isChecked(),
+        )
+        self.molseeq_notification(f"Computing traces for {len(locs)} bounding boxes.")
+        self.update_ui(init=True)
+        self.worker = Worker(self._molseeq_compute_traces, settings, locs.copy(), boxes["box_size"])
+        self.worker.signals.progress.connect(self.gui.compute_traces_progressbar.setValue)
+        self.worker.signals.result.connect(
+            partial(
+                self._publish_trace_metrics,
+                revision=self.session.revision,
+                site_snapshot=self.bounding_box_token(),
+            )
+        )
+        self.worker.signals.finished.connect(self._molseeq_compute_traces_finished)
+        self.worker.signals.error.connect(lambda error: self.molseeq_notification(str(error[1])))
+        self.threadpool.start(self.worker)
 
     def visualise_background_masks(self):
 

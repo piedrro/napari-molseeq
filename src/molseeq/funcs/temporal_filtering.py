@@ -6,6 +6,22 @@ import concurrent.futures
 import multiprocessing
 import time
 from functools import partial
+from importlib.util import find_spec
+
+
+def _filter_sources(sources, size, method, stop_event, progress_callback):
+    from molcore.temporal import rolling_filter
+
+    results = {}
+    for index, (key, source) in enumerate(sources.items()):
+        filtered = rolling_filter(
+            source, size, method=method, cancel_event=stop_event,
+            progress=lambda update: progress_callback.emit(
+                int((index + update.percent / 100) * 100 / len(sources))
+            ),
+        )
+        results[key] = filtered.array
+    return results
 
 def temporal_filtering(dat):
 
@@ -225,6 +241,10 @@ class _utils_temporal_filtering:
 
             self.update_ui(init=True)
 
+            if find_spec("molcore.temporal") is not None:
+                self._start_core_filter()
+                return
+
             self.worker = Worker(self._molseeq_temporal_filtering)
             self.worker.signals.progress.connect(partial(self.molseeq_progress, progress_bar=self.gui.filtering_progressbar))
             self.worker.signals.finished.connect(self._molseeq_temporal_filtering_finished)
@@ -235,6 +255,32 @@ class _utils_temporal_filtering:
             self.update_ui()
             print(traceback.format_exc())
             pass
+
+    def _start_core_filter(self):
+        name = self.gui.filtering_datasets.currentText()
+        selection = self.gui.filtering_channels.currentText()
+        sources = {
+            (dataset, channel): self.session.working_source(dataset, channel)
+            for dataset in self.session.images
+            if name in ("All Datasets", dataset)
+            for channel in self.session.images[dataset]
+            if selection == "All Channels" or selection.lower() == channel
+            if len(self.session.channel(dataset, channel))
+        }
+        size = int(self.gui.filtering_filter_size.currentText())
+        method = "mean" if "mean" in self.gui.filtering_mode.currentText().lower() else "median"
+        self.worker = Worker(_filter_sources, sources, size, method, self.stop_event)
+        self.worker.signals.progress.connect(self.gui.filtering_progressbar.setValue)
+        self.worker.signals.result.connect(partial(
+            self._publish_filtered_images, revision=self.session.revision
+        ))
+        self.worker.signals.error.connect(lambda error: self.molseeq_notification(str(error[1])))
+        self.worker.signals.finished.connect(self._molseeq_temporal_filtering_finished)
+        self.threadpool.start(self.worker)
+
+    def _publish_filtered_images(self, images, revision):
+        if not self.stop_event.is_set() and self.session.revision == revision:
+            self.session.replace_working_images(images)
 
     def _molseeq_temporal_filtering_finished(self):
 

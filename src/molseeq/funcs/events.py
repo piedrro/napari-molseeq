@@ -76,20 +76,8 @@ class _events_utils:
 
 
     def stop_worker(self, viewer=None):
-
-        if self.stop_event is not None:
+        if self.multiprocessing_active:
             self.stop_event.set()
-
-        while self.multiprocessing_active is True:
-            time.sleep(0.1)
-
-        if self.stop_event is not None:
-            self.stop_event.clear()
-
-        if self.worker is not None:
-            self.worker.stop()
-
-        self.update_ui()
 
 
     def increment_active_dataset(self, viewer=None, key=None):
@@ -707,8 +695,7 @@ class _events_utils:
                 if self.verbose:
                     print("Deleting dataset {dataset_name}")
 
-                self.dataset_dict.pop(dataset_name)
-                self.localisation_dict["localisations"].pop(dataset_name)
+                self.session.delete(dataset_name)
 
                 if hasattr(self, "traces_dict"):
                     if dataset_name in self.traces_dict.keys():
@@ -745,11 +732,8 @@ class _events_utils:
                     if self.verbose:
                         print("Updating dataset name from {old_name} to {new_name}")
 
-                    dataset_data = self.dataset_dict.pop(old_name)
-                    self.dataset_dict[new_name] = dataset_data
+                    self.session.rename(old_name, new_name)
 
-                    localisation_data = self.localisation_dict["localisations"].pop(old_name)
-                    self.localisation_dict["localisations"][new_name] = localisation_data
 
                     if hasattr(self, "traces_dict"):
                         if old_name in self.traces_dict.keys():

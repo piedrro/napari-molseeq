@@ -1,11 +1,42 @@
+from concurrent.futures import CancelledError
+from contextlib import contextmanager
+
 import numpy as np
 import traceback
 import tifffile
 import os
-import psutil
+from molcore.files import atomic_files
 from qtpy.QtWidgets import QFileDialog
 from molseeq.funcs.utils_compute import Worker
-from functools import partial
+
+def write_image_jobs(jobs, stop_event, progress_callback):
+    paths = [path for path, *_ in jobs]
+    total = sum(shape[0] for _, shape, _, _ in jobs)
+    if not paths or not total:
+        return
+
+    def check():
+        if stop_event.is_set():
+            raise CancelledError("Image export cancelled")
+
+    @contextmanager
+    def publish_guard():
+        check()
+        yield
+
+    done = 0
+    with atomic_files(paths, publish_guard=publish_guard) as staged_paths:
+        for (_, shape, dtype, frames), staged in zip(jobs, staged_paths, strict=True):
+            size = int(np.prod(shape)) * dtype.itemsize
+            with tifffile.TiffWriter(staged, bigtiff=size >= 2**32) as writer:
+                for frame in frames:
+                    check()
+                    writer.write(frame, photometric="minisblack", contiguous=True, metadata=None)
+                    done += 1
+                    progress_callback.emit(done * 100 // total)
+        if done != total:
+            raise ValueError("Image source ended before the expected frame count")
+
 
 class _export_images_utils:
 
@@ -55,19 +86,6 @@ class _export_images_utils:
 
             self.gui.export_channel.clear()
             self.gui.export_channel.addItems(export_channel_list)
-
-    def get_free_RAM(self):
-
-            try:
-
-                memory_info = psutil.virtual_memory()
-                available_memory = memory_info.available
-
-                return available_memory
-
-            except:
-                print(traceback.format_exc())
-                pass
 
     def get_export_path(self,dialog=False):
 
@@ -226,288 +244,36 @@ class _export_images_utils:
 
         return export_jobs, total_frames
 
-    def export_data_finished(self):
-
-        self.update_ui()
-
-
     def export_data(self):
-
+        if not self.session.images:
+            return
         try:
-
-            if self.dataset_dict != {}:
-
-                export_jobs, total_frames = self.get_export_jobs()
-
-                progress_dict = {}
-
-                self.molseeq_notification(f"Exporting image data...")
-
-                for job_index, export_jobs in enumerate(export_jobs):
-
-                    if job_index not in progress_dict.keys():
-                        progress_dict[job_index] = 0
-
-                    dataset_name = export_jobs["dataset_name"]
-                    export_channel = export_jobs["export_channel"]
-                    export_path = export_jobs["export_path"]
-
-                    self.update_ui(init=True)
-
-                    def export_progress(progress, job_index=None):
-                        progress_dict[job_index] = progress
-                        total_progress = int(np.sum(list(progress_dict.values()))/len(progress_dict))
-                        self.molseeq_progress(total_progress, self.gui.export_progressbar)
-
-                    if export_channel.lower() == "alex":
-                        self.worker = Worker(self.export_alex_data,
-                            dataset_name=dataset_name,
-                            export_path=export_path)
-                        self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
-                        self.worker.signals.finished.connect(self.export_data_finished)
-                        self.worker.signals.error.connect(self.update_ui)
-                        self.threadpool.start(self.worker)
-
-                    elif export_channel.lower() == "fret":
-                        self.worker = Worker(self.export_fret_data,
-                            dataset_name=dataset_name,
-                            export_path=export_path)
-                        self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
-                        self.worker.signals.finished.connect(self.export_data_finished)
-                        self.worker.signals.error.connect(self.update_ui)
-                        self.threadpool.start(self.worker)
-
-                    elif export_channel.lower() == "single channel":
-                        self.worker = Worker(self.export_channel_data,
-                            dataset_name=dataset_name,
-                            export_channel="Data",
-                            export_path=export_path)
-                        self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
-                        self.worker.signals.finished.connect(self.export_data_finished)
-                        self.worker.signals.error.connect(self.update_ui)
-                        self.threadpool.start(self.worker)
-
-                    else:
-                        self.worker = Worker(self.export_channel_data,
-                            dataset_name=dataset_name,
-                            export_channel=export_channel,
-                            export_path=export_path)
-                        self.worker.signals.progress.connect(partial(export_progress, job_index=job_index))
-                        self.worker.signals.finished.connect(self.export_data_finished)
-                        self.worker.signals.error.connect(self.update_ui)
-                        self.threadpool.start(self.worker)
-
-        except:
-            print(traceback.format_exc())
-            pass
-
-    def export_channel_data(self, progress_callback = None, dataset_name="", export_channel="", export_path=""):
-
-        try:
-
-            channel_dict = self.dataset_dict[dataset_name][export_channel.lower()]
-
-            image = channel_dict["data"]
-
-            tifffile.imwrite(export_path, image)
-
-            self.molseeq_notification(f"Exported {export_channel} data to {export_path}")
-
-        except:
-            print(traceback.format_exc())
-            pass
-
-    def export_fret_data(self, progress_callback = None, dataset_name="", export_path=""):
-
-        try:
-
-            dataset_dict = self.dataset_dict[dataset_name]
-
-            image_shapes = [channel_data["data"].shape for channel_name, channel_data in dataset_dict.items()]
-            image_disk_sizes = [abs(int(channel_data["data"].nbytes)) for channel_name, channel_data in dataset_dict.items()]
-
-            export_dir = os.path.dirname(export_path)
-
-            if export_path != "" and os.path.isdir(export_dir):
-
-                image_disk_size = 0
-                for size in image_disk_sizes:
-                    image_disk_size += size
-
-                free_RAM = self.get_free_RAM()
-
-                if free_RAM > image_disk_size:
-                    disk_export = False
+            requests, _ = self.get_export_jobs()
+            snapshot = self.session.image_snapshot()
+            jobs = []
+            for request in requests:
+                name = request["dataset_name"]
+                channel = request["export_channel"].lower()
+                path = request["export_path"]
+                if channel in ("fret", "alex"):
+                    component = "dd" if channel == "alex" else "donor"
+                    view = snapshot.channel(name, component)
+                    count = len(view)
+                    if channel == "alex":
+                        count += len(snapshot.channel(name, "aa"))
+                    shape = (count, view.shape[1], view.shape[2] * 2)
+                    jobs.append((path, shape, view.dtype, snapshot.camera_frames(name, channel)))
                 else:
-                    disk_export = True
-
-                n_frames = image_shapes[0][0]
-                height = image_shapes[0][1]
-                width = image_shapes[0][2]
-
-                export_shape = (n_frames,height,width*2)
-
-                if disk_export == True:
-                    disk_array_path = 'mmapped_array.dat'
-                    export_array = np.memmap(disk_array_path, dtype='uint16', mode='w+', shape=export_shape)
-                else:
-                    disk_array_path = None
-                    export_array = np.zeros(export_shape, dtype="uint16")
-
-                iter = 0
-
-                n_frames = n_frames*len(dataset_dict.keys())
-
-                for channel_name, channel_data in dataset_dict.items():
-
-                    channel_layout = channel_data["channel_layout"]
-                    alex_first_frame = channel_data["alex_first_frame"]
-                    channel_ref = channel_data["channel_ref"]
-
-                    for frame_index in range(len(channel_data["data"])):
-
-                        frame = channel_data["data"][frame_index]
-
-                        left_image = False
-                        if channel_layout == "Donor-Acceptor":
-                            if channel_ref[-1] == "d":
-                                left_image = True
-                        else:
-                            if channel_ref[-1] == "a":
-                                left_image = True
-
-                        if left_image == True:
-                            export_array[frame_index][0:height,0:width] = frame
-                        else:
-                            export_array[frame_index][0:height,width:width*2] = frame
-
-                        iter += 1
-
-                        if progress_callback != None:
-                            progress = int(iter/n_frames*100)
-                            progress_callback.emit(progress)
-
-                if disk_export:
-                    # Make sure to flush changes to disk
-                    export_array.flush()
-
-                    with tifffile.TiffWriter(export_path) as tiff:
-                        for idx in range(export_array.shape[0]):
-                            tiff.write(export_array[idx])
-
-                    if os.path.exists(disk_array_path):
-                        os.remove(disk_array_path)
-
-                else:
-                    tifffile.imwrite(export_path, export_array)
-                    del export_array
-
-                print(f"Exported FRET data to {export_path}")
-
-        except:
-            pass
-
-
-    def export_alex_data(self, progress_callback=None, dataset_name = "", export_path = ""):
-
-        try:
-
-            dataset_dict = self.dataset_dict[dataset_name]
-
-            image_shapes = [channel_data["data"].shape for channel_name, channel_data in dataset_dict.items()]
-            image_disk_sizes = [abs(int(channel_data["data"].nbytes)) for channel_name, channel_data in dataset_dict.items()]
-
-            export_dir = os.path.dirname(export_path)
-
-            if export_path != "" and os.path.isdir(export_dir):
-
-                print("Exporting ALEX data")
-
-                image_disk_size = 0
-                for size in image_disk_sizes:
-                    image_disk_size += size
-
-                free_RAM = self.get_free_RAM()
-
-                if free_RAM > image_disk_size:
-                    disk_export = False
-                else:
-                    disk_export = True
-
-                n_frames = image_shapes[0][0]
-                height = image_shapes[0][1]
-                width = image_shapes[0][2]
-
-                export_shape = (n_frames*2,height,width*2)
-
-                if disk_export == True:
-                    disk_array_path = 'mmapped_array.dat'
-                    export_array = np.memmap(disk_array_path, dtype='uint16', mode='w+', shape=export_shape)
-                else:
-                    disk_array_path = None
-                    export_array = np.zeros(export_shape, dtype="uint16")
-
-                iter = 0
-
-                n_frames = n_frames*len(dataset_dict.keys())
-
-                for channel_name, channel_data in dataset_dict.items():
-
-                    channel_layout = channel_data["channel_layout"]
-                    alex_first_frame = channel_data["alex_first_frame"]
-                    channel_ref = channel_data["channel_ref"]
-
-                    for frame_index in range(len(channel_data["data"])):
-
-                        frame = channel_data["data"][frame_index]
-
-                        left_image = False
-                        if channel_layout.lower() == "donor-acceptor":
-                            if channel_ref[-1] == "d":
-                                left_image = True
-                        else:
-                            if channel_ref[-1] == "a":
-                                left_image = True
-
-                        if alex_first_frame == "Donor":
-                            if channel_ref[0] == "d":
-                                mapped_frame_index = frame_index * 2
-                            else:
-                                mapped_frame_index = frame_index * 2 + 1
-                        else:
-                            if channel_ref[0] == "a":
-                                mapped_frame_index = frame_index * 2
-                            else:
-                                mapped_frame_index = frame_index * 2 + 1
-
-                        if left_image == True:
-                            export_array[mapped_frame_index][0:height,0:width] = frame
-                        else:
-                            export_array[mapped_frame_index][0:height,width:width*2] = frame
-
-                        iter += 1
-
-                        if progress_callback != None:
-                            progress = int(iter/n_frames*100)
-                            progress_callback.emit(progress)
-
-                if disk_export:
-                    # Make sure to flush changes to disk
-                    export_array.flush()
-
-                    with tifffile.TiffWriter(export_path) as tiff:
-                        for idx in range(export_array.shape[0]):
-                            tiff.write(export_array[idx])
-
-                    if os.path.exists(disk_array_path):
-                        os.remove(disk_array_path)
-
-                else:
-                    tifffile.imwrite(export_path, export_array)
-                    del export_array
-
-                print(f"Exported ALEX data to {export_path}")
-
-        except:
-            print(traceback.format_exc())
-            return None
+                    source = snapshot.working_source(name, "data" if channel == "single channel" else channel)
+                    jobs.append((path, source.shape, source.dtype, iter(source)))
+            if not jobs:
+                return
+            self.update_ui(init=True)
+            self.worker = Worker(write_image_jobs, jobs, self.stop_event)
+            self.worker.signals.progress.connect(self.gui.export_progressbar.setValue)
+            self.worker.signals.error.connect(lambda error: self.molseeq_notification(str(error[1])))
+            self.worker.signals.finished.connect(self.update_ui)
+            self.threadpool.start(self.worker)
+        except (ValueError, KeyError) as error:
+            self.molseeq_notification(str(error))
+            self.update_ui()

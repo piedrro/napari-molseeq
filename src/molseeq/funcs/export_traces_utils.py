@@ -2,6 +2,7 @@ import traceback
 import os
 from qtpy.QtWidgets import QFileDialog
 from molseeq.funcs.utils_compute import Worker
+from molseeq.trace_views import expand_export_trace, stack_export_traces
 from functools import partial
 import numpy as np
 import json
@@ -85,7 +86,7 @@ class _export_traces_utils:
 
             export_dict = self.populate_export_dict()
 
-            export_dataset = np.stack(export_dict["data"], axis=0).T
+            export_dataset = stack_export_traces(export_dict["data"]).T
 
             export_dataset = pd.DataFrame(export_dataset)
 
@@ -103,7 +104,7 @@ class _export_traces_utils:
 
             export_dict = self.populate_export_dict()
 
-            export_dataset = np.stack(export_dict["data"], axis=0).T
+            export_dataset = stack_export_traces(export_dict["data"]).T
 
             export_dataset = pd.DataFrame(export_dataset)
 
@@ -121,7 +122,7 @@ class _export_traces_utils:
 
             export_dict = self.populate_export_dict()
 
-            export_dataset = np.stack(export_dict["data"], axis=0).T
+            export_dataset = stack_export_traces(export_dict["data"]).T
 
             export_dataset = pd.DataFrame(export_dataset)
 
@@ -141,7 +142,7 @@ class _export_traces_utils:
         try:
             export_dict = self.populate_export_dict()
 
-            export_dataset = np.stack(export_dict["data"], axis=0).T
+            export_dataset = stack_export_traces(export_dict["data"]).T
 
             export_dataset = pd.DataFrame(export_dataset)
 
@@ -161,7 +162,7 @@ class _export_traces_utils:
 
             export_dict = self.populate_export_dict()
 
-            export_data = np.stack(export_dict["data"], axis=0).T
+            export_data = stack_export_traces(export_dict["data"]).T
 
             export_data = pd.DataFrame(export_data)
 
@@ -486,7 +487,7 @@ class _export_traces_utils:
                                 background = np.array(trace_dict[background_metric_key].copy())
                                 data = data - background
 
-                            data = data.astype(float).tolist()
+                            data = expand_export_trace(data, trace_dict).tolist()
 
                             dataset_name_list.append(dataset)
                             channel_name_list.append(channel_name)
@@ -625,7 +626,7 @@ class _export_traces_utils:
         try:
             export_dict = self.populate_export_dict()
 
-            export_data = np.stack(export_dict["data"], axis=0).T
+            export_data = stack_export_traces(export_dict["data"]).T
 
             export_indices = np.array(export_dict["index"]).astype(int)
             export_indices += 1
@@ -704,12 +705,15 @@ class _export_traces_utils:
                                 background = np.array(trace_dict[background_metric_key].copy())
                                 data = data - background
 
-                            smd_values.append(data)
+                            smd_values.append(expand_export_trace(data, trace_dict))
 
-                    smd_index = np.expand_dims(np.arange(1, len(smd_values[0])+1), -1).astype(float).tolist()
-                    smd_values = np.stack(smd_values, axis=1).tolist()
-
-                    lowerbound = np.min(smd_values)
+                    if not smd_values:
+                        continue
+                    smd_values = stack_export_traces(smd_values, axis=1)
+                    smd_index = np.arange(1, len(smd_values) + 1, dtype=float)[:, None].tolist()
+                    finite = smd_values[np.isfinite(smd_values)]
+                    lowerbound = float(finite.min()) if len(finite) else np.nan
+                    smd_values = smd_values.tolist()
 
                     smd_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
                     smd_attr = {
@@ -720,7 +724,7 @@ class _export_traces_utils:
                         "group": "group 1",
                         "restart":0,
                         "crop_min": 0,
-                        "crop_max": len(data),
+                        "crop_max": len(smd_values),
                     }
 
                     smd_dict["data"]["attr"].append(smd_attr)

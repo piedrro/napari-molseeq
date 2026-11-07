@@ -1,6 +1,4 @@
-from qtpy.QtCore import QObject
-from qtpy.QtCore import QRunnable
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from qtpy.QtCore import QObject, QRunnable, Signal, Slot
 import traceback
 import sys
 from multiprocessing import Process, shared_memory, Pool
@@ -41,7 +39,7 @@ class _utils_compute:
                             image = channel_dict["data"]
                             n_frames = 1
                         else:
-                            image = channel_dict.pop("data")
+                            image = channel_dict["data"]
                             n_frames = image.shape[0]
                             n_chunks = int(np.ceil(n_frames / chunk_size))
 
@@ -190,7 +188,7 @@ class _utils_compute:
 
                     channel_dict = self.dataset_dict[dataset_name][channel_name]
 
-                    image = channel_dict.pop("data")
+                    image = channel_dict["data"]
 
                     shared_mem = shared_memory.SharedMemory(create=True, size=image.nbytes)
                     shared_memory_name = shared_mem.name
@@ -211,23 +209,27 @@ class _utils_compute:
 
         return self.shared_images
 
-    def restore_shared_images(self):
+    def restore_shared_images(self, *, publish=True):
 
         if self.verbose:
             print("Restoring shared images")
 
         if hasattr(self, "shared_images"):
 
-            for dat in self.shared_images:
+            shared_images, self.shared_images = self.shared_images, []
+            for dat in shared_images:
                 try:
                     shared_mem = dat["shared_mem"]
 
-                    np_array = np.ndarray(dat["shape"], dtype=dat["dtype"], buffer=shared_mem.buf)
-
-                    self.dataset_dict[dat["dataset"]][dat["channel"]]["data"] = np_array.copy()
-
-                    shared_mem.close()
-                    shared_mem.unlink()
+                    try:
+                        if publish:
+                            np_array = np.ndarray(
+                                dat["shape"], dtype=dat["dtype"], buffer=shared_mem.buf
+                            )
+                            self.dataset_dict[dat["dataset"]][dat["channel"]]["data"] = np_array
+                    finally:
+                        shared_mem.close()
+                        shared_mem.unlink()
 
                 except:
                     print(traceback.format_exc())
@@ -290,7 +292,7 @@ class _utils_compute:
 
                     else:
 
-                        image = channel_dict.pop("data")
+                        image = channel_dict["data"]
 
                         image_dict = {"dataset": dataset_name,
                                       "channel": channel_name,
@@ -412,10 +414,10 @@ class WorkerSignals(QObject):
 
     """
 
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
-    progress = pyqtSignal(int)
+    finished = Signal()
+    error = Signal(tuple)
+    result = Signal(object)
+    progress = Signal(int)
 
 class Worker(QRunnable):
     """
@@ -445,7 +447,7 @@ class Worker(QRunnable):
 
         self._is_stopped = False  # Stop flag
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         """
         Initialise the runner function with passed args, kwargs.

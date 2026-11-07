@@ -5,12 +5,12 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-GapSeq2.svg?color=green)](https://python.org)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-GapSeq2)](https://napari-hub.org/plugins/napari-molseeq)
 
-A **Napari** plugin for extracting single molecule sequences from single/multi-channel SMLM microscopy data. 
+A **Napari** plugin for extracting single molecule sequences from single/multi-channel SMLM microscopy data.
 
 Compatible with both ALEX and FRET data. All functions are parallelised/GPU accelerated where possible to increase performance.
 Multiple datasets can be loaded and processed in parallel.
 
-napari-molseeq uses **Picasso** (picassosr) as a backend and includes features for **aligning** image channels/datasets, **undrifting** images, **detecting/fitting** localisations and extracting **traces**, and supports both **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
+napari-molseeq uses **MolCore** to manage recordings, localisations and photon sequences. It includes channel and dataset alignment, drift correction, **Picasso** localisation and trace extraction for **ALEX** and **FRET** data. Traces can be exported in different formats for downstream analysis.
 
 napari-molseeq traces can be analysed with TraceAnalyser: https://github.com/piedrro/TraceAnalyser
 
@@ -22,24 +22,32 @@ This was built by Dr Piers Turner from the Kapanidis Lab, University of Oxford.
 
 ## Installation
 
-You can install `napari-molseeq` via [pip]:
+This project uses Python 3.14 and [uv](https://docs.astral.sh/uv/getting-started/installation/) to manage Python, dependencies, and the development environment.
 
-    pip install napari-molseeq
+From a checkout of this repository, run:
 
-You can install `napari-molseeq` via [GitHub]:
+```shell
+uv sync --locked
+uv run napari
+```
 
-    conda create –-name napari-molseeq python==3.9
-    conda activate napari-molseeq
-    conda install -c anaconda git
-    conda update --all
+uv downloads Python 3.14 when needed and installs the plugin in editable mode in `.venv`.
+In napari, open the molSEEQ widget from the Plugins menu.
 
-    pip install git+https://github.com/piedrro/napari-molseeq.git
+For a runtime environment without development tools, use `uv sync --locked --no-dev`.
 
 ## Contributing
 
-Contributions are very welcome. Tests can be run with [tox], please ensure
-the coverage at least stays the same before you submit a pull request.
+```shell
+uv sync --locked
+uv run pytest
+```
 
+Add runtime dependencies with `uv add PACKAGE` and development tools with
+`uv add --dev PACKAGE`. Commit both `pyproject.toml` and `uv.lock` when dependencies
+change. Use `uv lock --upgrade` to update locked versions deliberately.
+
+See [MAINTENANCE.md](MAINTENANCE.md) for interactive development, UI editing, and releases.
 ## License
 
 Distributed under the terms of the [MIT] license,

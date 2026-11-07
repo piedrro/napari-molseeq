@@ -27,6 +27,8 @@ from molseeq.funcs.cluster_utils import _cluster_utils
 from molseeq.funcs.simple_analysis_utils import _simple_analysis_utils
 from molseeq.funcs.filter_utils import _filter_utils
 from molseeq.funcs.tracking_utils import _tracking_utils
+from molseeq.session import ProjectSession
+from molseeq.trace_views import trace_view
 
 import napari
 
@@ -68,11 +70,14 @@ class QWidget(QWidget, gui,
         self.register_events()
 
         #initialise variables
-        self.dataset_dict = {}
-        self.traces_dict = {}
+        self.session = ProjectSession()
+        self.dataset_dict = self.session.images
         self.plot_dict = {}
         self.contrast_dict = {}
-        self.localisation_dict = {"bounding_boxes": {}, "localisations": {}}
+        self.localisation_dict = {
+            "bounding_boxes": {}, "localisations": self.session.localisations
+        }
+        self.traces_dict = {}
         self.metric_dict = {"spot_mean": "Mean", "spot_median": "Median", "spot_sum": "Sum", "spot_max": "Maximum",
                             "spot_std": "std", "spot_photons": "Picasso Photons", }
 
@@ -106,6 +111,32 @@ class QWidget(QWidget, gui,
 
         from molseeq.__init__ import __version__ as version
         print(f"napari-molseeq version: {version}")
+
+    def bounding_box_token(self):
+        boxes = self.localisation_dict["bounding_boxes"]
+        rows = boxes.get("localisations")
+        return (
+            None if rows is None else np.asarray(rows).tobytes(),
+            boxes.get("box_size"), boxes.get("fitted"),
+        )
+
+    @property
+    def traces_dict(self):
+        sites = self.bounding_box_token()
+        if self._trace_sites != sites:
+            self.session.invalidate_traces()
+            self._trace_sites = sites
+        if self._trace_revision != self.session.trace_revision:
+            self._traces = trace_view(self.session)
+            self._trace_revision = self.session.trace_revision
+            self.compute_photo_bleaching()
+        return self._traces
+
+    @traces_dict.setter
+    def traces_dict(self, traces):
+        self._traces = traces
+        self._trace_sites = self.bounding_box_token()
+        self._trace_revision = self.session.trace_revision
 
     def register_events(self):
 
@@ -566,5 +597,7 @@ class QWidget(QWidget, gui,
 
         return loc_centres
 
-    def closeEvent(self):
-        print("Closing molSEEQ")
+    def closeEvent(self, event):
+        self.stop_event.set()
+        self.session.experiment.close()
+        super().closeEvent(event)

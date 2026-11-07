@@ -17,31 +17,35 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Image Processing",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 dependencies = [
-    "napari[all]==0.5.0",
+    "napari[pyqt5]>=0.9.2",
     "numpy",
     "magicgui",
     "qtpy",
+    "molcore[localisation,tracking,clustering] @ git+https://github.com/piedrro/molcore.git@8a455b62538640351aa752eb16e7a9c0beef6d13",
     "scipy",
     "pyqtgraph",
-    "picassosr==0.7.3",
+    "picassosr>=0.7.3",
     "pandas",
     "matplotlib >= 3.7.0",
-    "scipy",
     "opencv-python",
     "tqdm",
     "originpro",
-    "pyqt5-tools",
     "trackpy",
     "shapely",
     "astropy",
     "mat4py",
+    "h5py",
+    "numba",
+    "pillow",
+    "psutil",
+    "pyyaml",
+    "scikit-learn",
+    "tifffile",
 ]
 
 [project.optional-dependencies]
@@ -55,7 +59,7 @@ testing = [
 ]
 
 [project.entry-points."napari.manifest"]
-napari-moltrack = "molseeq:napari.yaml"
+napari-molseeq = "molseeq:napari.yaml"
 
 [project.urls]
 "Bug Tracker" = "https://github.com/piedrro/napari-molseeq/issues"
@@ -81,9 +85,10 @@ where = ["src"]
 
 [tool.black]
 line-length = 79
-target-version = ['py39', 'py310', 'py311']
+target-version = ['py314']
 
 [tool.ruff]
+target-version = "py314"
 line-length = 79
 lint.select = [
     "E", "F", "W", #flake8
@@ -127,4 +132,11 @@ exclude = [
 ]
 
 
-
+[dependency-groups]
+dev = [
+    "ipython",
+    "pytest",
+    "pytest-cov",
+    "pytest-qt",
+    "twine",
+]

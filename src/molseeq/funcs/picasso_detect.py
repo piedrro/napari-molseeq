@@ -4,12 +4,15 @@ import traceback
 import pandas as pd
 
 from molseeq.funcs.utils_compute import Worker
+from molseeq.model_processing import LocalisationJob, SUPPORTS_WORKING_LOCALISATION, localise_channels
+from molcore import ArraySource, LocalisationSettings
+from numpy.lib.recfunctions import stack_arrays
 import time
 import os
 from multiprocessing import shared_memory
 from picasso import localize
-from picasso.localize import get_spots, identify_frame
-from picasso.gaussmle import gaussmle
+from picasso.localize import get_spots as _get_spots
+from picasso.gaussmle import gaussmle, locs_from_fits as _mle_locs_from_fits
 from picasso import gausslq
 from picasso import postprocess
 from functools import partial
@@ -27,6 +30,18 @@ import pandas as pd
 
 
 
+
+
+def identify_frame(image, minimum_gradient, box_size, frame, *, roi=None):
+    y, x, gradient = localize.identify_in_frame(image, minimum_gradient, box_size, roi)
+    return np.rec.fromarrays(
+        (np.full(len(x), frame, dtype=np.uint32), x, y, gradient),
+        names="frame,x,y,net_gradient",
+    )
+
+
+def get_spots(movie, localizations, box_size, camera):
+    return _get_spots(movie, pd.DataFrame.from_records(localizations), box_size, camera)
 
 
 def remove_overlapping_locs(locs, box_size):
@@ -259,7 +274,10 @@ def picasso_detect(dat, progress_list):
                     spot_data = get_spots(image, locs, box_size, camera_info)
 
                     theta, CRLBs, likelihoods, iterations = gaussmle(spot_data, eps=0.001, max_it=1000, method="sigma")
-                    locs = localize.locs_from_fits(locs.copy(), theta, CRLBs, likelihoods, iterations, box_size)
+                    locs = _mle_locs_from_fits(
+                        pd.DataFrame.from_records(locs), theta, CRLBs, likelihoods,
+                        iterations, box_size
+                    ).to_records(index=False)
 
                     locs.frame = frame_index
 
@@ -433,7 +451,7 @@ class _picasso_detect_utils:
                             locs.insert(1, "channel", channel)
                             locs = locs.to_records(index=False)
 
-                        image = image_dict.pop("data")
+                        image = image_dict["data"]
 
                         camera_info = {"Baseline": 100.0, "Gain": 1, "Sensitivity": 1.0, "qe": 0.9, }
                         spot_data = get_spots(image, locs, box_size, camera_info)
@@ -824,6 +842,12 @@ class _picasso_detect_utils:
 
                     channel_list = [image_channel.lower()]
 
+                    if not gpu_fit and self._start_core_localisation(
+                        dataset_list, channel_list[0], int(min_net_gradient),
+                        frame_index, detect, fit,
+                    ):
+                        return
+
                     self.worker = Worker(self._picasso_wrapper,
                         detect=detect, fit=fit,
                         min_net_gradient=min_net_gradient,
@@ -844,6 +868,95 @@ class _picasso_detect_utils:
             print(traceback.format_exc())
 
             self.update_ui()
+
+    def _start_core_localisation(self, names, channel, threshold, frame, detect, fit):
+        mode = self.gui.picasso_detect_mode.currentText().lower()
+        box_size = int(self.gui.picasso_box_size.currentText())
+        settings = LocalisationSettings(min_net_gradient=threshold, box_size=box_size)
+        jobs = []
+        previous = {}
+        for name in names:
+            if channel not in self.session.images[name]:
+                continue
+            source = self.session.working_source(name, channel)
+            if isinstance(source, ArraySource) and not SUPPORTS_WORKING_LOCALISATION:
+                return False
+            entry, _, _ = self.get_loc_dict(name, channel, type=mode)
+            previous[name] = entry.get("localisations")
+            dataset = self.session.dataset(name).snapshot()
+            for view, offset in self.session.channel_parts(name, channel):
+                if not len(view) or (frame is not None and not offset <= frame < offset + len(view)):
+                    continue
+                seeds = None
+                if not detect:
+                    if previous[name] is None:
+                        continue
+                    seeds = previous[name]
+                    if mode == "bounding boxes" and frame is not None:
+                        seeds = seeds.copy()
+                        seeds.frame = frame
+                    seeds = seeds[(seeds.frame >= offset) & (seeds.frame < offset + len(view))]
+                    if frame is not None:
+                        seeds = seeds[seeds.frame == frame]
+                working = (
+                    ArraySource(source.array[offset:offset + len(view)])
+                    if isinstance(source, ArraySource) else None
+                )
+                jobs.append((name, LocalisationJob(dataset, view, offset, frame, working, seeds)))
+        if not jobs:
+            self._picasso_wrapper_finished()
+            return True
+
+        self.worker = Worker(
+            localise_channels, jobs, settings, detect=detect, fit=fit,
+            roi=self.generate_roi(),
+            remove_overlapping=self.gui.picasso_remove_overlapping.isChecked(),
+            cancel_event=self.stop_event,
+        )
+        self.worker.signals.progress.connect(self.gui.picasso_progressbar.setValue)
+        self.worker.signals.result.connect(partial(
+            self._publish_core_localisations, revision=self.session.revision,
+            channel=channel, mode=mode, frame=frame, fitted=fit, box_size=box_size,
+            previous=previous, sites=self.bounding_box_token(),
+        ))
+        self.worker.signals.error.connect(lambda error: self.molseeq_notification(str(error[1])))
+        self.worker.signals.finished.connect(self._picasso_wrapper_finished)
+        self.threadpool.start(self.worker)
+        return True
+
+    def _publish_core_localisations(
+        self, results, revision, channel, mode, frame, fitted, box_size, previous, sites
+    ):
+        if self.stop_event.is_set() or self.session.revision != revision:
+            return
+        if mode == "bounding boxes" and self.bounding_box_token() != sites:
+            return
+        entries = []
+        for name, rows in results.items():
+            if mode == "bounding boxes":
+                if len(rows):
+                    self.localisation_dict["bounding_boxes"] = {
+                        "localisations": rows, "fitted": fitted, "box_size": box_size,
+                    }
+                continue
+            old = previous[name]
+            if frame is not None and old is not None:
+                defaults = {
+                    key: np.nan for chunk in (old, rows)
+                    for key in chunk.dtype.names if chunk.dtype[key].kind == "f"
+                }
+                rows = stack_arrays(
+                    (old[old.frame != frame], rows), defaults=defaults,
+                    usemask=False, asrecarray=True, autoconvert=True,
+                )
+            entries.append((name, channel, {
+                "localisations": rows, "fitted": fitted, "box_size": box_size,
+            }))
+        if entries:
+            try:
+                self.session.publish_localisations(entries)
+            except ValueError as error:
+                self.molseeq_notification(str(error))
 
 
     def generate_roi(self):

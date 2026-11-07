@@ -1,4 +1,5 @@
-from sklearn.cluster import DBSCAN
+from molcore import ClusteringSettings
+from molcore.clustering import cluster_points
 import numpy as np
 import traceback
 from molseeq.funcs.utils_compute import Worker
@@ -70,25 +71,10 @@ class _cluster_utils:
 
             cluster_dataset = np.vstack((locs.x, locs.y)).T
 
-            # Applying DBSCAN
-            dbscan = DBSCAN(eps=eps, min_samples=min_samples, n_jobs=-1)
-            dbscan.fit(cluster_dataset)
-
-            # Extracting labels
-            labels = dbscan.labels_
-
-            # Finding unique clusters
-            n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-            unique_labels = set(labels)
-
-            # Filtering out noise (-1 label)
-            filtered_data = cluster_dataset[labels != -1]
-
-            # Corresponding labels after filtering out noise
-            filtered_labels = labels[labels != -1]
-
-            # Finding cluster centers
-            cluster_centers = np.array([filtered_data[filtered_labels == i].mean(axis=0) for i in range(n_clusters)])
+            _, centres = cluster_points(
+                cluster_dataset, settings=ClusteringSettings(radius=eps, min_samples=min_samples)
+            )
+            cluster_centers = np.column_stack((centres["x"], centres["y"]))
 
             if remove_overlapping:
                 cluster_centers = self.remove_overlapping_coords(cluster_centers,

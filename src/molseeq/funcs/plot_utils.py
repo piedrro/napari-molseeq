@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from qtpy.QtWidgets import QSlider
 from PyQt5.QtWidgets import QCheckBox
 import numpy as np
+from molseeq.trace_views import align_trace_samples
 import pyqtgraph as pg
 import traceback
 import copy
@@ -213,8 +214,10 @@ class _plot_utils:
 
             for trace_index in trace_indices:
 
-                donor = copy.deepcopy(dataset_dict["donor"][trace_index][metric_key])
-                acceptor = copy.deepcopy(dataset_dict["acceptor"][trace_index][metric_key])
+                donor_trace = dataset_dict["donor"][trace_index]
+                acceptor_trace = dataset_dict["acceptor"][trace_index]
+                donor = copy.deepcopy(donor_trace[metric_key])
+                acceptor = copy.deepcopy(acceptor_trace[metric_key])
 
                 if background_metric_key != None:
 
@@ -233,12 +236,15 @@ class _plot_utils:
                     donor = donor + global_min
                     acceptor = acceptor + global_min
 
+                acceptor = align_trace_samples(acceptor, acceptor_trace, donor_trace)
                 efficiency = acceptor / ((gamma_correction * donor) + acceptor)
 
                 if clip_data:
                     efficiency = np.clip(efficiency, 0, 1)
 
                 dataset_dict["fret_efficiency"][trace_index][metric_key] = efficiency
+                if "_export_frames" in donor_trace:
+                    dataset_dict["fret_efficiency"][trace_index]["_export_frames"] = donor_trace["_export_frames"]
 
                 if progress_callback is not None:
                     progress = int(100 * trace_index / n_traces)
@@ -265,8 +271,10 @@ class _plot_utils:
 
             for trace_index in range(n_traces):
 
-                dd = copy.deepcopy(dataset_dict["dd"][trace_index][metric_key])
-                da = copy.deepcopy(dataset_dict["da"][trace_index][metric_key])
+                dd_trace = dataset_dict["dd"][trace_index]
+                da_trace = dataset_dict["da"][trace_index]
+                dd = copy.deepcopy(dd_trace[metric_key])
+                da = copy.deepcopy(da_trace[metric_key])
 
                 if background_metric_key != None:
 
@@ -281,6 +289,7 @@ class _plot_utils:
                     da = da + max_value
                     dd = dd + max_value
 
+                da = align_trace_samples(da, da_trace, dd_trace)
                 efficiency = da / ((gamma_correction * dd) + da)
                 efficiency = np.array(efficiency)
 
@@ -288,6 +297,8 @@ class _plot_utils:
                     efficiency = np.clip(efficiency, 0, 1)
 
                 dataset_dict["alex_efficiency"][trace_index][metric_key] = efficiency
+                if "_export_frames" in dd_trace:
+                    dataset_dict["alex_efficiency"][trace_index]["_export_frames"] = dd_trace["_export_frames"]
 
                 if progress_callback is not None:
                     progress = int(100 * trace_index / n_traces)
