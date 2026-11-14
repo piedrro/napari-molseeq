@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from molcore import ArraySource
 
-from molseeq.funcs.export_images_utils import write_image_jobs
+from molseeq.ui.image_export import write_image_jobs
 
 
 def test_cancelled_image_batch_keeps_previous_files(tmp_path):

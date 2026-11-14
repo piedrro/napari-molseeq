@@ -1,0 +1,18 @@
+[project]
+name = "molseeq-windows-build"
+version = "0.0.0"
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    "napari-molseeq",
+    "pyinstaller==6.17.0",
+    "pyinstaller-hooks-contrib==2025.10",
+    "pytest",
+    "pytest-qt",
+]
+
+[tool.uv]
+package = false
+environments = ["sys_platform == 'win32' and platform_machine == 'AMD64'"]
+
+[tool.uv.sources]
+napari-molseeq = { path = "../.." }

@@ -1,28 +1,80 @@
 """Detached MolCore processing requests for the widget's CPU workflows."""
 
 from dataclasses import dataclass, replace
-from inspect import signature
 
 import numpy as np
-from molcore import CameraSettings, Dataset, LocalisationSettings
-from molcore import localisation
+from molcore import (
+    CameraSettings,
+    ExecutionContext,
+    LocalisationSettings,
+    PartitionSelection,
+    localisation,
+)
+from molcore.snapshots import DatasetSnapshot
 from molcore.types.acquisition import ChannelView
 from molcore.types.images import Source
 from scipy.spatial import cKDTree
 
-SUPPORTS_WORKING_LOCALISATION = (
-    "source" in signature(localisation.detect).parameters
-)
-
 
 @dataclass(frozen=True)
 class LocalisationJob:
-    dataset: Dataset
+    dataset: DatasetSnapshot
     view: ChannelView
     offset: int
     frame: int | None = None
     source: Source | None = None
     seeds: np.recarray | None = None
+
+
+def _fit_gpufit(job, columns, box_size, context):
+    from picasso.fitting.precision import localization_precision
+
+    from pygpufit import gpufit
+
+    view = job.view
+    source = job.source if job.source is not None else view
+    frames = view.channel_indices(columns["frame"])
+    x = np.rint(columns["x"]).astype(int)
+    y = np.rint(columns["y"]).astype(int)
+    half = box_size // 2
+    spots = np.empty((len(frames), box_size, box_size), dtype=np.float32)
+    for frame in np.unique(frames):
+        context.check_cancelled()
+        image = source[frame]
+        for i in np.flatnonzero(frames == frame):
+            spots[i] = image[y[i] - half:y[i] + half + 1, x[i] - half:x[i] + half + 1]
+    pixels = spots.reshape(len(frames), -1) - np.float32(100)
+    peak = pixels.argmax(axis=1)
+    background = pixels.min(axis=1)
+    initial = np.ones((len(frames), 6), dtype=np.float32)
+    initial[:, 0] = np.maximum(1, pixels.max(axis=1) - background)
+    initial[:, 1] = peak % box_size
+    initial[:, 2] = peak // box_size
+    initial[:, 5] = background
+    params, states, _, _, _ = gpufit.fit(
+        pixels, None, gpufit.ModelID.GAUSS_2D_ELLIPTIC, initial,
+        tolerance=1e-2, max_number_iterations=20,
+    )
+    context.check_cancelled()
+    keep = (states == 0) & np.all(np.isfinite(params), axis=1)
+    keep &= (params[:, 0] > 0) & np.all(params[:, 3:5] > 0, axis=1)
+    if not keep.any():
+        raise ValueError("No Gpufit localisation fits converged")
+    amplitude, dx, dy, sx, sy, bg = params[keep].T
+    photons = amplitude * (2 * np.pi * sx * sy)
+    return {
+        "frame": columns["frame"][keep],
+        "x": x[keep] + dx - half,
+        "y": y[keep] + dy - half,
+        "photons": photons,
+        "sx": sx,
+        "sy": sy,
+        "bg": bg,
+        "lpx": localization_precision(photons, sx, sy, bg, em=False),
+        "lpy": localization_precision(photons, sy, sx, bg, em=False),
+        "ellipticity": 1 - np.minimum(sx, sy) / np.maximum(sx, sy),
+        "net_gradient": columns["net_gradient"][keep],
+    }
 
 
 def _select_candidates(columns, settings, roi, remove_overlapping):
@@ -49,6 +101,7 @@ def localise_channel(
     *,
     detect: bool,
     fit: bool,
+    gpu_fit: bool = False,
     roi=None,
     remove_overlapping=False,
     cancel_event=None,
@@ -59,13 +112,18 @@ def localise_channel(
     if job.frame is not None:
         camera_frame = int(view.source_frames[job.frame - job.offset])
         frame_range = (camera_frame, camera_frame + 1)
-    options = {"cancel_event": cancel_event}
+    snapshot = (
+        job.dataset.snapshot()
+        if hasattr(job.dataset, "snapshot")
+        else job.dataset
+    )
+    context = ExecutionContext(cancel_event=cancel_event)
+    options = {"context": context}
     if job.source is not None:
         options["source"] = job.source
     found = localisation.detect(
-        job.dataset,
-        view.acquisition.id,
-        view.name,
+        snapshot,
+        PartitionSelection(view.acquisition.id, view.name),
         settings=settings,
         frame_range=frame_range if detect else (0, 0),
         **options,
@@ -89,6 +147,8 @@ def localise_channel(
     if fit and len(columns["frame"]):
         half = settings.box_size // 2
         x, y = columns["x"], columns["y"]
+        if gpu_fit:
+            x, y = np.rint(x), np.rint(y)
         valid = (
             (x >= half)
             & (x < view.shape[2] - half)
@@ -97,21 +157,17 @@ def localise_channel(
         )
         if not valid.any():
             raise ValueError("No localisation has a complete fitting box")
-        found = replace(
-            found,
-            columns={name: values[valid] for name, values in columns.items()},
-            frame_range=frame_range,
-        )
-        fitted = localisation.fit(
-            job.dataset,
-            found,
-            camera=CameraSettings(100, 1, 1),
-            apply=False,
-            **options,
-        )
-        if fitted.failed_fits and not len(fitted.columns["frame"]):
-            raise ValueError("No localisation fits converged")
-        columns = dict(fitted.columns)
+        columns = {name: values[valid] for name, values in columns.items()}
+        if gpu_fit:
+            columns = _fit_gpufit(job, columns, settings.box_size, context)
+        else:
+            found = replace(found, columns=columns, frame_range=frame_range)
+            fitted = localisation.fit(
+                snapshot, found, camera=CameraSettings(100, 1, 1), **options,
+            )
+            if fitted.failed_fits and not len(fitted.columns["frame"]):
+                raise ValueError("No localisation fits converged")
+            columns = dict(fitted.columns)
     columns["frame"] = view.channel_indices(columns["frame"]) + job.offset
     return np.rec.fromarrays(tuple(columns.values()), names=tuple(columns))
 

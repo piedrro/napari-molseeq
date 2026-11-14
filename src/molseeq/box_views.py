@@ -4,13 +4,14 @@ from collections import defaultdict, deque
 from collections.abc import MutableMapping
 from copy import deepcopy
 from dataclasses import asdict
-from uuid import uuid4
 from datetime import datetime, timezone
+from uuid import uuid4
 
 import numpy as np
-from molcore import BoundingBox
+from molcore import BoundingBox, StaleResultError
 from molcore.staging import clone_experiment, experiment_state_token
-from molcore import StaleResultError
+
+from molseeq.model_metadata import mutable_metadata
 
 _KEY = "molseeq_bounding_boxes"
 
@@ -28,7 +29,7 @@ def _plain(value):
 
 
 def box_state(session):
-    state = deepcopy(session.experiment.metadata.get(_KEY, {}))
+    state = mutable_metadata(session.experiment.metadata.get(_KEY, {}))
     if session.experiment.datasets:
         reference = next(iter(session.experiment.datasets.values()))
         active = set(reference.bounding_boxes)
@@ -41,7 +42,7 @@ def box_state(session):
 
 
 def sync_box_definitions(experiment, *, refresh=False):
-    state = experiment.metadata.get(_KEY, {})
+    state = mutable_metadata(experiment.metadata.get(_KEY, {}))
     if refresh and experiment.datasets and state:
         # Existing native definitions are authoritative when another round is added.
         reference = next(iter(experiment.datasets.values()))
@@ -57,6 +58,8 @@ def sync_box_definitions(experiment, *, refresh=False):
                 for identifier in existing
                 if identifier in active
             ]
+    if refresh and state:
+        experiment.update_metadata({_KEY: state})
     definitions = [
         BoundingBox(**value) for value in state.get("definitions", [])
     ]
@@ -201,7 +204,7 @@ def replace_box_state(session, entry):
         definition["revision"] = state["revision"]
     expected = experiment_state_token(session.experiment)
     staged = clone_experiment(session.experiment)
-    staged.metadata[_KEY] = state
+    staged.update_metadata({_KEY: state})
     sync_box_definitions(staged)
     if experiment_state_token(session.experiment) != expected:
         raise StaleResultError("Bounding box inputs changed during editing")

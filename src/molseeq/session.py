@@ -1,13 +1,13 @@
 """MolSeeq's application bindings for MolCore acquisitions and datasets."""
 
-from collections.abc import Mapping, MutableMapping
-from copy import copy
-from copy import deepcopy
-from datetime import datetime, timezone
-from uuid import uuid4
 import json
+from collections.abc import Mapping, MutableMapping
+from concurrent.futures import CancelledError
+from copy import copy, deepcopy
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 import numpy as np
 from molcore import (
@@ -16,19 +16,21 @@ from molcore import (
     ArraySource,
     Dataset,
     Experiment,
+    StaleResultError,
 )
 from molcore.files import image_acquisition, read_image
-from molcore.staging import clone_experiment
+from molcore.staging import clone_experiment, validate_expected
 from molcore.types.images import Source
 
-from molseeq.model_views import LocalisationViews
-from molseeq.trace_views import discard_trace_runs
 from molseeq.box_views import (
     BoundingBoxView,
     LocalisationState,
     box_state,
     sync_box_definitions,
 )
+from molseeq.model_metadata import mutable_metadata
+from molseeq.model_views import LocalisationViews
+from molseeq.trace_views import discard_trace_runs
 
 
 @dataclass(frozen=True)
@@ -44,6 +46,13 @@ class ImportSettings:
 class Recording:
     name: str
     acquisition: Acquisition
+
+
+@dataclass(frozen=True)
+class ImageCorrection:
+    images: dict[str, np.ndarray]
+    moves: list[tuple[np.ndarray, np.ndarray, np.ndarray]]
+    operation: dict
 
 
 class _ImportSource(Source):
@@ -187,6 +196,9 @@ class ProjectSession:
         snapshot._names = self._names.copy()
         snapshot._bindings = self._bindings.copy()
         snapshot._working = self._working.copy()
+        snapshot._display_pixels = self._display_pixels.copy()
+        snapshot.images = _DatasetImages(snapshot)
+        snapshot.localisations = LocalisationViews(snapshot)
         return snapshot
 
     def channel(self, name: str, channel: str):
@@ -280,6 +292,35 @@ class ProjectSession:
             ],
         }
 
+    def publish_image_correction(self, corrections, *, revision, expected, cancel_event):
+        """Adopt working pixels, localisation moves and provenance together."""
+        if cancel_event.is_set():
+            raise CancelledError()
+        if self.revision != revision:
+            raise StaleResultError("Inputs changed; run the correction again")
+        for name, token in expected.items():
+            validate_expected(self.dataset(name), token)
+
+        staged = self.image_snapshot()
+        for name, correction in corrections.items():
+            if correction.moves:
+                ids, x, y = (
+                    np.concatenate(columns)
+                    for columns in zip(*correction.moves, strict=True)
+                )
+                staged.dataset(name).localizations.move_many(ids, x=x, y=y)
+            staged.replace_working_images(
+                {(name, channel): pixels for channel, pixels in correction.images.items()},
+                operation=correction.operation,
+            )
+        if cancel_event.is_set():
+            raise CancelledError()
+        self.experiment = staged.experiment
+        self._working = staged._working
+        self._display_pixels = staged._display_pixels
+        self.revision = staged.revision
+        self.trace_revision = staged.trace_revision
+
     def replace_working_images(self, images, *, operation=None):
         operation = deepcopy(
             operation
@@ -297,7 +338,8 @@ class ProjectSession:
             replacements[self.dataset(name).id, channel] = ArraySource(pixels)
         for dataset_id, channel in replacements:
             dataset = self.experiment.datasets[dataset_id]
-            history = dataset.processing.settings.setdefault(
+            processing = mutable_metadata(dataset.processing.settings)
+            history = processing.setdefault(
                 "molseeq_working_images", {}
             ).setdefault(channel, {"active": None, "records": {}})
             identifier = str(uuid4())
@@ -307,6 +349,7 @@ class ProjectSession:
                 "created_at": datetime.now(timezone.utc).isoformat(),
             }
             history["active"] = identifier
+            dataset.update_processing(processing, replace=True)
         self._working.update(replacements)
         for key in replacements:
             self._display_pixels.pop(key, None)
@@ -324,7 +367,7 @@ class ProjectSession:
         if not new.strip() or new in self._names:
             raise ValueError("Dataset names must be nonempty and unique")
         dataset = self.dataset(old)
-        dataset.name = new
+        dataset.rename(new)
         self._names = {
             new if key == old else key: value
             for key, value in self._names.items()
@@ -416,7 +459,8 @@ class ProjectSession:
                         pixels.flags.writeable = False
                         working[key] = ArraySource(pixels)
                     bindings[key] = (sequence.id, True)
-                    history = dataset.processing.settings.get(
+                    processing = mutable_metadata(dataset.processing.settings)
+                    history = processing.get(
                         "molseeq_working_images", {}
                     ).get(channel)
                     if history is not None and key in working:
@@ -432,17 +476,20 @@ class ProjectSession:
                             ).isoformat(),
                         }
                         history["active"] = identifier
+                        dataset.update_processing(processing, replace=True)
             else:
                 acquisition = dataset.add_acquisition(incoming[0])
                 for channel in acquisition.channels:
                     key = dataset.id, channel
                     bindings[key] = (acquisition.id, False)
                     working.pop(key, None)
-                    history = dataset.processing.settings.get(
+                    processing = mutable_metadata(dataset.processing.settings)
+                    history = processing.get(
                         "molseeq_working_images", {}
                     ).get(channel)
                     if history is not None:
                         history["active"] = None
+                        dataset.update_processing(processing, replace=True)
         affected = {
             key[0]
             for key, binding in bindings.items()

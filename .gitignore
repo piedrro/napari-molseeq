@@ -1,6 +1,7 @@
 /src/molseeq/_tests/
 /src/molseeq/dev/
 /dist/
+/build/
 /src/molseeq/scripts/
 /.idea/inspectionProfiles/profiles_settings.xml
 /.idea/inspectionProfiles/Project_Default.xml

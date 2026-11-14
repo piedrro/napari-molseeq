@@ -7,27 +7,28 @@ def test_napari_entry_point_loads_with_locked_picasso():
 
 
 def test_widget_publishes_an_alex_import_to_the_napari_layer(
-    qapp, tmp_path, monkeypatch
+    qapp, tmp_path
 ):
-    from threading import Event
-    from types import SimpleNamespace
-
     import numpy as np
     import tifffile
     from napari.components import ViewerModel
 
-    from molseeq import molseeq_widget
+    from molseeq import QWidget
     from molseeq.session import ImportSettings, read_recording
 
-    monkeypatch.setattr(
-        molseeq_widget, "Manager", lambda: SimpleNamespace(Event=Event)
-    )
     movie = np.arange(5 * 4 * 6, dtype=np.uint16).reshape(5, 4, 6)
     path = tmp_path / "alex.tif"
     tifffile.imwrite(path, movie, photometric="minisblack")
     viewer = ViewerModel()
-    widget = molseeq_widget.QWidget(viewer)
+    widget = QWidget(viewer)
     try:
+        models = ["Translation", "Rigid", "Similarity", "Affine", "Homography"]
+        for selector, default, choices in (
+            (widget.gui.tform_compute_model, "Homography", models),
+            (widget.gui.align_model, "Auto", ["Auto", *models]),
+        ):
+            assert selector.currentText() == default
+            assert [selector.itemText(i) for i in range(selector.count())] == choices
         recordings = [read_recording(path, ImportSettings("alex"))]
         widget._publish_import(
             recordings, widget.session.revision, None, False
@@ -36,6 +37,19 @@ def test_widget_publishes_an_alex_import_to_the_napari_layer(
         np.testing.assert_array_equal(
             widget.image_layer.data, movie[::2, :, :3]
         )
+        unrelated_pixels = np.full((4, 3), 123, dtype=np.uint16)
+        unrelated = viewer.add_image(unrelated_pixels, name="Unrelated image")
+        channel = widget.gui.picasso_channel
+        dd = channel.findText("DD")
+        if dd < 0:
+            dd = channel.findText("dd")
+        assert dd >= 0
+        channel.setCurrentIndex(dd)
+        assert widget._clear_detection_image()
+        np.testing.assert_array_equal(widget.image_layer.data, np.zeros((4, 3)))
+        np.testing.assert_array_equal(unrelated.data, unrelated_pixels)
+        widget._picasso_wrapper_finished()
+        np.testing.assert_array_equal(widget.image_layer.data, movie[::2, :, :3])
         widget.localisation_dict["bounding_boxes"] = {
             "localisations": np.rec.fromarrays(
                 ([0], [1.0], [1.0]), names="frame,x,y"

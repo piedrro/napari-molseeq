@@ -1,4 +1,4 @@
-__version__ = "1.0.8"
+__version__ = "2.0.0"
 
 __all__ = (
     "QWidget",
@@ -7,7 +7,7 @@ __all__ = (
 
 def __getattr__(name):
     if name == "QWidget":
-        from molseeq.molseeq_widget import QWidget
+        from molseeq.ui.widget import QWidget
 
         return QWidget
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

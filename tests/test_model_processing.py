@@ -1,9 +1,9 @@
 import numpy as np
 import tifffile
+from molcore import LocalisationSettings
 
 from molseeq.model_processing import LocalisationJob, localise_channel
 from molseeq.session import ImportSettings, ProjectSession, read_recording
-from molcore import LocalisationSettings
 
 
 def test_detecting_one_alex_frame_returns_logical_index_for_the_widget(

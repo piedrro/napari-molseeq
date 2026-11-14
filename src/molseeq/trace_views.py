@@ -1,14 +1,23 @@
 """Bind trace results to MolCore camera frames and project legacy metric names."""
 
-from uuid import uuid4
 from dataclasses import asdict, replace
+from uuid import uuid4
 
 import numpy as np
-from molcore import ApertureShape, ArraySource, PhotonSequence, PhotonUnit
-from molcore import photometry
+from molcore import (
+    ApertureShape,
+    ArraySource,
+    ExecutionContext,
+    PartitionSelection,
+    PhotonSequence,
+    PhotonUnit,
+    StaleResultError,
+    photometry,
+)
 from molcore.staging import clone_experiment, experiment_state_token
-from molcore import StaleResultError
+
 from molseeq import __version__
+from molseeq.model_metadata import mutable_metadata
 
 _METHOD = "molseeq_aperture"
 
@@ -32,13 +41,14 @@ def discard_trace_runs(experiment, dataset_ids=None):
 class TraceResults(dict):
     """Legacy plotting columns accompanied by the original MolCore trace records."""
 
-    def __init__(self, session, settings):
+    def __init__(self, session, settings, expected):
         super().__init__()
         self.records = []
+        self.results = []
         self.run_id = str(uuid4())
         self.settings = asdict(settings)
         self.session_revision = session.revision
-        self.expected = experiment_state_token(session.experiment)
+        self.expected = expected
 
 
 def _legacy_aperture_columns(sequence):
@@ -90,10 +100,22 @@ def _legacy_aperture_columns(sequence):
     return columns
 
 
+def _trace_parts(session, name, channel):
+    export_offset = 0
+    for view, offset in session.channel_parts(name, channel):
+        if len(view):
+            yield view, offset, export_offset
+        camera_frames = len(view.acquisition.source)
+        export_offset += (camera_frames + 1) // 2 if view.acquisition.mode == "alex" else camera_frames
+
+
 def compute_fixed_traces(
-    session, locs, options, *, box_size=None, progress=None, cancel_event=None
+    session, locs, options, *, box_size=None, progress=None, cancel_event=None, expected=None
 ):
     """Measure fixed sites with MolCore and retain MolSeeq's existing metric names."""
+    if expected is None:
+        expected = experiment_state_token(session.experiment)
+        session = session.image_snapshot()
     size, shape, buffer, width, global_background, fit_psf = options
     settings = photometry.FixedApertureSettings(
         spot_size=size,
@@ -133,21 +155,19 @@ def compute_fixed_traces(
             session.dataset(name),
             view,
             offset,
+            export_offset,
             session.working_source(name, channel),
         )
         for name, channels in session.images.items()
         for channel in channels
-        for view, offset in session.channel_parts(name, channel)
-        if len(view)
+        for view, offset, export_offset in _trace_parts(session, name, channel)
     ]
-    output = TraceResults(session, settings)
-    for job, (name, channel, dataset, view, offset, source) in enumerate(jobs):
+    output = TraceResults(session, settings, expected)
+    for job, (name, channel, dataset, view, offset, export_offset, source) in enumerate(jobs):
         working = (
             ArraySource(source.array[offset : offset + len(view)])
             if isinstance(source, ArraySource)
-            else view
-            if anchored
-            else None
+            else view if anchored else None
         )
         measure = (
             photometry.bounding_box_traces
@@ -155,14 +175,11 @@ def compute_fixed_traces(
             else photometry.stationary_site_traces
         )
         result = measure(
-            dataset,
-            view.acquisition.id,
-            channel,
+            dataset.snapshot(),
+            PartitionSelection(view.acquisition.id, channel),
             tuple(sites) if anchored else sites,
             settings=settings,
             source=working,
-            apply=False,
-            cancel_event=cancel_event,
             **(
                 {
                     "source_metadata": session.working_image_provenance(
@@ -172,14 +189,18 @@ def compute_fixed_traces(
                 if anchored
                 else {}
             ),
-            progress=(
-                None
-                if progress is None
-                else lambda update: progress(
-                    int((job + update.percent / 100) * 100 / len(jobs))
-                )
+            context=ExecutionContext(
+                cancel_event=cancel_event,
+                progress=(
+                    None
+                    if progress is None
+                    else lambda update: progress(
+                        int((job + update.percent / 100) * 100 / len(jobs))
+                    )
+                ),
             ),
         )
+        decorated = []
         channel_spots = output.setdefault(name, {}).setdefault(channel, {})
         for sequence in result.sequences:
             index = spot_indices[sequence.molecule_id]
@@ -196,15 +217,6 @@ def compute_fixed_traces(
             )
             if not np.isfinite(gradient):
                 gradient = None
-            export_offset = sum(
-                (len(previous.acquisition.source) + 1) // 2
-                if previous.acquisition.mode == "alex"
-                else len(previous.acquisition.source)
-                for previous, part_offset in session.channel_parts(
-                    name, channel
-                )
-                if part_offset < offset
-            )
             export_frames = (
                 sequence.frames // 2
                 if view.acquisition.mode == "alex"
@@ -236,10 +248,14 @@ def compute_fixed_traces(
                     ),
                 )
             )
+            decorated.append(output.records[-1][1])
             columns = _legacy_aperture_columns(output.records[-1][1])
             parts = channel_spots.setdefault(index, {})
             for key, values in columns.items():
                 parts.setdefault(key, []).append(values)
+        output.results.append(
+            (dataset.id, replace(result, sequences=tuple(decorated)))
+        )
     for channels in output.values():
         for spots in channels.values():
             for index, columns in spots.items():
@@ -260,8 +276,12 @@ def publish_traces(session, traces):
             raise StaleResultError("Trace inputs changed before publication")
         staged = clone_experiment(session.experiment)
         discard_trace_runs(staged)
-        for dataset_id, sequence in traces.records:
-            staged.datasets[dataset_id].photon_sequences.add(sequence)
+        allocated = {}
+        for dataset_id, result in traces.results:
+            receipt = staged.datasets[dataset_id].apply(result)
+            allocated.setdefault(dataset_id, []).extend(
+                receipt.sequence_ids or ()
+            )
         for model in staged.datasets.values():
             records = [
                 sequence
@@ -269,13 +289,14 @@ def publish_traces(session, traces):
                 if dataset_id == model.id
             ]
             if records:
-                model.processing.settings.setdefault("photon_sequences", {})[
+                processing = mutable_metadata(model.processing.settings)
+                processing.setdefault("photon_sequences", {})[
                     traces.run_id
                 ] = {
                     "version": 2,
                     "application": "molseeq",
                     "settings": traces.settings,
-                    "sequence_ids": [sequence.id for sequence in records],
+                    "sequence_ids": allocated[model.id],
                     "bounding_box_ids": sorted(
                         {
                             sequence.bounding_box_id
@@ -284,6 +305,7 @@ def publish_traces(session, traces):
                         }
                     ),
                 }
+                model.update_processing(processing, replace=True)
         session.experiment = staged
         session.revision += 1
         session.trace_revision += 1

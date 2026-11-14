@@ -1,7 +1,7 @@
 import numpy as np
 import tifffile
-
 from molcore import Experiment
+
 from molseeq.session import ImportSettings, ProjectSession, read_recording
 from molseeq.trace_views import (
     compute_fixed_traces,

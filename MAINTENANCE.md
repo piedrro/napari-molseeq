@@ -18,15 +18,19 @@ This will launch and instance of the viewer and the plugin widget.
     from molseeq import QWidget
     viewer.window.add_dock_widget(QWidget(viewer))
 
-After modifying the code, you can reload the PixSeq widget module with:
+After modifying the code, you can reload the MolSeeq widget module with:
 
     QWidget
 
+## Package layout
+
+The `molseeq.ui` package contains the dock widget, Qt workers, and workflow mixins. The session, MolCore processing adapters, and result views live at the package root. The desktop entry point is `molseeq.launcher`.
+
 ## Editing the UI
 
-The UI is created using Qt Designer. To edit the UI, open the `gui.ui` file (src/molseeq/GUI/gui.ui) in Qt Designer.
+The UI is created using Qt Designer. To edit the UI, open the `gui.ui` file (src/molseeq/ui/gui.ui) in Qt Designer.
 
-Install Qt Designer separately (for example, the Qt SDK). `pyqt5-tools` pins an older Qt/Python stack and is not part of the Python 3.14 environment. The PyQt5 runtime supplies `pyuic5` for regenerating Python code.
+Install Qt Designer separately (for example, the Qt SDK). The PyQt6 runtime supplies `pyuic6` for regenerating Python code.
 
 
 Launch Designer from your Qt installation:
@@ -35,12 +39,12 @@ Launch Designer from your Qt installation:
 
 Once the UI is edited, the `gui.py` file can be generated with the following command:
 
-    uv run pyuic5 src/molseeq/GUI/gui.ui -o src/molseeq/GUI/gui.py
+    uv run pyuic6 src/molseeq/ui/gui.ui -o src/molseeq/ui/gui.py
 
     OR
 
-    cd src/molseeq/GUI
-    uv run pyuic5 gui.ui -o gui.py
+    cd src/molseeq/ui
+    uv run pyuic6 gui.ui -o gui.py
 
 ## Deployment
 

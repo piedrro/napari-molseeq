@@ -105,3 +105,49 @@ def test_rectangular_alex_export_keeps_empty_cycles_at_recording_boundaries(
         stack_export_traces(columns, axis=1),
         [[1, 5], [2, np.nan], [3, 6], [4, np.nan]],
     )
+
+    import pandas as pd
+
+    from molseeq.ui.trace_export import TraceExportMixin
+
+    exporter = TraceExportMixin()
+    exporter.populate_export_dict = lambda: {
+        "index": [0, 0], "dataset": [name, name],
+        "channel": list(traces), "data": columns,
+    }
+    destination = tmp_path / "traces.csv"
+    exporter.export_traces_csv(export_path=destination)
+    exported = pd.read_csv(destination, header=[0, 1, 2])
+    assert exported.columns.get_level_values(2).tolist() == list(traces)
+    np.testing.assert_array_equal(exported.to_numpy(), [[1, 5], [2, np.nan], [3, 6], [4, np.nan]])
+
+
+def test_detached_trace_run_publishes_with_an_empty_odd_channel_in_the_first_movie(tmp_path):
+    from molcore.staging import experiment_state_token
+
+    from molseeq.trace_views import compute_fixed_traces
+
+    first, second = (tmp_path / name for name in ("first.tif", "second.tif"))
+    for path, n_frames in ((first, 1), (second, 3)):
+        tifffile.imwrite(
+            path, np.full((n_frames, 6, 12), 7, dtype=np.uint16), photometric="minisblack"
+        )
+    session = ProjectSession()
+    session.import_recordings(
+        [read_recording(path, ImportSettings("alex")) for path in (first, second)],
+        concatenate=True,
+    )
+    expected = experiment_state_token(session.experiment)
+    sites = np.rec.fromarrays(([2.0], [2.0]), names="x,y")
+    results = compute_fixed_traces(
+        session.image_snapshot(), sites, (1, "square", 0, 1, False, False), expected=expected
+    )
+    publish_traces(session, results)
+    traces = trace_view(session)[first.name]
+    columns = [
+        expand_export_trace(traces[channel][0]["spot_sum"], traces[channel][0])
+        for channel in ("dd", "aa")
+    ]
+    np.testing.assert_array_equal(
+        stack_export_traces(columns, axis=1), [[7, np.nan], [7, 7], [7, np.nan]]
+    )

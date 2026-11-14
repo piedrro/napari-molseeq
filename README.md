@@ -24,17 +24,20 @@ This was built by Dr Piers Turner from the Kapanidis Lab, University of Oxford.
 
 ## Installation
 
-This project uses Python 3.14 and [uv](https://docs.astral.sh/uv/getting-started/installation/) to manage Python, dependencies, and the development environment.
+The Windows desktop installer opens napari with MolSeeq already docked. See
+the [Windows build and installation instructions](docs/windows-installer.md).
+
+This project uses Python 3.14, PyQt6 and [uv](https://docs.astral.sh/uv/getting-started/installation/) for development.
 
 From a checkout of this repository, run:
 
 ```shell
 uv sync --locked
-uv run napari
+uv run molseeq
 ```
 
 uv downloads Python 3.14 when needed and installs the plugin in editable mode in `.venv`.
-In napari, open the molSEEQ widget from the Plugins menu.
+To use MolSeeq as a plugin, run `uv run napari` and open molSEEQ from the Plugins menu.
 
 For a runtime environment without development tools, use `uv sync --locked --no-dev`.
 
@@ -76,3 +79,16 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
+
+
+## MolCore compatibility
+
+MolSeeq pins MolCore 0.2. Processing reads immutable dataset snapshots, uses
+`PartitionSelection` or `SequenceSelection` and `context=ExecutionContext(...)`,
+and returns detached results for explicit publication with `Dataset.apply(...)`.
+Editable staging models use `molcore.staging.clone_dataset(...)`.
+
+MolCore 0.2 reads and writes dataset and experiment **format 7 only**. Older saved
+files are rejected. Preserve original files and use an environment with the older
+MolCore release to export valuable scientific data before upgrading, then import
+that data explicitly; there is no automatic old-format reader.

@@ -1,0 +1,186 @@
+import traceback
+
+import numpy as np
+from molcore import ClusteringSettings
+from molcore.clustering import cluster_points
+
+from molseeq.ui.worker import Worker
+
+
+class ClusteringMixin:
+
+    def _cluster_localisations_finished(self):
+
+        try:
+            mode = self.gui.cluster_mode.currentText()
+
+            if "localisations" in mode.lower():
+                self.draw_localisations(update_vis=True)
+            else:
+                self.draw_bounding_boxes()
+
+            self.update_ui()
+
+        except:
+            print(traceback.format_exc())
+            pass
+
+
+    def remove_overlapping_coords(self, coordinates, min_distance):
+
+        # Calculate all pairwise differences
+        diff = coordinates[:, np.newaxis, :] - coordinates[np.newaxis, :, :]
+
+        # Calculate squared distances
+        dist_squared = np.sum(diff ** 2, axis=-1)
+
+        # Check if the array is of integer type
+        if coordinates.dtype.kind in 'iu':
+            # Use the maximum integer value for the diagonal if the array is of integer type
+            max_int_value = np.iinfo(coordinates.dtype).max
+            np.fill_diagonal(dist_squared, max_int_value)
+        else:
+            # Use infinity for the diagonal if the array is of float type
+            np.fill_diagonal(dist_squared, np.inf)
+
+        # Identify overlapping coordinates (distance less than X)
+        overlapping = np.any(dist_squared < min_distance ** 2, axis=1)
+
+        # Filter out overlapping coordinates
+        filtered_coordinates = coordinates[~overlapping]
+
+        return filtered_coordinates
+
+
+
+    def _cluster_localisations(self, progress_callback=None, eps=0.1, min_samples=20):
+
+        result = None, None, None
+
+        try:
+
+            mode = self.gui.cluster_mode.currentText()
+            dataset = self.gui.cluster_dataset.currentText()
+            channel = self.gui.cluster_channel.currentText()
+            remove_overlapping = self.gui.dbscan_remove_overlapping.isChecked()
+
+            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower(), type = "localisations")
+
+            locs = loc_dict["localisations"]
+            box_size = loc_dict["box_size"]
+
+            n_frames = len(np.unique([loc.frame for loc in locs]))
+
+            cluster_dataset = np.vstack((locs.x, locs.y)).T
+
+            _, centres = cluster_points(
+                cluster_dataset, settings=ClusteringSettings(radius=eps, min_samples=min_samples)
+            )
+            cluster_centers = np.column_stack((centres["x"], centres["y"]))
+
+            if remove_overlapping:
+                cluster_centers = self.remove_overlapping_coords(cluster_centers,
+                    min_distance = box_size)
+
+            if "localisations" not in mode.lower():
+                n_frames = 1
+
+            clustered_locs = []
+
+            for cluster_index in range(len(cluster_centers)):
+                for frame_index in range(n_frames):
+                    [locX, locY] = cluster_centers[cluster_index].copy()
+                    new_loc = (int(frame_index), float(locX), float(locY))
+                    clustered_locs.append(new_loc)
+
+            # Convert list to recarray
+            clustered_locs = np.array(clustered_locs,
+                dtype=[('frame', '<u4'), ('x', '<f4'), ('y', '<f4')]).view(np.recarray)
+
+            result = clustered_locs
+
+        except:
+            print(traceback.format_exc())
+            result = None
+
+        return result
+
+
+    def _cluster_localisations_result(self, locs):
+
+        try:
+
+            if locs is not None:
+
+                mode = self.gui.cluster_mode.currentText()
+                dataset = self.gui.cluster_dataset.currentText()
+                channel = self.gui.cluster_channel.currentText()
+
+                fiducial_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
+                bbox_dict = self.localisation_dict["bounding_boxes"]
+
+                if "localisations" in mode.lower():
+
+                    fiducial_dict = self.localisation_dict["localisations"][dataset][channel.lower()]
+
+                    fiducial_dict["localisations"] = locs
+
+                else:
+
+                    if "box_size" in fiducial_dict.keys():
+                        box_size = fiducial_dict["box_size"]
+                    else:
+                        box_size = int(self.gui.picasso_box_size.currentText())
+
+                    bbox_dict["localisations"] = locs
+                    bbox_dict["box_size"] = box_size
+
+        except:
+            print(traceback.format_exc())
+            pass
+
+
+
+    def check_number(self, string):
+
+        if string.isdigit():
+            number = int(string)
+        elif string.replace('.', '', 1).isdigit() and string.count('.') < 2:
+            number = float(string)
+        else:
+            number = None
+
+        return number
+
+    def molseeq_cluster_localisations(self):
+
+        try:
+
+            dataset = self.gui.cluster_dataset.currentText()
+            channel = self.gui.cluster_channel.currentText()
+            mode = self.gui.cluster_mode.currentText()
+            eps = self.gui.cluster_eps.text()
+            min_samples = self.gui.dbscan_min_samples.text()
+
+            eps = self.check_number(eps)
+            min_samples = self.check_number(min_samples)
+
+            loc_dict, n_locs, fitted = self.get_loc_dict(dataset, channel.lower())
+
+            if n_locs == 0 or fitted == False:
+                self.molseeq_notification("Localisation clustering requires fitted localisations.")
+
+            if n_locs > 0 and fitted and eps is not None and min_samples is not None:
+
+                self.update_ui(init = True)
+
+                worker = Worker(self._cluster_localisations, eps=eps, min_samples=min_samples)
+                worker.signals.result.connect(self._cluster_localisations_result)
+                worker.signals.finished.connect(self._cluster_localisations_finished)
+                worker.signals.error.connect(self.update_ui)
+                self.threadpool.start(worker)
+
+        except:
+            print(traceback.format_exc())
+            self.update_ui()
+            pass

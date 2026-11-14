@@ -22,11 +22,11 @@ classifiers = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "napari[pyqt5]>=0.9.2",
+    "napari[pyqt6]>=0.9.2",
     "numpy",
     "magicgui",
     "qtpy",
-    "molcore[localisation,tracking,clustering] @ git+https://github.com/piedrro/molcore.git@b7bed312a6462a4c7891fd4c2da48ee151ea3fb8",
+    "molcore[localisation,tracking,clustering] @ git+https://github.com/piedrro/molcore.git@6fcf9dee9b8e7423912695b7bd4ff3fb61c07766",
     "scipy",
     "pyqtgraph",
     "picassosr>=0.7.3",
@@ -55,8 +55,11 @@ testing = [
     "pytest-cov",  # https://pytest-cov.readthedocs.io/en/latest/
     "pytest-qt",  # https://pytest-qt.readthedocs.io/en/latest/
     "napari",
-    "pyqt5",
+    "pyqt6",
 ]
+
+[project.scripts]
+molseeq = "molseeq.launcher:main"
 
 [project.entry-points."napari.manifest"]
 napari-molseeq = "molseeq:napari.yaml"
